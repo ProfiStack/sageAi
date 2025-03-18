@@ -1,0 +1,3 @@
+exports.STARTUP = 'STARTUP';
+exports.SUPERADMIN = 'SUPERADMIN';
+exports.INVESTOR = 'INVESTOR';
