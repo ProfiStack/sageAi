@@ -18,7 +18,7 @@ export default function Home() {
     trendingDealsRef.current?.scrollIntoView({ behavior: "smooth" });
   };
   return (
-    <div className="mx-4 md:container md:mx-auto overflow-x-hidden">
+    <div className=" overflow-x-hidden">
       <Header />
       <Hero onButtonClick={scrollToTrendingDeals} />
       <TrendingDeals ref={trendingDealsRef} />
