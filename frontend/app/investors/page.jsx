@@ -3,7 +3,7 @@ import Header from "../CustomComponents/header/Header";
 import InvestorBanner from "../CustomComponents/banner/InvestorsBanner";
 import FounderClub from "../CustomComponents/founderClub.jsx/FounderClub";
 import Community from "../CustomComponents/community/Community";
-import Industries from "../CustomComponents/Industries/Industries";
+import Industries from "../CustomComponents/skinDecoded/SkinDecoded";
 import SteSection from "../CustomComponents/steSection/SteSection";
 import Struggle from "../CustomComponents/struggle/Struggle";
 import Footer from "../CustomComponents/Footer/Footer";

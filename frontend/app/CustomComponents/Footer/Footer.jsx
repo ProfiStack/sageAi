@@ -2,44 +2,49 @@
 import Image from "next/image";
 export default function Footer() {
   return (
-    <div className="overflow-hidden mx-4 md:container md:mx-auto">
-      <div className="flex gap-14 md:gap-0 md:justify-between">
-        <div>
-          <div className="relative w-[50px] h-[50px] md:w-[100px] md:h-[100px]">
-            <Image
-              src={"/images/logo.png"}
-              alt="logo"
-              layout="fill"
-              objectFit="contain"
-            />
-          </div>
-          <p className="text-[16px] font-[400px] w-auto text-[#545B79]">
-            Please contact us if you have any specific idea or request.
+    <div>
+      <div className=" flex justify-between my-5 container mx-auto">
+        <div className="flex flex-col">
+          <p className="text-[16px] md:text-[20px] font-bold text-[#02331E]">
+            Sagee Ai
           </p>
-          <button
-            className="text-[15px] font-[400px] text-[#356DF6]"
-            onClick={() => window.open("mailto:info@naimaat.com")}
-          >
-            info@niamaat.com
-          </button>
-        </div>
-        <div>
-          <div className="flex flex-col items-start gap-2">
-            <p className="text-[14px] font-[400px] text-[#545B79]">Socials</p>
-            <button className="text-[16px] font-[300px]">Twitter</button>
-            <button className="text-[16px] font-[300px]">Instagram</button>
-            <button className="text-[16px] font-[300px]"> Twitter</button>
-          </div>
-        </div>
-      </div>
-      <hr className="border-t-[1px] border-[#D1D5DB] w-full mt-10 mb-5" />
-      <div className="flex justify-between mb-5">
-        <div>
-          <p className="text-[#545B79] text-[14px] font-[400px]">
-            © 2024 NAIMAAT. All rights reserved
+          <p className="text-[#4B5563] text-[12px] md:text-[16px]">
+            Your AI-powered <br className="flex md:hidden" /> skincare companion
           </p>
         </div>
+        <div className="flex flex-col gap-2 items-start justify-start">
+          <p className="font-bold md:text-[16px] text-[12px]">Quick Links</p>
+          <div className="flex flex-col justify-start items-start text-[#4B5563] gap-1  md:text-[16px] text-[12px]">
+            <button> About Us</button>
+            <button>How It Works</button>
+            <button>Quizzes</button>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 items-start justify-start ">
+          <p className="font-bold  md:text-[16px] text-[12px]">Legal</p>
+          <div className="flex flex-col justify-start items-start text-[#4B5563] gap-1  md:text-[16px] text-[12px]">
+            <button>Privacy Policy</button>
+            <button>Terms of Service</button>
+            <button>Contact</button>
+          </div>
+        </div>
+        <div className=" gap-2 items-start md:flex hidden">
+          <Image src="/images/insta.svg" width={18} height={20} />
+          <Image src="/images/facebook.svg" width={18} height={20} />
+          <Image src="/images/twitter.svg" width={18} height={20} />
+          <Image src="/images/tiktok.svg" width={18} height={20} />
+        </div>
       </div>
+      <div className=" gap-2 items-start flex md:hidden justify-center">
+        <Image src="/images/insta.svg" width={18} height={20} />
+        <Image src="/images/facebook.svg" width={18} height={20} />
+        <Image src="/images/twitter.svg" width={18} height={20} />
+        <Image src="/images/tiktok.svg" width={18} height={20} />
+      </div>
+      <hr className="container mx-auto  my-3 text-[#E5E7EB] flex w-full" />
+      <p className="my-10 text-[#4B5563] flex justify-center">
+        © 2025 SageeAi. All rights reserved.
+      </p>
     </div>
   );
 }
