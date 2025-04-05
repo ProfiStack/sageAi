@@ -9,7 +9,7 @@ import {
 export default function DermatologistVerified() {
   return (
     <div className="my-10 container mx-auto">
-      <p className="text-[36px] font-bold flex justify-center">
+      <p className="text-[24px] md:text-[36px] font-bold flex justify-center text-center">
         Dermatologist Verified
       </p>
       <div className="hidden lg:flex items-center justify-center gap-10">

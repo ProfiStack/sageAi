@@ -13,7 +13,7 @@ export default function Solutions() {
   return (
     <div className=" md:bg-[#02331ED9] py-10 mt-5">
       <div>
-        <p className="font-bold text-[36px] flex justify-center pb-4 text-center">
+        <p className="font-bold text-[24px]  md:text-[36px] flex justify-center pb-4 text-center text-[#02331E] md:text-black">
           🔥 Find solutions for your specific needs
         </p>
       </div>

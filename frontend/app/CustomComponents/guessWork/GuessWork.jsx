@@ -5,7 +5,7 @@ export default function GuessWork() {
   return (
     <div className="  bg-[#02331ED9] py-4">
       <div className="  flex lg:justify-end justify-center items-center md:gap-12 lg:gap-12  2xl:gap-56 ">
-        <div className="flex flex-col items-center space-y-10">
+        <div className="flex flex-col items-center space-y-5 md:space-y-10">
           <p className="text-[24px] md:text-[36px] font-bold text-white text-center">
             Ditch the guesswork, your <br className="flex md:hidden" /> glow{" "}
             <br className="xl:flex hidden" /> starts here!✨

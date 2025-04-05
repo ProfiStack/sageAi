@@ -9,9 +9,13 @@ import Image from "next/image";
 export default function Results() {
   return (
     <div className="my-16 container mx-auto">
-      <p className="flex justify-center text-[36px] font-bold">
+      <p className="md:flex hidden justify-center text-[24px] text-center md:text-[36px] font-bold">
         Real results, real people
       </p>
+      <p className="md:hidden flex justify-center text-[24px] text-center text-[#02331E] md:text-black font-bold ">
+        What Our Users Say
+      </p>
+
       <div className="flex justify-center">
         <Carousel className="w-screen">
           <CarouselContent>
