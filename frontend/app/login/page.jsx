@@ -1,6 +1,6 @@
-import Footer from "../CustomComponents/Footer/Footer";
-import Header from "../CustomComponents/header/Header";
-import Login from "../CustomComponents/Login/Login";
+import Footer from "../../CustomComponents/Footer/Footer";
+import Header from "../../CustomComponents/header/Header";
+import Login from "../../CustomComponents/Login/Login";
 
 export default function LoginPage() {
   return (

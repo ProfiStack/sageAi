@@ -1,6 +1,6 @@
-import Footer from "../CustomComponents/Footer/Footer";
-import Header from "../CustomComponents/header/Header";
-import SubSignup from "../CustomComponents/subSignUp/SubSignup";
+import Footer from "../../CustomComponents/Footer/Footer";
+import Header from "../../CustomComponents/header/Header";
+import SubSignup from "../../CustomComponents/subSignUp/SubSignup";
 
 export default function Signup() {
   return (

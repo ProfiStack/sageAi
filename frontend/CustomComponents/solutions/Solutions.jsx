@@ -44,7 +44,7 @@ export default function Solutions() {
                           layout="fill"
                         />
                       </div>
-                      <p className="font-bold text-[20px] leading-none">
+                      <p className="font-bold text-[20px] leading-none text-[#02331E] md:text-black">
                         Routine builder
                       </p>
                       <p className="text-[#4B5563]">
