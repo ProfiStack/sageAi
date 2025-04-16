@@ -25,7 +25,7 @@ export default function SpecificConcerns() {
   };
   const handleNext = () => {
     setAnswers("preferredRoutine", selectedOptions);
-    router.push("/quizz/preferredRoutine");
+    router.push("/result");
   };
   return (
     <div>
