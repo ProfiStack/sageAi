@@ -24,7 +24,7 @@ export default function Results() {
                 <CarouselItem className="md:basis-1/2 lg:basis-1/3 flex justify-center ">
                   <div
                     key={index}
-                    className="w-[394px] shadow-[0px_18px_20px_rgb(0,0,0,0.1)] rounded-2xl my-10 px-5 py-5 space-y-5"
+                    className="w-[394px] shadow-[0px_18px_20px_rgb(0,0,0,0.1)] rounded-2xl mb-7 mt-3 px-5 py-5 space-y-5"
                   >
                     <div className="flex gap-2 items-center">
                       <div className="relative w-[48px] h-[48px]">
