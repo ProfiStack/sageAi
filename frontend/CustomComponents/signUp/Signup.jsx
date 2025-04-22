@@ -71,6 +71,9 @@ export default function Signup() {
       services: false,
     },
   });
+  const handleLogoClick = () => {
+    router.push("/");
+  };
   async function onSubmit(values) {
     try {
       if (values.terms) {
@@ -88,10 +91,13 @@ export default function Signup() {
       console.log(error);
     }
   }
+
   return (
     <div>
       <div className="space-y-2 my-6  flex justify-center flex-col items-center">
-        <Image src="/images/sageLogo2.png" width={78} height={78} />
+        <button onClick={() => handleLogoClick()}>
+          <Image src="/images/sageLogo2.png" width={78} height={78} />
+        </button>
         <p className=" text-2xl font-semibold">Create Account</p>
         <p className="text-[#6B7280] text-sm">
           Join us today! Please enter your details.
