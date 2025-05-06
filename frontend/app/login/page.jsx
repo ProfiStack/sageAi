@@ -1,4 +1,4 @@
-import Footer from "../../CustomComponents/Footer/Footer";
+import Footer from "../../CustomComponents/home/Footer/Footer";
 import Header from "../../CustomComponents/header/Header";
 import Login from "../../CustomComponents/Login/Login";
 

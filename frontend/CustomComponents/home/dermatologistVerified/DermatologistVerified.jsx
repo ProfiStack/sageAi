@@ -1,11 +1,11 @@
 import Image from "next/image";
-import DermatologistCard from "../dermatologistCard/DermatologistCard";
 import {
   Carousel,
   CarouselContent,
   CarouselDots,
   CarouselItem,
 } from "@/components/ui/carousel";
+import DermatologistCard from "./dermatologistCard/DermatologistCard";
 export default function DermatologistVerified() {
   return (
     <div className="my-10 container mx-auto">

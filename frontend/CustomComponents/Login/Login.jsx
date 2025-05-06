@@ -17,6 +17,7 @@ import { Api } from "@/shared/api/api";
 import { useRouter } from "next/navigation";
 import useFormToast from "../FormToast/FormToast";
 import { setAuthToken } from "@/shared/utils/utils";
+import useAuthStore from "@/store/authStore";
 const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
@@ -38,7 +39,10 @@ export default function Login() {
   async function onSubmit(values) {
     try {
       const data = await Api.client.signIn(values);
-      await setAuthToken(data.token);
+      if (data.token) {
+        useAuthStore.getState().setToken(data.token);
+        await setAuthToken(data.token);
+      }
       primaryToast({ description: data.message });
       router.push("/");
     } catch (error) {

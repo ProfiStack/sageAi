@@ -79,7 +79,10 @@ export default function Signup() {
       if (values.terms) {
         console.log(values);
         const data = await Api.client.signUp(values);
-        setAuthToken(data.token);
+        if (data.token) {
+          useAuthStore.getState().setToken(data.token);
+          await setAuthToken(data.token);
+        }
         primaryToast({ description: data.message });
 
         router.push("/");
