@@ -6,7 +6,7 @@ import useAuthStore from "@/store/authStore";
 
 export default function Home() {
   const { token } = useAuthStore();
-  if (!token) {
+  if (token) {
     return <Dashboard />;
   } else {
     return <HomePage />;

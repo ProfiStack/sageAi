@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import useAuthStore from "@/store/authStore";
 const formSchema = z.object({
   gender: z.enum(["male", "female", "none"], {
     message: "You need to select a type.",
@@ -77,15 +78,14 @@ export default function Signup() {
   async function onSubmit(values) {
     try {
       if (values.terms) {
-        console.log(values);
+        values.role = 'USER';
         const data = await Api.client.signUp(values);
         if (data.token) {
           useAuthStore.getState().setToken(data.token);
           await setAuthToken(data.token);
+          primaryToast({ description: data.message });
+          router.push("/");
         }
-        primaryToast({ description: data.message });
-
-        router.push("/");
       } else {
         destructiveToast("Please read and accept terms and conditions");
       }

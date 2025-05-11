@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 
 const appendTimestamps = (data) => {
   return data.map((item) => ({
@@ -13,61 +14,45 @@ const appendTimestamps = (data) => {
 const getRoles = () =>
   appendTimestamps([
     {
-      name: 'Super Admin',
-      permissions: ['*'],
+      role: 'Super Admin',
     },
     {
-      name: 'CompanyAdmin',
-      permissions: ['*'],
-    },
-    {
-      name: 'InvestorAdmin',
-      permissions: ['*'],
-    },
-    {
-      name: 'Investors',
-      permissions: ['*'],
+      role: 'Users',
     },
   ]);
 
 const getUsers = () => {
   return appendTimestamps([
     {
-      name: 'Hassan',
-      username: 'hasankhn',
-      email: 'hassan.khan@naimaat.com',
+      id: uuidv4(),  // ✅ Generate UUID manually
+      fullName: 'Hassan',
+      gender: 'Male',
+      email: 'hasankhn06@gmail.com',
       password: bcrypt.hashSync('hasankhn', 10),
-      roleId: 1,
+      role: 'SUPERADMIN',
+      country: 'Pakistan',
     },
     {
-      name: 'Nayab',
-      username: 'nay',
-      email: 'nayab@naimaat.com',
-      password: bcrypt.hashSync('nay', 10),
-      roleId: 1,
+      id: uuidv4(),  // ✅ Generate UUID manually
+      fullName: 'Salman',
+      gender: 'Male',
+      email: 'salmankhn.sk28@gmail.com',
+      password: bcrypt.hashSync('Sallu', 10),
+      role: 'SUPERADMIN',
+      country: 'Pakistan',
     },
   ]);
 };
 
-const getArticles = (users) =>
-  appendTimestamps([
-    {
-      title: 'My article',
-      body: 'This is me writing',
-    },
-    {
-      title: 'My article no 2',
-      body: 'This is me writing again',
-    },
-  ]);
-
 const getRoleUser = (roles, users) =>
   appendTimestamps([
     {
+      id: uuidv4(),  // ✅ Generate UUID manually
       roleId: roles[0].id,
       userId: users[0].id,
     },
     {
+      id: uuidv4(),  // ✅ Generate UUID manually
       roleId: roles[0].id,
       userId: users[1].id,
     },
@@ -76,6 +61,5 @@ const getRoleUser = (roles, users) =>
 module.exports = {
   getRoles,
   getUsers,
-  getArticles,
   getRoleUser,
 };

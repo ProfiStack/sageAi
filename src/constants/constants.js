@@ -1,3 +1,2 @@
-exports.STARTUP = 'STARTUP';
+exports.USER = 'USER';
 exports.SUPERADMIN = 'SUPERADMIN';
-exports.INVESTOR = 'INVESTOR';

@@ -13,17 +13,12 @@ module.exports = {
       returning: true,
     });
 
-    // seed articles
-    await queryInterface.bulkInsert('Articles', getArticles(users));
-    console.log('********', roles, '***********');
-    // seeder role-user
     return queryInterface.bulkInsert('RoleUsers', getRoleUser(roles, users));
   },
 
   // eslint-disable-next-line
   down: async (queryInterface, Sequelize) => {
     await queryInterface.bulkDelete('RoleUsers', null, {});
-    await queryInterface.bulkDelete('Articles', null, {});
     await queryInterface.bulkDelete('Users', null, {});
     return queryInterface.bulkDelete('Roles', null, {});
   },

@@ -1,36 +1,21 @@
 module.exports = {
   // eslint-disable-next-line
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Users', {
+    await queryInterface.createTable('RoleUsers', {
       id: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
-      fullName: {
-        type: Sequelize.STRING,
+      roleId: {
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
-      email: {
-        type: Sequelize.STRING,
+      userId: {
+        type: Sequelize.UUID,
         unique: true,  // Unique constraint
         allowNull: false,  // Add not-null constraint if desired
-      },
-      country: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      gender: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      role: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      password: {
-        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,
@@ -47,6 +32,6 @@ module.exports = {
 
   // eslint-disable-next-line
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Users');
+    return queryInterface.dropTable('RoleUsers');
   },
 };
