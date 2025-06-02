@@ -7,5 +7,6 @@ module.exports = () => {
     return res.json({ message: 'Postgres. Welcome :)' });
   });
   router.use('/auth', authRoutes);
+  router.use('/quiz', require('./quiz'));
   return router;
 };
