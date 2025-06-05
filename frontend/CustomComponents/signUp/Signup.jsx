@@ -78,7 +78,7 @@ export default function Signup() {
   async function onSubmit(values) {
     try {
       if (values.terms) {
-        values.role = 'USER';
+        values.role = "USER";
         const data = await Api.client.signUp(values);
         if (data.token) {
           useAuthStore.getState().setToken(data.token);
@@ -91,7 +91,6 @@ export default function Signup() {
       }
     } catch (error) {
       destructiveToast(error.message);
-      console.log(error);
     }
   }
 

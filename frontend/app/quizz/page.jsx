@@ -1,11 +1,30 @@
 "use client";
 import Results from "@/CustomComponents/home/results/Results";
+import { Api } from "@/shared/api/api";
+import { useQuizzStore } from "@/store/quizzStore";
 import { Clock3, Handshake, Star, Users } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function QuizzLandingPage() {
   const router = useRouter();
+  const { setQuizzData, quizzData } = useQuizzStore();
+
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      if (!quizzData) {
+        try {
+          const data = await Api.client.getQuizzes();
+          setQuizzData(data.data);
+        } catch (error) {
+          console.error("Failed to fetch quizzes", error);
+        }
+      }
+    };
+
+    fetchQuizzes();
+  }, [quizzData, setQuizzData]);
   const handleClick = () => {
     router.push("/quizz/primaryGoals");
   };

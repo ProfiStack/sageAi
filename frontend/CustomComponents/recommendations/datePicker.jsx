@@ -30,7 +30,6 @@ export default function DatePicker() {
       });
     }
   }, [selectedDate]);
-  console.log(selectedDate);
   const getMonthDays = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -61,7 +60,7 @@ export default function DatePicker() {
               value={`${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}`}
               onValueChange={handleMonthChange}
             >
-              <SelectTrigger className="p-3 rounded-3xl text-[#6B6B6B] border border-[#6B6B6B] gap-2">
+              <SelectTrigger className="p-3 rounded-3xl text-[#6B6B6B] border border-[#6B6B6B] gap-2 z-10">
                 <SelectValue placeholder="Select a month" />
               </SelectTrigger>
 

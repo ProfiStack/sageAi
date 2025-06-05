@@ -5,9 +5,7 @@ import Image from "next/image";
 
 export default function Result() {
   const { answers } = useQuizzStore();
-  const selfieUrl = answers.selfie
-    ? URL.createObjectURL(answers.selfie)
-    : "/images/sagelogo.png";
+  const selfieUrl = answers?.selfie?.previewUrl;
 
   return (
     <div>

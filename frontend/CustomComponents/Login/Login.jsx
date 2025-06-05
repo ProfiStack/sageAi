@@ -22,7 +22,7 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  password: z.string().min(6, {
+  password: z.string().min(2, {
     message: "Password must be at least 6 characters long.",
   }),
 });
@@ -42,12 +42,13 @@ export default function Login() {
       if (data.token) {
         useAuthStore.getState().setToken(data.token);
         await setAuthToken(data.token);
+        router.push("/");
+        primaryToast({ description: data.message });
+      } else {
+        destructiveToast(data.message);
       }
-      primaryToast({ description: data.message });
-      router.push("/");
     } catch (error) {
       destructiveToast(error.message);
-      console.log(error);
     }
   }
   return (

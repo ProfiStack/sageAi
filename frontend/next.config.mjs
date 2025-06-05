@@ -5,7 +5,7 @@ const nextConfig = {
     fonts: true, // Enable experimental font optimization
   },
   images: {
-    domains: ["nemat.s3.eu-north-1.amazonaws.com"],
+    domains: ["sageai-products.s3.ap-southeast-1.amazonaws.com"],
   },
 };
 export default nextConfig;
