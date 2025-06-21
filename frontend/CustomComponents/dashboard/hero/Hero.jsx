@@ -45,7 +45,7 @@ export default function Hero() {
         </div>
         <div className="px-2 py-8  bg-[#02331E1A] rounded-2xl">
           <button
-            onClick={() => handleOnClick("/quizz/landing-page")}
+            onClick={() => handleOnClick("/quizz/")}
             className="space-y-4  flex flex-col items-center text-start text-[20px] font-medium  text-[#948E91] "
           >
             <Image src="/images/skincare.png" width={65} height={65} />
