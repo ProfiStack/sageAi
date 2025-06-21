@@ -18,9 +18,17 @@ import { useRouter } from "next/navigation";
 import useFormToast from "../FormToast/FormToast";
 import { setAuthToken } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
+import Image from "next/image";
 const formSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
+  email: z.string().refine((value) => {
+    // Email regex pattern
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Phone regex pattern (supports various formats)
+    const phonePattern = /^[\+]?[1-9][\d]{0,15}$/;
+    
+    return emailPattern.test(value) || phonePattern.test(value.replace(/[\s\-\(\)]/g, ''));
+  }, {
+    message: "Please enter a valid email address or phone number.",
   }),
   password: z.string().min(2, {
     message: "Password must be at least 6 characters long.",
@@ -52,87 +60,99 @@ export default function Login() {
     }
   }
   return (
-    <div className="container mx-auto">
-      <div className="flex justify-center pt-[0px]  md:pt-[122px]  h-auto  ">
-        <div>
-          <div className="flex flex-col items-center mb-5">
-            <p className="text-[24px] md:text-[48px] font-semibold text-[#014367] ">
-              Hi! Welcome back!
-            </p>
-            <div className="flex items-center">
-              <p className=" text-[14px]  md:text-[16px] font-normal text-black">
-                New to Naimaat?
-              </p>
-              <div className="w-1"></div>
-              <a
-                className="text-[14px] md:text-[16px] font-normal  text-[#007AFF]"
-                href="/signup"
-              >
-                Sign up
-              </a>
-            </div>
-          </div>
-
+    <div>
+      <div className="space-y-2 w-full p-4   flex justify-center flex-col items-center">
+        
+          <div className="relative w-full h-[537px]">
+          <Image 
+            src="/images/signup.png" 
+            alt="Signup"
+            fill
+            style={{ objectFit: "fill" }}
+            className="rounded-3xl"
+          />
+         
+        </div>
+        
+        <p className=" text-2xl font-semibold pt-7">Get answers that actually help.</p>
+        <p className="text-[#6B7280] text-sm text-center">
+        From skincare to wellness, your lifestyle agent cuts through the noise to guide you with insight that fits you.
+        </p>
+      </div>
+      <div className={cn("flex px-4 w-full md-h-auto")}>
+        <div className="w-full">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4 flex flex-col items-center justify-center"
+              className="flex flex-col w-full"
             >
-              <div className="flex flex-col items-center justify-center gap-2">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          className="mb-3 rounded-[8px] border-[#ADB9C9] border-2 w-[280px] md:w-[390px] h-[45px] md:h-[55px] text-[#363636] focus:border-[#014367] focus:ring-[#014367] focus:ring-opacity-50"
-                          placeholder="Email"
-                          {...field}
-                        />
-                      </FormControl>
+              <div className="flex flex-col gap-2 w-full">
+               
+                <div className="w-full">
+                 
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            className="mb-3  rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
+                            placeholder="Email or Phone Number (starts with eg +123)"
+                            {...field}
+                          />
+                        </FormControl>
 
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          className="mb-3 rounded-[8px] border-[#ADB9C9] border-2 w-[280px] md:w-[390px] h-[45px] md:h-[55px] text-[#363636] focus:border-[#014367] focus:ring-[#014367] focus:ring-opacity-50"
-                          placeholder="Password"
-                          {...field}
-                        />
-                      </FormControl>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />{" "}
+                </div>
+                <div className="w-full">
+                  
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            className="mb-6 rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
+                            placeholder="Password"
+                            {...field}
+                          />
+                        </FormControl>
 
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
+                
+
               <Button
                 className={cn(
-                  "flex justify-center text-[18px] w-[280px] md:w-[390px] h-[40px] md:h-[50px] font-bold bg-[#014367] text-white rounded-[8px] hover:bg-[#023450]"
+                  "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
                 )}
                 type="submit"
               >
-                Login
+                Sign In
               </Button>
             </form>
           </Form>
-          <Link
-            href={"/forgot-password"}
-            className="flex justify-center items-center mt-4 "
-          >
-            <p className="font-normal text-[16px] text-[#007AFF]">
-              Forgot Password?
+
+          <div className="flex justify-center items-center gap-2 mt-3 mb-6">
+            <p className="text-[14px] md:text-[20px] text-[#4B5563]">
+              Don't have an account?
             </p>
-          </Link>
+            <Link href={"/signup"} className="">
+              <p className="text-[14px] md:text-[20px] font-medium text-[#02331E]">
+                Sign Up
+              </p>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

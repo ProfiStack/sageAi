@@ -9,34 +9,28 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Api } from "@/shared/api/api";
 import useFormToast from "../FormToast/FormToast";
 import { useRouter } from "next/navigation";
 import { setAuthToken } from "@/shared/utils/utils";
 import Image from "next/image";
-import countryList from "react-select-country-list";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import useAuthStore from "@/store/authStore";
 const formSchema = z.object({
  
-  email: z.string().email({
-    message: "Please enter a valid email address.",
+  email: z.string().refine((value) => {
+    // Email regex pattern
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Phone regex pattern (supports various formats)
+    const phonePattern = /^[\+]?[1-9][\d]{0,15}$/;
+    
+    return emailPattern.test(value) || phonePattern.test(value.replace(/[\s\-\(\)]/g, ''));
+  }, {
+    message: "Please enter a valid email or phone number",
   }),
   
   password: z.string().min(6, {
@@ -56,9 +50,6 @@ export default function Signup() {
       
     },
   });
-  const handleLogoClick = () => {
-    router.push("/");
-  };
   async function onSubmit(values) {
     try {
     
@@ -77,28 +68,35 @@ export default function Signup() {
 
   return (
     <div>
-      <div className="space-y-2 w-full  flex justify-center flex-col items-center">
+      <div className="space-y-2 w-full p-4   flex justify-center flex-col items-center">
         
-          <div className="relative p-4 w-full h-[537px]">
-          <Image src="/images/signup.png" objectFit="cover" layout="fill" className="rounded-3xl"/>
-          </div>
+          <div className="relative w-full h-[537px]">
+          <Image 
+            src="/images/signup.png" 
+            alt="Signup"
+            fill
+            style={{ objectFit: "fill" }}
+            className="rounded-3xl"
+          />
+         
+        </div>
         
-        <p className=" text-2xl font-semibold">Get answers that actually help.</p>
-        <p className="text-[#6B7280] text-sm">
+        <p className=" text-2xl font-semibold pt-7">Get answers that actually help.</p>
+        <p className="text-[#6B7280] text-sm text-center">
         From skincare to wellness, your lifestyle agent cuts through the noise to guide you with insight that fits you.
         </p>
       </div>
-      <div className={cn("flex justify-center md-h-auto")}>
-        <div>
+      <div className={cn("flex px-4 w-full md-h-auto")}>
+        <div className="w-full">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col items-center justify-center"
+              className="flex flex-col w-full"
             >
-              <div className="flex flex-col items-center justify-center gap-2">
+              <div className="flex flex-col gap-2 w-full">
                
-                <div>
-                  <p className="text-sm text-[#374151] mb-2">Email</p>
+                <div className="w-full">
+                 
                   <FormField
                     control={form.control}
                     name="email"
@@ -106,8 +104,8 @@ export default function Signup() {
                       <FormItem>
                         <FormControl>
                           <Input
-                            className="mb-3 placeholder:text-[#ADAEBC] rounded-[8px] border-[#E5E7EB] border w-[280px] h-[40px] md:w-[390px] md:h-[55px] text-[#363636] focus:border-[#02331E] focus:ring-[#02331E] focus:ring-opacity-50"
-                            placeholder="john@example.com"
+                            className="mb-3  rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
+                            placeholder="Email or Phone Number (starts with eg +123)"
                             {...field}
                           />
                         </FormControl>
@@ -115,10 +113,10 @@ export default function Signup() {
                         <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
-                  />{" "}
+                  />
                 </div>
-                <div>
-                  <p className="text-sm text-[#374151] mb-2">Password</p>
+                <div className="w-full">
+                  
                   <FormField
                     control={form.control}
                     name="password"
@@ -127,8 +125,8 @@ export default function Signup() {
                         <FormControl>
                           <Input
                             type="password"
-                            className="mb-3 placeholder:text-[#ADAEBC] rounded-[8px] border-[#E5E7EB] border w-[280px] h-[40px] md:w-[390px] md:h-[55px] text-[#363636] focus:border-[#02331E] focus:ring-[#02331E] focus:ring-opacity-50"
-                            placeholder="••••••••"
+                            className="mb-6 rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
+                            placeholder="Password"
                             {...field}
                           />
                         </FormControl>
@@ -143,11 +141,11 @@ export default function Signup() {
 
               <Button
                 className={cn(
-                  "flex justify-center text-[16px] w-[280px] md:w-[390px] py-5 font-semibold bg-[#02331E] text-white rounded-[8px] hover:bg-[#02331E]"
+                  "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
                 )}
                 type="submit"
               >
-                Create Account
+                Sign Up
               </Button>
             </form>
           </Form>
