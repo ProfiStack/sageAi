@@ -3,43 +3,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Camera, List, TrendingUp, Search, Send } from 'lucide-react';
 import Footer from '@/CustomComponents/home/Footer/Footer';
+import { uniqueId } from 'lodash';
 
 export default function ConsultationChat() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: 'Dr. Willow',
-      content: "Hi there! I'm Dr. Willow, your AI lifestyle expert. I've analyzed your profile and identified some areas we can address. To get started, please tell me which area you'd like to focus on today: skincare, makeup, haircare, nutrition, wellness, or styling?",
-      timestamp: new Date(),
-      type: 'received'
-    },
-    {
-      id: 2,
-      sender: 'Olivia',
-      content: "I'm mostly concerned about the redness and occasional breakouts on my cheeks and forehead.",
-      timestamp: new Date(),
-      type: 'sent'
-    },
-    {
-      id: 3,
-      sender: 'Dr. Willow',
-      content: "I see. Since you're focusing on skincare, the analysis indicates mild rosacea and some acne. Let's tailor a routine to soothe the redness and prevent future breakouts. I'll suggest some products and lifestyle adjustments.",
-      timestamp: new Date(),
-      type: 'received'
-    }
+    
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
 
+  const getUserId = () => {
+    let uid = localStorage.getItem("sagee_user_id");
+    if (!uid) {
+      uid = `user-${Date.now()}`;
+      localStorage.setItem("sagee_user_id", uid);
+    }
+    return uid;
+  };
   // WebSocket connection
   useEffect(() => {
     // Connect to WebSocket server (adjust URL as needed)
     const connectWebSocket = () => {
       try {
-        ws.current = new WebSocket('ws://localhost:8000/ws/chat');
+        ws.current = new WebSocket(`ws://localhost:8000/ws/chat${getUserId()}`);
         
         ws.current.onopen = () => {
           console.log('WebSocket connected');
@@ -48,8 +37,8 @@ export default function ConsultationChat() {
 
         ws.current.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          
-          if (data.type === 'typing_start') {
+            console.log(data);
+          if (data.type === 'typing') {
             setIsTyping(true);
           } else if (data.type === 'typing_stop') {
             setIsTyping(false);
