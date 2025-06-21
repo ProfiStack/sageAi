@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Camera, List, TrendingUp, Search, Send } from 'lucide-react';
+import Footer from '@/CustomComponents/home/Footer/Footer';
 
 export default function ConsultationChat() {
   const [message, setMessage] = useState('');
@@ -236,14 +237,7 @@ export default function ConsultationChat() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="bg-white border-t border-gray-200 px-6 py-3">
-        <div className="flex justify-between items-center">
-          <Camera className="w-6 h-6 text-gray-600" />
-          <List className="w-6 h-6 text-gray-600" />
-          <TrendingUp className="w-6 h-6 text-gray-600" />
-          <Search className="w-6 h-6 text-gray-600" />
-        </div>
-      </div>
+      <Footer/>
     </div>
   );
 }

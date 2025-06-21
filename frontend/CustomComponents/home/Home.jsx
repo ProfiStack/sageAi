@@ -1,47 +1,90 @@
+
+
+import { mockPageData } from "@/mockData/homeMockData";
+import CategoryCard from "./categoryCard/CategoryCard";
+import Image from "next/image";
 import Footer from "./Footer/Footer";
-import Header from "../header/Header";
-import DermatologistVerified from "./dermatologistVerified/DermatologistVerified";
-import GuessWork from "./guessWork/GuessWork";
-import Hero from "./Hero/Hero";
-import Results from "./results/Results";
-import SkinDecoded from "./skinDecoded/SkinDecoded";
-import Solutions from "./solutions/Solutions";
-import SubHero from "./subHero/SubHero";
-import WellnessJourney from "./wellnessJourney/WellnessJourney";
+ 
+const SectionHeader = ({ title }) => (
+  <h2 className="text-lg font-bold text-gray-900 mb-4 px-4">
+    {title}
+  </h2>
+);
 
 export default function HomePage() {
-  return (
-    <div className="flex flex-col overflow-x-hidden">
-      <div className="order-1 ">
-        <Header />
-      </div>
-      <div className="order-2">
-        <Hero />
-      </div>
-      <div className="order-3">
-        <SubHero />
-      </div>
-      <div className="order-7 md:order-4">
-        <SkinDecoded />
-      </div>
-      <div className="order-5">
-        <Solutions />
-      </div>
-      <div className="order-6">
-        <DermatologistVerified />
-      </div>
-      <div className="order-8 md:order-7">
-        <WellnessJourney />
-      </div>
-      <div className="order-4 md:order-8">
-        <Results />
-      </div>
-      <div className="order-9">
-        <GuessWork />
-      </div>
-      <div className="order-10">
-        <Footer />
-      </div>
-    </div>
-  );
-}
+  const data = mockPageData 
+  
+   
+      const handleCategoryClick = (item) => {
+        console.log('Navigate to:', item.route);
+        // Add navigation logic here
+      };
+    
+      return (
+        <div className="bg-gray-50 min-h-screen">
+          <div className="max-w-md mx-auto bg-white min-h-screen">
+            <div className="relative w-[78px] h-[78px] mx-auto">
+              <Image src={"/images/sagelogo2.png"} alt="sage" objectFit="contain" layout="fill" />
+            </div>
+            <p className="text-2xl font-bold text-center">Welcome to SageeAi</p>
+            {/* Main Section */}
+            <div className="pt-6 pb-4">
+              <SectionHeader title="Main" />
+              <div className="px-4 space-y-3">
+                {data.main.map((item) => (
+                  <CategoryCard 
+                    key={item.id} 
+                    item={item} 
+                    onClick={handleCategoryClick}
+                  />
+                ))}
+              </div>
+            </div>
+    
+            {/* Insights Section */}
+            <div className="py-4">
+              <SectionHeader title="Insights" />
+              <div className="px-4 space-y-3">
+                {data.insights.map((item) => (
+                  <CategoryCard 
+                    key={item.id} 
+                    item={item} 
+                    onClick={handleCategoryClick}
+                  />
+                ))}
+              </div>
+            </div>
+    
+            {/* Professional Section */}
+            <div className="py-4">
+              <SectionHeader title="Professional" />
+              <div className="px-4 space-y-3">
+                {data.professional.map((item) => (
+                  <CategoryCard 
+                    key={item.id} 
+                    item={item} 
+                    onClick={handleCategoryClick}
+                  />
+                ))}
+              </div>
+            </div>
+    
+            {/* Other Categories Section */}
+            <div className="py-4 pb-8">
+              <SectionHeader title="Other Categories" />
+              <div className="px-4 space-y-3">
+                {data.otherCategories.map((item) => (
+                  <CategoryCard 
+                    key={item.id} 
+                    item={item} 
+                    onClick={handleCategoryClick}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <Footer/>
+        </div>
+      );
+    }
+  
