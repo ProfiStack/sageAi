@@ -3,7 +3,8 @@
 import { mockPageData } from "@/mockData/homeMockData";
 import CategoryCard from "./categoryCard/CategoryCard";
 import Image from "next/image";
-import Footer from "./Footer/Footer";
+import Footer from "../Footer/Footer";
+import { useRouter } from "next/navigation";
  
 const SectionHeader = ({ title }) => (
   <h2 className="text-lg font-bold text-gray-900 mb-4 px-4">
@@ -12,12 +13,12 @@ const SectionHeader = ({ title }) => (
 );
 
 export default function HomePage() {
+  const router = useRouter();
   const data = mockPageData 
   
    
       const handleCategoryClick = (item) => {
-        console.log('Navigate to:', item.route);
-        // Add navigation logic here
+        router.push(item.route);
       };
     
       return (

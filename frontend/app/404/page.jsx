@@ -1,6 +1,6 @@
 "use client";
 import Header from "../../CustomComponents/header/Header";
-import Footer from "../../CustomComponents/home/Footer/Footer";
+import Footer from "../../CustomComponents/Footer/Footer";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
