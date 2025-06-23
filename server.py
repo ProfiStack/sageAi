@@ -241,6 +241,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 
 # REST API Endpoints
 
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(chat_message: ChatMessage):
     """Send a chat message and get AI response"""

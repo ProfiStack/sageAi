@@ -26,7 +26,7 @@ export default function ConsultationChat({ route, title }) {
     const connectWebSocket = () => {
       try {
         ws.current = new WebSocket(
-          `ws://localhost:8000/ws/chat/${getUserId()}`
+          `ws://localhost:8000/ws/chat-${getUserId()}`
         );
 
         ws.current.onopen = () => {
