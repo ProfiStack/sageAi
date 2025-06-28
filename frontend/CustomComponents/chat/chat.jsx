@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send } from "lucide-react";
 import Footer from "@/CustomComponents/Footer/Footer";
+import ReactMarkdown from "react-markdown";
 
 export default function ConsultationChat({ route, title }) {
   const [message, setMessage] = useState("");
@@ -20,13 +21,12 @@ export default function ConsultationChat({ route, title }) {
     }
     return uid;
   };
-  // WebSocket connection
+
   useEffect(() => {
-    // Connect to WebSocket server (adjust URL as needed)
     const connectWebSocket = () => {
       try {
         ws.current = new WebSocket(
-          `ws://localhost:8000/ws/chat-${getUserId()}`
+          `ws://localhost:8000/ws/${route}/chat-${getUserId()}`
         );
 
         ws.current.onopen = () => {
@@ -36,7 +36,6 @@ export default function ConsultationChat({ route, title }) {
 
         ws.current.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          console.log(data);
           if (data.type === "typing") {
             setIsTyping(true);
           } else if (data.type === "typing_stop") {
@@ -57,7 +56,6 @@ export default function ConsultationChat({ route, title }) {
         ws.current.onclose = () => {
           console.log("WebSocket disconnected");
           setConnectionStatus("disconnected");
-          // Attempt to reconnect after 3 seconds
           setTimeout(connectWebSocket, 3000);
         };
 
@@ -73,7 +71,6 @@ export default function ConsultationChat({ route, title }) {
 
     connectWebSocket();
 
-    // Cleanup on component unmount
     return () => {
       if (ws.current) {
         ws.current.close();
@@ -81,7 +78,6 @@ export default function ConsultationChat({ route, title }) {
     };
   }, []);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -92,7 +88,6 @@ export default function ConsultationChat({ route, title }) {
       ws.current &&
       ws.current.readyState === WebSocket.OPEN
     ) {
-      // Add user message to chat
       const userMessage = {
         id: Date.now(),
         sender: "Olivia",
@@ -102,7 +97,6 @@ export default function ConsultationChat({ route, title }) {
       };
       setMessages((prev) => [...prev, userMessage]);
 
-      // Send message through WebSocket
       ws.current.send(
         JSON.stringify({
           type: "message",
@@ -138,7 +132,6 @@ export default function ConsultationChat({ route, title }) {
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
-      {/* Header */}
       <div className="bg-white px-4 py-3 flex items-center justify-between shadow-sm">
         <ArrowLeft className="w-6 h-6 text-gray-700" />
         <div className="flex flex-col items-center">
@@ -162,7 +155,6 @@ export default function ConsultationChat({ route, title }) {
         </div>
       </div>
 
-      {/* Chat Messages */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {messages.map((msg) => (
           <div
@@ -175,22 +167,12 @@ export default function ConsultationChat({ route, title }) {
               </div>
             )}
 
-            <div
-              className={`flex-1 ${msg.type === "sent" ? "flex flex-col items-end" : ""}`}
-            >
-              <div
-                className={`text-sm font-medium mb-1 ${msg.type === "sent" ? "text-orange-500 mr-2" : "text-gray-900"}`}
-              >
+            <div className={`flex-1 ${msg.type === "sent" ? "flex flex-col items-end" : ""}`}>
+              <div className={`text-sm font-medium mb-1 ${msg.type === "sent" ? "text-orange-500 mr-2" : "text-gray-900"}`}>
                 {msg.sender}
               </div>
-              <div
-                className={`rounded-2xl px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${
-                  msg.type === "sent"
-                    ? "bg-yellow-100 rounded-tr-md"
-                    : "bg-green-100 rounded-tl-md"
-                }`}
-              >
-                {msg.content}
+              <div className={`rounded-2xl px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-yellow-100 rounded-tr-md" : "bg-green-100 rounded-tl-md"}`}>
+                <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
               <div className="text-xs text-gray-400 mt-1">
                 {msg.timestamp.toLocaleTimeString([], {
@@ -208,28 +190,19 @@ export default function ConsultationChat({ route, title }) {
           </div>
         ))}
 
-        {/* Typing indicator */}
         {isTyping && (
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
               <div className="w-6 h-6 bg-orange-400 rounded-full"></div>
             </div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900 mb-1">
-                Dr. Willow
-              </div>
+              <div className="text-sm font-medium text-gray-900 mb-1">Dr. Willow</div>
               <div className="bg-green-100 rounded-2xl rounded-tl-md px-4 py-3 text-gray-600 text-sm italic flex items-center space-x-1">
                 <span>Typing</span>
                 <div className="flex space-x-1">
                   <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-1 h-1 bg-gray-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-1 h-1 bg-gray-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
+                  <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                  <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                 </div>
               </div>
             </div>
@@ -238,7 +211,6 @@ export default function ConsultationChat({ route, title }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4">
         <div className="flex items-center space-x-3 bg-gray-100 rounded-full px-4 py-3">
           <input
@@ -247,7 +219,6 @@ export default function ConsultationChat({ route, title }) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
-            // disabled={connectionStatus !== 'connected'}
             className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-500 disabled:opacity-50"
           />
           <button
@@ -260,7 +231,6 @@ export default function ConsultationChat({ route, title }) {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
       <Footer />
     </div>
   );

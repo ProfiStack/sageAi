@@ -3,7 +3,7 @@ import ConsultationChat from "@/CustomComponents/chat/chat";
 export default function CheckIngredients() {
   return (
     <div>
-      <ConsultationChat route="check-ingredients" title="Check Ingredients" />
+      <ConsultationChat route="ingredient_checker" title="Check Ingredients" />
     </div>
   );
 }
