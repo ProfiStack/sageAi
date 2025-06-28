@@ -162,7 +162,7 @@ async def get_ai_response(message: str, user_id: str) -> str:
         
         user_sessions[user_id]['chat_history'].extend([
             {"role": "user", "content": message},
-            {"role": "Ai assistant", "content": ai_response}
+            {"role": "Ai consultant", "content": ai_response}
         ])
         user_sessions[user_id]['last_active'] = datetime.now().isoformat()
         
@@ -180,7 +180,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
     # Send welcome message
     welcome_msg = {
         "type": "message",
-        "sender": "Ai assistant",
+        "sender": "Ai consultant",
         "content": "Hello! I'm SAGEE, your AI skincare consultant. I can help you find the perfect skincare routine based on your skin profile. What would you like to know about skincare today?",
         "timestamp": datetime.now().isoformat()
     }
@@ -198,7 +198,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
                 # Send typing indicator
                 typing_msg = {
                     "type": "typing",
-                    "sender": "Ai assistant",
+                    "sender": "Ai consultant",
                     "content": "SAGEE is thinking...",
                     "timestamp": datetime.now().isoformat()
                 }
@@ -210,7 +210,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
                 # Send AI response
                 response_msg = {
                     "type": "message",
-                    "sender": "Ai assistant", 
+                    "sender": "Ai consultant", 
                     "content": ai_response,
                     "timestamp": datetime.now().isoformat()
                 }
@@ -436,7 +436,7 @@ async def test_websocket():
         async for response in websocket:
             data = json.loads(response)
             print(f"WebSocket Response: {data}")
-            if data.get('type') == 'message' and data.get('sender') == 'assistant':
+            if data.get('type') == 'message' and data.get('sender') == 'consultant':
                 break
 
 # Test profile update

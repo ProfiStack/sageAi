@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime
-from models.model import ChatMessage, ChatResponse
+from models.schemas import ChatRequest, ChatResponse
 from services.ai import get_ai_response
 from services.db_service import get_or_create_user_profile, save_chat_message
 from db import SessionLocal
@@ -18,7 +18,7 @@ def get_db():
         db.close()
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(chat_message: ChatMessage, db: Session = Depends(get_db)):
+async def chat_endpoint(chat_message: ChatRequest, db: Session = Depends(get_db)):
     user_id = chat_message.user_id or str(uuid.uuid4())
     try:
         get_or_create_user_profile(db, user_id)

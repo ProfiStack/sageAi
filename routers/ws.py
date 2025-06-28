@@ -12,7 +12,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: s
     print(feature_type, '*****************');
     welcome_msg = {
         "type": "message",
-        "sender": "assistant",
+        "sender": "consultant",
         "content": "Welcome to SAGEE skincare chat!",
         "timestamp": datetime.now().isoformat(),
     }
@@ -28,7 +28,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: s
 
                 typing_msg = {
                     "type": "typing",
-                    "sender": "assistant",
+                    "sender": "consultant",
                     "content": "SAGEE is thinking...",
                     "timestamp": datetime.now().isoformat(),
                 }
@@ -38,7 +38,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: s
 
                 response_msg = {
                     "type": "message",
-                    "sender": "assistant",
+                    "sender": "consultant",
                     "content": ai_response,
                     "timestamp": datetime.now().isoformat(),
                 }

@@ -284,13 +284,16 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
         temperature=0.7,
         max_tokens=300
     )
-    save_chat_message(SessionLocal(), user_id, message, ai_response)
     ai_response = response.choices[0].message.content
+    db_message = messages;
+    db_message.append({"role": "consultant", "content": ai_response})
+    type=feature_type
+    save_chat_message(SessionLocal(), user_id, type, message, db_message)
     
     # Update chat history
     user_sessions[user_id]['chat_history'].extend([
         {"role": "user", "content": message},
-        {"role": "assistant", "content": ai_response}
+        {"role": "consultant", "content": ai_response}
     ])
     user_sessions[user_id]['last_active'] = datetime.now().isoformat()
 
@@ -309,5 +312,3 @@ async def handle_user_onboarding(user_id: str, skin_type: str, lifestyle: str, c
         concern=concern,
         preferred_routine=preferred_routine
     )
-
-ChatInterface(get_ai_response, type="messages").launch(share=True)

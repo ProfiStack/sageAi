@@ -42,4 +42,3 @@ async def get_all_users():
         "active_connections": len(manager.active_connections),
         "users": users
     }
-

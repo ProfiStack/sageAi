@@ -4,7 +4,7 @@ import ConsultationChat from "@/CustomComponents/chat/chat";
 export default function Chat() {
   return (
     <div>
-      <ConsultationChat route="general" title="Consultation Chat" />
+      <ConsultationChat route="skincare" title="Consultation Chat" />
     </div>
   );
 }
