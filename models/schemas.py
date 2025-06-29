@@ -22,7 +22,6 @@ class UserProfileResponse(UserProfileRequest):
     name: Optional[str] = None
     age: Optional[str] = None
     gender: Optional[str] = None
-    location: Optional[str] = None
     user_id: str
     created_at: datetime
     last_active: datetime
@@ -42,6 +41,7 @@ class LoginResponse(BaseModel):
 
 class UserProfileUpdateRequest(BaseModel):
     name: Optional[str] = None
+    gender: Optional[str] = None
     age: Optional[str] = None
     gender: Optional[str] = None
     location: Optional[str] = None

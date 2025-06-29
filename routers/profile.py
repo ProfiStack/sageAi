@@ -32,10 +32,9 @@ def get_profile(user_id: str, db: Session = Depends(get_db)):
     
     return UserProfileResponse(
         user_id=profile.user_id,
-        name=profile.name if profile.name else None,  # Don't default to "User"
-        age=profile.age if profile.age else None,     # Don't default to anything
+        name=profile.name or "User",
+        age=profile.age,
         gender=profile.gender,
-        location=profile.location,
         skin_type=profile.skin_type or "Unknown",
         lifestyle=profile.lifestyle or "Unknown",
         concern=profile.concern or "Unknown",
