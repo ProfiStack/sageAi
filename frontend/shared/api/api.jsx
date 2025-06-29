@@ -75,5 +75,22 @@ export const Api = {
         console.log(error);
       }
     },
+
+    getProfile: async (userId) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/profile`,
+          {
+            method: "GET",
+            next: {
+              revalidate: 3600, // 1 hour
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 };

@@ -12,6 +12,8 @@ class UserProfile(Base):
     skin_type = Column(String, nullable=True)
     name = Column(String, nullable=True)
     age = Column(String, nullable=True)
+    gender = Column(String, nullable=True)
+    location = Column(String, nullable=True)
     lifestyle = Column(String, nullable=True)
     concern = Column(String, nullable=True)
     preferred_routine = Column(String, nullable=True)

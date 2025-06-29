@@ -2,32 +2,20 @@
 
 import { beautyQuizData } from "@/mockData/quizzMockData";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Api } from "@/shared/api/api";
+import useAuthStore from "@/store/authStore";
 
 const BeautyQuizPopup = ({ isOpen, setIsOpen }) => {
   const [quizData, setQuizData] = useState(beautyQuizData);
+  const { userId } = useAuthStore();
 
   const updateSelection = (questionId, optionId) => {
     setQuizData((prev) =>
       prev.map((question) => {
         if (question.id === questionId) {
-          const isMultiple = question.type === "multiple-choice";
-          let newSelectedOptions;
-
-          if (isMultiple) {
-            // Toggle for multiple choice
-            if (question.selectedOptions.includes(optionId)) {
-              newSelectedOptions = question.selectedOptions.filter(
-                (id) => id !== optionId
-              );
-            } else {
-              newSelectedOptions = [...question.selectedOptions, optionId];
-            }
-          } else {
-            // Single choice - replace selection
-            newSelectedOptions = [optionId];
-          }
-
+          // Always single choice - replace selection
+          const newSelectedOptions = [optionId];
           return { ...question, selectedOptions: newSelectedOptions };
         }
         return question;
@@ -45,15 +33,66 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen }) => {
       .length;
   };
 
-  const handleSubmit = () => {
-    const answers = {};
-    quizData.forEach((question) => {
-      answers[question.id] = question.selectedOptions;
-    });
-    console.log("Quiz Results:", answers);
-    alert("Quiz submitted! Check console for results.");
-    setIsOpen(false);
+  // Extract skin type and concerns from quiz responses
+  const extractQuizResults = () => {
+    const skinTypeQuestion = quizData.find((q) => q.id === "skin-type");
+    const skinConcernsQuestion = quizData.find((q) => q.id === "skin-concerns");
+
+    const skin_type = skinTypeQuestion?.selectedOptions[0] || "";
+    const concern = skinConcernsQuestion?.selectedOptions.join(", ") || "";
+
+    return { skin_type, concern };
   };
+
+  // Save quiz results to localStorage for guest users
+  const saveQuizResultsForGuest = (skin_type, concern) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "sagee_guest_quiz_results",
+        JSON.stringify({
+          skin_type,
+          concern,
+          timestamp: Date.now(),
+        })
+      );
+    }
+  };
+
+  // Auto-submit when both questions are answered
+  useEffect(() => {
+    if (getCompletionCount() === quizData.length) {
+      // Update profile with quiz results
+      const updateProfileWithQuizResults = async () => {
+        const { skin_type, concern } = extractQuizResults();
+
+        if (!userId) {
+          // Guest user - save to localStorage
+          console.log("Guest user - saving quiz results to localStorage");
+          saveQuizResultsForGuest(skin_type, concern);
+        } else {
+          // Logged in user - update profile via API
+          try {
+            const updateData = {
+              skin_type,
+              concern,
+            };
+
+            const response = await Api.client.updateProfile(updateData, userId);
+            console.log("Profile updated with quiz results:", response);
+          } catch (error) {
+            console.error("Error updating profile with quiz results:", error);
+          }
+        }
+
+        // Close the popup after successful save/update
+        setTimeout(() => {
+          setIsOpen(false);
+        }, 1000);
+      };
+
+      updateProfileWithQuizResults();
+    }
+  }, [quizData, userId, setIsOpen]);
 
   return (
     <div>
@@ -130,41 +169,20 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen }) => {
                           );
                         })}
                       </div>
-
-                      {/* Selection indicator for multiple choice */}
-                      {question.type === "multiple-choice" &&
-                        question.selectedOptions.length > 0 && (
-                          <p className="text-xs text-emerald-600 mt-2">
-                            {question.selectedOptions.length} selected
-                          </p>
-                        )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Footer */}
+            {/* Footer - Auto-submit status */}
             <div className="p-6 border-t border-gray-100 bg-gray-50">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-center">
                 <p className="text-sm text-gray-500">
                   {getCompletionCount() === quizData.length
-                    ? "Ready to submit."
+                    ? "Analyzing your responses..."
                     : `${quizData.length - getCompletionCount()} sections remaining`}
                 </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleSubmit}
-                    disabled={getCompletionCount() !== quizData.length}
-                    className={`px-6 py-2 rounded-[8px] font-medium transition-all ${
-                      getCompletionCount() > 0
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    Submit Quiz
-                  </button>
-                </div>
               </div>
             </div>
           </div>

@@ -55,6 +55,10 @@ export default function Login() {
         useAuthStore.getState().setUserId(data.user_id);
         await setAuthToken(data.user_id);
         localStorage.setItem("sagee_user_id", data.user_id);
+
+        // Transfer guest quiz results to user profile if they exist
+        await transferGuestQuizResults(data.user_id);
+
         router.push("/");
         primaryToast({ description: "Login successful" });
       }
@@ -62,6 +66,39 @@ export default function Login() {
       destructiveToast(error.message);
     }
   }
+
+  // Transfer guest quiz results to user profile
+  const transferGuestQuizResults = async (userId) => {
+    try {
+      if (typeof window !== "undefined") {
+        const guestQuizResults = localStorage.getItem(
+          "sagee_guest_quiz_results"
+        );
+
+        if (guestQuizResults) {
+          const { skin_type, concern } = JSON.parse(guestQuizResults);
+
+          if (skin_type || concern) {
+            // Update user profile with guest quiz results
+            const updateData = {
+              skin_type: skin_type || "",
+              concern: concern || "",
+            };
+
+            await Api.client.updateProfile(updateData, userId);
+            console.log("Guest quiz results transferred to user profile");
+
+            // Remove guest quiz results from localStorage
+            localStorage.removeItem("sagee_guest_quiz_results");
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error transferring guest quiz results:", error);
+      // Don't block login if transfer fails
+    }
+  };
+
   return (
     <div>
       <div className="space-y-2 w-full p-4   flex justify-center flex-col items-center">

@@ -1,6 +1,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import AuthInitializer from "@/CustomComponents/AuthInitializer";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -17,9 +18,8 @@ export const metadata = {
   title: "Naimaat",
   description: "Naimaat an open-source platform for startups",
   icons: {
-    icon: './icon.ico', 
+    icon: "./icon.ico",
   },
-
 };
 
 export default function RootLayout({ children }) {
@@ -28,6 +28,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <AuthInitializer />
         {children}
         <Toaster />
       </body>

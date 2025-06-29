@@ -14,31 +14,37 @@ export default function PersonalDetailsPage() {
     name: "",
     age: "",
     gender: "",
-    location: "",
-    skinType: "",
-    skinConcerns: "",
+    skin_type: "",
+    concern: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  // Load existing profile data
   useEffect(() => {
     const loadProfile = async () => {
       if (!userId) {
         setIsLoadingProfile(false);
         return;
       }
-
       try {
         const profileData = await Api.client.getProfile(userId);
+        console.log("Profile data from API:", profileData);
+        console.log("Profile data fields:", {
+          name: profileData?.name,
+          age: profileData?.age,
+          gender: profileData?.gender,
+          skin_type: profileData?.skin_type,
+          concern: profileData?.concern,
+        });
+
         if (profileData) {
           setFormData((prev) => ({
             ...prev,
             name: profileData.name || "",
             age: profileData.age || "",
             gender: profileData.gender || "",
-            location: profileData.location || "",
-            lifestyleHealth: profileData.lifestyleHealth || "",
+            skin_type: profileData.skin_type || "",
+            concern: profileData.concern || "",
           }));
         }
       } catch (error) {
@@ -149,20 +155,6 @@ export default function PersonalDetailsPage() {
           </select>
         </div>
 
-        {/* Location Field */}
-        <div>
-          <label className="block text-lg font-semibold text-gray-900 mb-3">
-            Location
-          </label>
-          <input
-            type="text"
-            value={formData.location}
-            onChange={(e) => handleInputChange("location", e.target.value)}
-            className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
-            placeholder="Enter your location"
-          />
-        </div>
-
         {/* Lifestyle & Health Information Field */}
         <div>
           <label className="block text-lg font-semibold text-gray-900 mb-3">
@@ -170,8 +162,8 @@ export default function PersonalDetailsPage() {
           </label>
           <input
             type="text"
-            value={formData.skinType}
-            onChange={(e) => handleInputChange("skinType", e.target.value)}
+            value={formData.skin_type}
+            onChange={(e) => handleInputChange("skin_type", e.target.value)}
             className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
             placeholder="Enter your skin type"
           />
@@ -183,8 +175,8 @@ export default function PersonalDetailsPage() {
           </label>
           <input
             type="text"
-            value={formData.skinConcerns}
-            onChange={(e) => handleInputChange("skinConcerns", e.target.value)}
+            value={formData.concern}
+            onChange={(e) => handleInputChange("concern", e.target.value)}
             className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
             placeholder="Enter your skin concerns"
           />
