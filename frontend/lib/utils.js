@@ -4,10 +4,14 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
-
 export const isUserLoggedIn = (userId) => {
   // Check if userId exists in Zustand store
   if (userId) return true;
+
+  // Only run browser-specific code on the client side
+  if (typeof window === "undefined") {
+    return false; // Return false during SSR
+  }
 
   // Check localStorage for user ID, but make sure it's not just a guest ID
   const storedUserId = localStorage.getItem("sagee_user_id");
