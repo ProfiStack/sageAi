@@ -2,19 +2,20 @@
 
 import { beautyQuizData } from "@/mockData/quizzMockData";
 import { X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
 
-const BeautyQuizPopup = ({ isOpen, setIsOpen }) => {
+const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
   const [quizData, setQuizData] = useState(beautyQuizData);
   const { userId } = useAuthStore();
+  const hasCompletedRef = useRef(false);
 
   const updateSelection = (questionId, optionId) => {
     setQuizData((prev) =>
       prev.map((question) => {
         if (question.id === questionId) {
-          // Always single choice - replace selection
+          // Single choice - replace selection
           const newSelectedOptions = [optionId];
           return { ...question, selectedOptions: newSelectedOptions };
         }
@@ -58,9 +59,16 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen }) => {
     }
   };
 
+  // Reset completion flag when popup opens
+  useEffect(() => {
+    if (isOpen) {
+      hasCompletedRef.current = false;
+    }
+  }, [isOpen]);
+
   // Auto-submit when both questions are answered
   useEffect(() => {
-    if (getCompletionCount() === quizData.length) {
+    if (getCompletionCount() === quizData.length && !hasCompletedRef.current) {
       // Update profile with quiz results
       const updateProfileWithQuizResults = async () => {
         const { skin_type, concern } = extractQuizResults();
@@ -84,6 +92,14 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen }) => {
           }
         }
 
+        // Call onComplete callback with results
+        if (onComplete) {
+          onComplete({ skin_type, concern });
+        }
+
+        // Mark as completed to prevent multiple executions
+        hasCompletedRef.current = true;
+
         // Close the popup after successful save/update
         setTimeout(() => {
           setIsOpen(false);
@@ -92,7 +108,7 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen }) => {
 
       updateProfileWithQuizResults();
     }
-  }, [quizData, userId, setIsOpen]);
+  }, [quizData, userId, setIsOpen, onComplete]);
 
   return (
     <div>

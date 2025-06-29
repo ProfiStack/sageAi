@@ -18,10 +18,10 @@ const beautyQuizData = [
   {
     id: "skin-concerns",
     title: "What specific concerns would you like to address?",
-    type: "multiple-choice",
+    type: "single-choice",
     options: [
       { id: "breakouts", label: "Breakouts" },
-      { id: "⁠Discoloration", label: "⁠Discoloration" },
+      { id: "discoloration", label: "Discoloration" },
       { id: "redness", label: "Redness" },
       { id: "ageing", label: "Ageing" },
       { id: "dullness", label: "Dullness" },

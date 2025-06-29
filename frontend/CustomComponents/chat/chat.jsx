@@ -7,6 +7,7 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import ReactMarkdown from "react-markdown";
 import useAuthStore from "@/store/authStore";
 import SettingsHeader from "../settingsHeader/settingsHeader";
+import BeautyQuizPopup from "../quizzPopup/QuizzPopup";
 import { cn } from "@/lib/utils";
 import {
   Form,
@@ -22,6 +23,7 @@ import { z } from "zod";
 import { setAuthToken } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useFormToast from "../FormToast/FormToast";
+import ThanksPopup from "../thanksPopup/thanksPopup";
 
 const formSchema = z.object({
   email: z.string().refine(
@@ -42,7 +44,7 @@ const formSchema = z.object({
   ),
 });
 
-export default function ConsultationChat({ route }) {
+export default function ConsultationChat({ route, title, initialMessage }) {
   const { userId } = useAuthStore();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -51,6 +53,12 @@ export default function ConsultationChat({ route }) {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [showBeautyQuiz, setShowBeautyQuiz] = useState(false);
+  const [showThanksPopup, setShowThanksPopup] = useState(false);
+  const [quizResults, setQuizResults] = useState({
+    skin_type: "",
+    concern: "",
+  });
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
   const { primaryToast, destructiveToast } = useFormToast();
@@ -66,7 +74,6 @@ export default function ConsultationChat({ route }) {
   async function onSubmit(values) {
     try {
       const data = await Api.client.signIn(values);
-      console.log(data.user_id);
       if (data.user_id) {
         useAuthStore.getState().setUserId(data.user_id);
         await setAuthToken(data.user_id);
@@ -79,8 +86,11 @@ export default function ConsultationChat({ route }) {
     }
   }
 
-  // Function to check if user is logged in
+  // Function to check if user is logged in - FIXED VERSION
   const isUserLoggedIn = () => {
+    // Return false if we're on server side
+    if (typeof window === "undefined") return false;
+
     // Check if userId exists in Zustand store
     if (userId) return true;
 
@@ -103,7 +113,9 @@ export default function ConsultationChat({ route }) {
     setIsMounted(true);
     // Load message count from window.localStorage after mounting
     if (!isUserLoggedIn()) {
-      const savedCount = window.localStorage.getItem("sagee_guest_message_count");
+      const savedCount = window.localStorage.getItem(
+        "sagee_guest_message_count"
+      );
       if (savedCount) {
         setUserMessageCount(parseInt(savedCount, 10));
       }
@@ -114,11 +126,29 @@ export default function ConsultationChat({ route }) {
     }
   }, [userId]);
 
+  useEffect(() => {
+    // Handle initial message when component mounts
+    if (initialMessage && messages.length === 0) {
+      const initialMsg = {
+        id: Date.now(),
+        sender: "Dr. Willow",
+        content: initialMessage,
+        timestamp: new Date(),
+        type: "received",
+      };
+
+      // Add the initial message immediately
+      setMessages([initialMsg]);
+    }
+  }, [initialMessage, messages.length]);
+
   // Handle logout - reset to guest state
   useEffect(() => {
     if (isMounted && !isUserLoggedIn()) {
       // User is not logged in, ensure guest message count is loaded
-      const savedCount = window.localStorage.getItem("sagee_guest_message_count");
+      const savedCount = window.localStorage.getItem(
+        "sagee_guest_message_count"
+      );
       if (savedCount) {
         setUserMessageCount(parseInt(savedCount, 10));
       } else {
@@ -142,6 +172,90 @@ export default function ConsultationChat({ route }) {
       }
     }
   }, [userMessageCount, userId, isMounted]);
+
+  // Check user profile and determine if beauty quiz is needed
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      if (!isMounted) return;
+      if (userId) {
+        // User is logged in - check their profile
+        try {
+          const profileData = await Api.client.getProfile(userId);
+          // Check if user has skin_type and concern
+          const hasValidSkinType =
+            profileData?.skin_type && profileData.skin_type !== "Unknown";
+          const hasValidConcern =
+            profileData?.concern && profileData.concern !== "Unknown";
+
+          if (!hasValidSkinType || !hasValidConcern) {
+            setShowBeautyQuiz(true);
+          } else {
+            console.log("User has complete profile, no quiz needed");
+          }
+        } catch (error) {
+          console.error("Error loading user profile:", error);
+          // If we can't load profile, show quiz to be safe
+          setShowBeautyQuiz(true);
+        }
+      } else {
+        // User is not logged in - check localStorage for guest quiz results
+        const guestQuizResults = localStorage.getItem(
+          "sagee_guest_quiz_results"
+        );
+        const hasShownThanks = localStorage.getItem(
+          "sagee_has_shown_thanks_popup"
+        );
+
+        if (!guestQuizResults) {
+          setShowBeautyQuiz(true);
+        } else {
+          // Guest has completed quiz, show thanks popup with their results
+          const results = JSON.parse(guestQuizResults);
+          setQuizResults(results);
+          // Only show thanks popup if we haven't shown it yet (check localStorage flag)
+          if (!hasShownThanks) {
+            setShowThanksPopup(true);
+            localStorage.setItem("sagee_has_shown_thanks_popup", "true");
+          }
+        }
+      }
+    };
+
+    checkUserProfile();
+  }, [userId, isMounted]);
+
+  // Handle saving guest quiz results when user logs in
+  useEffect(() => {
+    const saveGuestQuizResults = async () => {
+      if (userId && isMounted) {
+        const guestQuizResults = localStorage.getItem(
+          "sagee_guest_quiz_results"
+        );
+        if (guestQuizResults) {
+          try {
+            const results = JSON.parse(guestQuizResults);
+            const updateData = {
+              skin_type: results.skin_type,
+              concern: results.concern,
+            };
+
+            await Api.client.updateProfile(updateData, userId);
+
+            // Clear guest quiz results from localStorage
+            localStorage.removeItem("sagee_guest_quiz_results");
+            localStorage.removeItem("sagee_has_shown_thanks_popup");
+
+            // Update local profile state
+            setQuizResults(results);
+          } catch (error) {
+            console.error("Error saving guest quiz results:", error);
+          }
+        }
+      }
+    };
+
+    saveGuestQuizResults();
+  }, [userId, isMounted]);
 
   const getUserId = () => {
     let uid = window.localStorage.getItem("sagee_user_id");
@@ -239,14 +353,17 @@ export default function ConsultationChat({ route }) {
   };
 
   useEffect(() => {
+    // Don't connect WebSocket on server side
+    if (typeof window === "undefined") return;
+
     const connectWebSocket = () => {
       try {
-        ws.current = new WebSocket(
-          `ws://localhost:8000/ws/${route}/${getUserId()}`
-        );
+        const userId = getUserId();
+        if (!userId) return;
+
+        ws.current = new WebSocket(`ws://localhost:8000/ws/${route}/${userId}`);
 
         ws.current.onopen = () => {
-          console.log("WebSocket connected");
           setConnectionStatus("connected");
         };
 
@@ -292,7 +409,7 @@ export default function ConsultationChat({ route }) {
         ws.current.close();
       }
     };
-  }, []);
+  }, [route]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -347,13 +464,43 @@ export default function ConsultationChat({ route }) {
 
   const canSendMessage = () => {
     if (isUserLoggedIn()) return true; // Logged in users can send unlimited messages
-    return userMessageCount <= 3; // Non-logged in users limited to 3 messages
+    return userMessageCount < 3; // Non-logged in users limited to 3 messages
   };
+
+  // Handle beauty quiz completion
+  const handleQuizCompletion = (results) => {
+    console.log("Beauty quiz completed with results:", results);
+    setQuizResults(results);
+    setShowBeautyQuiz(false);
+    setShowThanksPopup(true);
+    localStorage.setItem("sagee_has_shown_thanks_popup", "true");
+  };
+
+  // Handle thanks popup close
+  const handleThanksPopupClose = () => {
+    console.log("Thanks popup closed");
+    setShowThanksPopup(false);
+  };
+
+  // Don't render anything until mounted (prevents hydration mismatch)
+  if (!isMounted) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
+        <div className="sticky top-0 z-10 inset-0">
+          <SettingsHeader title={title} />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">Loading...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
       <div className="sticky top-0 z-10 inset-0">
-        <SettingsHeader title="Consultation Chat" />
+        <SettingsHeader title={title} />
       </div>
 
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
@@ -520,6 +667,18 @@ export default function ConsultationChat({ route }) {
       )}
 
       <Footer />
+
+      <BeautyQuizPopup
+        isOpen={showBeautyQuiz}
+        setIsOpen={setShowBeautyQuiz}
+        onComplete={handleQuizCompletion}
+      />
+      <ThanksPopup
+        isOpen={showThanksPopup}
+        onClose={handleThanksPopupClose}
+        skinType={quizResults.skin_type || "combination"}
+        skinConcern={quizResults.concern || "acne and dark spots"}
+      />
     </div>
   );
 }

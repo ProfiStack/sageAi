@@ -7,7 +7,7 @@ import {
   MessageCircle,
   LogOut,
   MessageSquare,
-  TrendingUp,
+  LogIn,
   Camera,
 } from "lucide-react";
 import Footer from "@/CustomComponents/Footer/Footer";
@@ -16,30 +16,12 @@ import Link from "next/link";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
+import { isUserLoggedIn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { logout, userId } = useAuthStore();
   const [profileImage, setProfileImage] = useState(null);
-
-  // Function to check if user is logged in (same as chat component)
-  const isUserLoggedIn = () => {
-    // Check if userId exists in Zustand store
-    if (userId) return true;
-
-    // Check localStorage for user ID, but make sure it's not just a guest ID
-    // const storedUserId = window.localStorage.getItem("sagee_user_id");
-    // const authToken =
-    //   window.localStorage.getItem("authToken") ||
-    //   document.cookie.includes("authToken");
-
-    // // Only consider logged in if we have both a user ID and auth token
-    // if (storedUserId && authToken && !storedUserId.startsWith("user-")) {
-    //   return true;
-    // }
-
-    return false;
-  };
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -79,7 +61,7 @@ export default function ProfilePage() {
       iconColor: "text-purple-600",
       href: "/profile/chat-logs",
     },
-    ...(isUserLoggedIn()
+    ...(isUserLoggedIn(userId)
       ? [
           {
             icon: LogOut,
@@ -90,7 +72,16 @@ export default function ProfilePage() {
             onClick: handleLogout,
           },
         ]
-      : []),
+      : [
+          {
+            icon: LogIn,
+            label: "Log In",
+            bgColor: "bg-green-50",
+            iconColor: "text-green-600",
+            isButton: true,
+            onClick: () => router.push("/login"),
+          },
+        ]),
   ];
 
   const supportItems = [

@@ -6,7 +6,13 @@ const ConsultationChat = dynamic(() => import('@/CustomComponents/chat/chat'), {
 export default function TreatmentPlanning() {
   return (
     <div>
-      <ConsultationChat route="treatment_plan" title="Treatment Planning" />
+      <ConsultationChat
+        route="treatment_plan"
+        title="Treatment Planning"
+        initialMessage={
+          "From lasers to peels, not every treatment fits every skin type. I’ll help you discover options that match your goals and avoid what doesn’t."
+        }
+      />
     </div>
   );
 }
