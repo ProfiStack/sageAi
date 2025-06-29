@@ -24,6 +24,7 @@ def get_profile(user_id: str, db: Session = Depends(get_db)):
         user_id=profile.user_id,
         name=profile.name or "User",
         age=profile.age,
+        gender=profile.gender,
         skin_type=profile.skin_type or "Unknown",
         lifestyle=profile.lifestyle or "Unknown",
         concern=profile.concern or "Unknown",

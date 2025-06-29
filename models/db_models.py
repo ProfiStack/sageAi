@@ -9,6 +9,7 @@ class UserProfile(Base):
     user_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String, unique=True, nullable=True)
     phone_number = Column(String, unique=True, nullable=True)
+    gender = Column(String, nullable=True)
     skin_type = Column(String, nullable=True)
     name = Column(String, nullable=True)
     age = Column(String, nullable=True)
