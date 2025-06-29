@@ -1,7 +1,7 @@
+import { merge } from "lodash";
 
-import { merge } from 'lodash';
-
-export const globalBaseUrl = process.env.NEXT_PUBLIC_GLOBAL_BASE_URL || 'http://localhost:3001';
+export const globalBaseUrl =
+  process.env.NEXT_PUBLIC_GLOBAL_BASE_URL || "http://localhost:8000";
 
 /**
  * Fetches data from a URL with enhanced security and flexibility.
@@ -21,23 +21,23 @@ export const baseFetch = async (urlBuilder, options) => {
     };
 
     let url = urlBuilder;
-    if (typeof urlBuilder === 'function') {
+    if (typeof urlBuilder === "function") {
       url = urlBuilder(urlBuilderArgs);
     }
 
     const baseOptions = {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(options?.headers || {}),
       },
     };
 
     // Forward all headers from client to API
-  
+
     const finalOptions = merge(baseOptions, options);
     if (finalOptions.body instanceof FormData) {
-      delete finalOptions.headers['Content-Type'];
-    } else if (finalOptions.body && typeof finalOptions.body === 'object') {
+      delete finalOptions.headers["Content-Type"];
+    } else if (finalOptions.body && typeof finalOptions.body === "object") {
       finalOptions.body = JSON.stringify(finalOptions.body);
     }
 
@@ -47,7 +47,7 @@ export const baseFetch = async (urlBuilder, options) => {
   } catch (error) {
     console.log(error);
     if (!refetched) {
-      console.error('Error in baseFetch:', error);
+      console.error("Error in baseFetch:", error);
       throw error;
     }
   }

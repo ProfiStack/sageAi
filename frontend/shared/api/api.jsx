@@ -10,7 +10,7 @@ export const Api = {
     signUp: async (data) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/auth/signup`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/auth/signup`,
           {
             method: "POST",
             body: validatePayload(data),
@@ -27,7 +27,7 @@ export const Api = {
     signIn: async (data) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/auth/login`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/auth/login`,
           {
             method: "POST",
             body: validatePayload(data),
@@ -41,22 +41,7 @@ export const Api = {
         console.log(error);
       }
     },
-    getStartups: async () => {
-      try {
-        const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/startups`,
-          {
-            method: "GET",
-            next: {
-              revalidate: 3600, // 1 hour
-            },
-          }
-        );
-        return response;
-      } catch (error) {
-        console.log(error);
-      }
-    },
+
     getQuizzes: async () => {
       try {
         const res = await baseFetch(
@@ -69,6 +54,23 @@ export const Api = {
           }
         );
         return res;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    updateProfile: async (data, userId) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/profile`,
+          {
+            method: "POST",
+            body: validatePayload(data),
+            next: {
+              revalidate: 3600, // 1 hour
+            },
+          }
+        );
+        return response;
       } catch (error) {
         console.log(error);
       }

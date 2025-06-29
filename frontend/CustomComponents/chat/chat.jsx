@@ -1,17 +1,147 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Send } from "lucide-react";
+import { Send, ExternalLink, X } from "lucide-react";
+import { useForm as useFormHook } from "react-hook-form";
 import Footer from "@/CustomComponents/Footer/Footer";
 import ReactMarkdown from "react-markdown";
+import useAuthStore from "@/store/authStore";
+import SettingsHeader from "../settingsHeader/settingsHeader";
+import { cn } from "@/lib/utils";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { setAuthToken } from "@/shared/utils/utils";
+import { Api } from "@/shared/api/api";
+import useFormToast from "../FormToast/FormToast";
 
-export default function ConsultationChat({ route, title }) {
+const formSchema = z.object({
+  email: z.string().refine(
+    (value) => {
+      // Email regex pattern
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Phone regex pattern (supports various formats)
+      const phonePattern = /^[\+]?[1-9][\d]{0,15}$/;
+
+      return (
+        emailPattern.test(value) ||
+        phonePattern.test(value.replace(/[\s\-\(\)]/g, ""))
+      );
+    },
+    {
+      message: "Please enter a valid email address or phone number.",
+    }
+  ),
+});
+
+export default function ConsultationChat({ route }) {
+  const { userId } = useAuthStore();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [userMessageCount, setUserMessageCount] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
+  const { primaryToast, destructiveToast } = useFormToast();
+
+  const form = useFormHook({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  async function onSubmit(values) {
+    try {
+      const data = await Api.client.signIn(values);
+      console.log(data.user_id);
+      if (data.user_id) {
+        useAuthStore.getState().setUserId(data.user_id);
+        await setAuthToken(data.user_id);
+        localStorage.setItem("sagee_user_id", data.user_id);
+        setShowLoginPopup(false);
+        primaryToast({ description: "Login successful" });
+      }
+    } catch (error) {
+      destructiveToast(error.message);
+    }
+  }
+
+  // Function to check if user is logged in
+  const isUserLoggedIn = () => {
+    // Check if userId exists in Zustand store
+    if (userId) return true;
+
+    // Check localStorage for user ID, but make sure it's not just a guest ID
+    const storedUserId = localStorage.getItem("sagee_user_id");
+    const authToken =
+      localStorage.getItem("authToken") ||
+      document.cookie.includes("authToken");
+
+    // Only consider logged in if we have both a user ID and auth token
+    if (storedUserId && authToken && !storedUserId.startsWith("user-")) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Set mounted state after component mounts
+  useEffect(() => {
+    setIsMounted(true);
+    // Load message count from localStorage after mounting
+    if (!isUserLoggedIn()) {
+      const savedCount = localStorage.getItem("sagee_guest_message_count");
+      if (savedCount) {
+        setUserMessageCount(parseInt(savedCount, 10));
+      }
+    } else {
+      // Clear the count when user is logged in
+      localStorage.removeItem("sagee_guest_message_count");
+      setUserMessageCount(0);
+    }
+  }, [userId]);
+
+  // Handle logout - reset to guest state
+  useEffect(() => {
+    if (isMounted && !isUserLoggedIn()) {
+      // User is not logged in, ensure guest message count is loaded
+      const savedCount = localStorage.getItem("sagee_guest_message_count");
+      if (savedCount) {
+        setUserMessageCount(parseInt(savedCount, 10));
+      } else {
+        setUserMessageCount(0);
+      }
+    }
+  }, [userId, isMounted]);
+
+  // Save message count to localStorage whenever it changes
+  useEffect(() => {
+    if (isMounted && typeof window !== "undefined") {
+      if (!isUserLoggedIn()) {
+        localStorage.setItem(
+          "sagee_guest_message_count",
+          userMessageCount.toString()
+        );
+      } else {
+        // Clear the count when user logs in
+        localStorage.removeItem("sagee_guest_message_count");
+        setUserMessageCount(0);
+      }
+    }
+  }, [userMessageCount, userId, isMounted]);
 
   const getUserId = () => {
     let uid = localStorage.getItem("sagee_user_id");
@@ -22,11 +152,97 @@ export default function ConsultationChat({ route, title }) {
     return uid;
   };
 
+  // Function to detect and format URLs in text
+  const formatMessageContent = (content) => {
+    // Regex to detect URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    // Split content by URLs while keeping the URLs
+    const parts = content.split(urlRegex);
+
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
+          >
+            {part}
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
+  // Function to detect if content contains image URLs
+  const detectImages = (content) => {
+    const imageRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg))/gi;
+    return content.match(imageRegex) || [];
+  };
+
+  // Function to render message content with images and links
+  const renderMessageContent = (content) => {
+    const images = detectImages(content);
+
+    if (images.length > 0) {
+      // Remove image URLs from text content
+      let textContent = content;
+      images.forEach((img) => {
+        textContent = textContent.replace(img, "").trim();
+      });
+
+      return (
+        <div className="space-y-3">
+          {/* Render text content with links if any */}
+          {textContent && (
+            <div className="leading-relaxed">
+              {formatMessageContent(textContent)}
+            </div>
+          )}
+
+          {/* Render images */}
+          {images.map((imageUrl, index) => (
+            <div key={index} className="space-y-2">
+              <img
+                src={imageUrl}
+                alt={`Shared image ${index + 1}`}
+                className="max-w-full h-auto rounded-lg shadow-sm border border-gray-200"
+                style={{ maxHeight: "300px" }}
+                onError={(e) => {
+                  e.target.style.display = "none";
+                  // Show fallback link if image fails to load
+                  const fallbackLink = document.createElement("a");
+                  fallbackLink.href = imageUrl;
+                  fallbackLink.target = "_blank";
+                  fallbackLink.rel = "noopener noreferrer";
+                  fallbackLink.className =
+                    "text-blue-600 hover:text-blue-800 underline";
+                  fallbackLink.textContent = "View Image";
+                  e.target.parentNode.appendChild(fallbackLink);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // If no images, just format text with links
+    return (
+      <div className="leading-relaxed">{formatMessageContent(content)}</div>
+    );
+  };
+
   useEffect(() => {
     const connectWebSocket = () => {
       try {
         ws.current = new WebSocket(
-          `ws://localhost:8000/ws/${route}/chat-${getUserId()}`
+          `ws://localhost:8000/ws/${route}/${getUserId()}`
         );
 
         ws.current.onopen = () => {
@@ -88,6 +304,18 @@ export default function ConsultationChat({ route, title }) {
       ws.current &&
       ws.current.readyState === WebSocket.OPEN
     ) {
+      // Check if user is logged in
+      if (!isUserLoggedIn()) {
+        const newCount = userMessageCount + 1;
+        setUserMessageCount(newCount);
+
+        // If user has sent 3 messages, show login popup
+        if (newCount >= 3) {
+          setShowLoginPopup(true);
+          return;
+        }
+      }
+
       const userMessage = {
         id: Date.now(),
         sender: "Olivia",
@@ -117,42 +345,15 @@ export default function ConsultationChat({ route, title }) {
     }
   };
 
-  const getConnectionStatusColor = () => {
-    switch (connectionStatus) {
-      case "connected":
-        return "bg-green-500";
-      case "disconnected":
-        return "bg-red-500";
-      case "error":
-        return "bg-yellow-500";
-      default:
-        return "bg-gray-500";
-    }
+  const canSendMessage = () => {
+    if (isUserLoggedIn()) return true; // Logged in users can send unlimited messages
+    return userMessageCount <= 3; // Non-logged in users limited to 3 messages
   };
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
-      <div className="bg-white px-4 py-3 flex items-center justify-between shadow-sm">
-        <ArrowLeft className="w-6 h-6 text-gray-700" />
-        <div className="flex flex-col items-center">
-          <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
-          <div className="flex items-center space-x-1">
-            <div
-              className={`w-2 h-2 rounded-full ${getConnectionStatusColor()}`}
-            ></div>
-            <span className="text-xs text-gray-500 capitalize">
-              {connectionStatus}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center">
-          <span className="text-green-600 text-sm font-medium mr-2">
-            SageAI
-          </span>
-          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-            <div className="w-4 h-4 bg-green-600 rounded-sm transform rotate-45"></div>
-          </div>
-        </div>
+      <div className="sticky top-0 z-10 inset-0">
+        <SettingsHeader title="Consultation Chat" />
       </div>
 
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
@@ -167,11 +368,17 @@ export default function ConsultationChat({ route, title }) {
               </div>
             )}
 
-            <div className={`flex-1 ${msg.type === "sent" ? "flex flex-col items-end" : ""}`}>
-              <div className={`text-sm font-medium mb-1 ${msg.type === "sent" ? "text-orange-500 mr-2" : "text-gray-900"}`}>
+            <div
+              className={`flex-1 ${msg.type === "sent" ? "flex flex-col items-end" : ""}`}
+            >
+              <div
+                className={`text-sm font-medium mb-1 ${msg.type === "sent" ? "text-orange-500 mr-2" : "text-gray-900"}`}
+              >
                 {msg.sender}
               </div>
-              <div className={`rounded-2xl px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-yellow-100 rounded-tr-md" : "bg-green-100 rounded-tl-md"}`}>
+              <div
+                className={`rounded-2xl px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-yellow-100 rounded-tr-md" : "bg-green-100 rounded-tl-md"}`}
+              >
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
               <div className="text-xs text-gray-400 mt-1">
@@ -196,13 +403,21 @@ export default function ConsultationChat({ route, title }) {
               <div className="w-6 h-6 bg-orange-400 rounded-full"></div>
             </div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900 mb-1">Dr. Willow</div>
+              <div className="text-sm font-medium text-gray-900 mb-1">
+                Dr. Willow
+              </div>
               <div className="bg-green-100 rounded-2xl rounded-tl-md px-4 py-3 text-gray-600 text-sm italic flex items-center space-x-1">
                 <span>Typing</span>
                 <div className="flex space-x-1">
                   <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                  <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                  <div
+                    className="w-1 h-1 bg-gray-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="w-1 h-1 bg-gray-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -211,25 +426,98 @@ export default function ConsultationChat({ route, title }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex items-center space-x-3 bg-gray-100 rounded-full px-4 py-3">
+      <div className="bg-white border-t border-gray-200 p-4 sticky inset-0  ">
+        {!isUserLoggedIn() && isMounted && (
+          <div className="mb-3 text-center">
+            <span className="text-sm text-gray-600">
+              Messages: {userMessageCount}/3
+            </span>
+            {userMessageCount >= 3 && (
+              <p className="text-xs text-red-500 mt-1">
+                Please log in to continue chatting
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="flex  items-center space-x-3 bg-gray-100 rounded-full px-4 py-3">
           <input
             type="text"
-            placeholder="Message"
+            placeholder={
+              !isUserLoggedIn() && isMounted && userMessageCount >= 3
+                ? "Please log in to continue"
+                : "Message"
+            }
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
+            disabled={!canSendMessage() || connectionStatus !== "connected"}
             className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-500 disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
-            disabled={!message.trim() || connectionStatus !== "connected"}
+            disabled={
+              !message.trim() ||
+              connectionStatus !== "connected" ||
+              !canSendMessage()
+            }
             className="p-2 text-green-600 hover:bg-green-50 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-5 h-5" />
           </button>
         </div>
       </div>
+
+      {/* Login Popup Modal */}
+      {showLoginPopup && (
+        <div className="fixed inset-0   flex items-end bottom-[78px] justify-center z-50">
+          <div className=" bg-white p-6 w-full">
+            <div className="text-center mb-3">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="flex flex-col w-full"
+                >
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="w-full">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                className="mb-3  rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
+                                placeholder="Email or Phone Number (starts with eg +123)"
+                                {...field}
+                              />
+                            </FormControl>
+
+                            <FormMessage className="text-red-500" />
+                          </FormItem>
+                        )}
+                      />{" "}
+                    </div>
+                  </div>
+
+                  <Button
+                    className={cn(
+                      "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
+                    )}
+                    type="submit"
+                  >
+                    Sign Up
+                  </Button>
+                </form>
+              </Form>
+
+              <div className="w-full py-2 px-4 text-[#02331E] mt-3 rounded-[10px] bg-[#E8F0F2] text-start">
+                Free signup to unlock message
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
