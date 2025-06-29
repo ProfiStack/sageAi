@@ -20,16 +20,6 @@ def get_profile(user_id: str, db: Session = Depends(get_db)):
     profile = get_or_create_user_profile(db, user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # Debug: Print the actual profile data
-    print(f"Profile data for user {user_id}:")
-    print(f"  name: {profile.name}")
-    print(f"  age: {profile.age}")
-    print(f"  gender: {profile.gender}")
-    print(f"  location: {profile.location}")
-    print(f"  skin_type: {profile.skin_type}")
-    print(f"  concern: {profile.concern}")
-    
     return UserProfileResponse(
         user_id=profile.user_id,
         name=profile.name or "User",

@@ -44,7 +44,6 @@ class UserProfileUpdateRequest(BaseModel):
     gender: Optional[str] = None
     age: Optional[str] = None
     gender: Optional[str] = None
-    location: Optional[str] = None
     skin_type: Optional[str] = None
     concern: Optional[str] = None
     lifestyle: Optional[str] = None
