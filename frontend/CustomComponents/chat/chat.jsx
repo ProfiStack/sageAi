@@ -70,7 +70,7 @@ export default function ConsultationChat({ route }) {
       if (data.user_id) {
         useAuthStore.getState().setUserId(data.user_id);
         await setAuthToken(data.user_id);
-        localStorage.setItem("sagee_user_id", data.user_id);
+        window.localStorage.setItem("sagee_user_id", data.user_id);
         setShowLoginPopup(false);
         primaryToast({ description: "Login successful" });
       }
@@ -84,10 +84,10 @@ export default function ConsultationChat({ route }) {
     // Check if userId exists in Zustand store
     if (userId) return true;
 
-    // Check localStorage for user ID, but make sure it's not just a guest ID
-    const storedUserId = localStorage.getItem("sagee_user_id");
+    // Check window.localStorage for user ID, but make sure it's not just a guest ID
+    const storedUserId = window.localStorage.getItem("sagee_user_id");
     const authToken =
-      localStorage.getItem("authToken") ||
+      window.localStorage.getItem("authToken") ||
       document.cookie.includes("authToken");
 
     // Only consider logged in if we have both a user ID and auth token
@@ -101,15 +101,15 @@ export default function ConsultationChat({ route }) {
   // Set mounted state after component mounts
   useEffect(() => {
     setIsMounted(true);
-    // Load message count from localStorage after mounting
+    // Load message count from window.localStorage after mounting
     if (!isUserLoggedIn()) {
-      const savedCount = localStorage.getItem("sagee_guest_message_count");
+      const savedCount = window.localStorage.getItem("sagee_guest_message_count");
       if (savedCount) {
         setUserMessageCount(parseInt(savedCount, 10));
       }
     } else {
       // Clear the count when user is logged in
-      localStorage.removeItem("sagee_guest_message_count");
+      window.localStorage.removeItem("sagee_guest_message_count");
       setUserMessageCount(0);
     }
   }, [userId]);
@@ -118,7 +118,7 @@ export default function ConsultationChat({ route }) {
   useEffect(() => {
     if (isMounted && !isUserLoggedIn()) {
       // User is not logged in, ensure guest message count is loaded
-      const savedCount = localStorage.getItem("sagee_guest_message_count");
+      const savedCount = window.localStorage.getItem("sagee_guest_message_count");
       if (savedCount) {
         setUserMessageCount(parseInt(savedCount, 10));
       } else {
@@ -127,27 +127,27 @@ export default function ConsultationChat({ route }) {
     }
   }, [userId, isMounted]);
 
-  // Save message count to localStorage whenever it changes
+  // Save message count to window.localStorage whenever it changes
   useEffect(() => {
     if (isMounted && typeof window !== "undefined") {
       if (!isUserLoggedIn()) {
-        localStorage.setItem(
+        window.localStorage.setItem(
           "sagee_guest_message_count",
           userMessageCount.toString()
         );
       } else {
         // Clear the count when user logs in
-        localStorage.removeItem("sagee_guest_message_count");
+        window.localStorage.removeItem("sagee_guest_message_count");
         setUserMessageCount(0);
       }
     }
   }, [userMessageCount, userId, isMounted]);
 
   const getUserId = () => {
-    let uid = localStorage.getItem("sagee_user_id");
+    let uid = window.localStorage.getItem("sagee_user_id");
     if (!uid) {
       uid = `user-${Date.now()}`;
-      localStorage.setItem("sagee_user_id", uid);
+      window.localStorage.setItem("sagee_user_id", uid);
     }
     return uid;
   };

@@ -1,5 +1,9 @@
 "use client";
-import ConsultationChat from "@/CustomComponents/chat/chat";
+import dynamic from "next/dynamic";
+
+const ConsultationChat = dynamic(() => import('@/CustomComponents/chat/chat'), {
+  ssr: false,
+});
 import BeautyQuizPopup from "@/CustomComponents/quizzPopup/QuizzPopup";
 import { useState } from "react";
 

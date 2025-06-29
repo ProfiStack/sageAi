@@ -28,15 +28,15 @@ export default function ProfilePage() {
     if (userId) return true;
 
     // Check localStorage for user ID, but make sure it's not just a guest ID
-    const storedUserId = localStorage.getItem("sagee_user_id");
-    const authToken =
-      localStorage.getItem("authToken") ||
-      document.cookie.includes("authToken");
+    // const storedUserId = window.localStorage.getItem("sagee_user_id");
+    // const authToken =
+    //   window.localStorage.getItem("authToken") ||
+    //   document.cookie.includes("authToken");
 
-    // Only consider logged in if we have both a user ID and auth token
-    if (storedUserId && authToken && !storedUserId.startsWith("user-")) {
-      return true;
-    }
+    // // Only consider logged in if we have both a user ID and auth token
+    // if (storedUserId && authToken && !storedUserId.startsWith("user-")) {
+    //   return true;
+    // }
 
     return false;
   };
