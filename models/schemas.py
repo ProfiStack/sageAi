@@ -19,9 +19,15 @@ class UserProfileRequest(BaseModel):
     preferred_routine: Optional[str] = None
 
 class UserProfileResponse(UserProfileRequest):
+    name: Optional[str] = None
+    age: Optional[str] = None
     user_id: str
     created_at: datetime
     last_active: datetime
+    skin_type: Optional[str] = None
+    lifestyle: Optional[str] = None
+    concern: Optional[str] = None
+    preferred_routine: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -33,6 +39,8 @@ class LoginResponse(BaseModel):
     message: str
 
 class UserProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    age: Optional[str] = None
     skin_type: Optional[str] = None
     concern: Optional[str] = None
     lifestyle: Optional[str] = None

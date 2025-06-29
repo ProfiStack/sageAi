@@ -10,6 +10,8 @@ class UserProfile(Base):
     email = Column(String, unique=True, nullable=True)
     phone_number = Column(String, unique=True, nullable=True)
     skin_type = Column(String, nullable=True)
+    name = Column(String, nullable=True)
+    age = Column(String, nullable=True)
     lifestyle = Column(String, nullable=True)
     concern = Column(String, nullable=True)
     preferred_routine = Column(String, nullable=True)
