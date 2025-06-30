@@ -360,7 +360,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       try {
         const userId = getUserId();
         if (!userId) return;
-        ws.current = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
+        ws.current = new WebSocket(`wss://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
 
         ws.current.onopen = () => {
           setConnectionStatus("connected");
