@@ -49,8 +49,12 @@ export default function Login() {
   });
   async function onSubmit(values) {
     try {
-      const data = await Api.client.signIn(values);
-      console.log(data.user_id);
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
+      const transformedValues = {
+        name: values.name,
+        ...(isEmail ? { email: values.email } : { phone_number: values.email })
+      };
+      const data = await Api.client.signIn(transformedValues);
       if (data.user_id) {
         useAuthStore.getState().setUserId(data.user_id);
         await setAuthToken(data.user_id);
