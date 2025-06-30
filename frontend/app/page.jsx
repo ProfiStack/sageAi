@@ -1,9 +1,11 @@
+"use client";
 
-'use client'
+import Login from "@/CustomComponents/Login/Login";
 
-import HomePage from "@/CustomComponents/home/Home";
-
-export default function Home() {
-    return <HomePage />;
-  
+export default function LoginPage() {
+  return (
+    <div className="flex flex-col justify-between h-screen">
+      <Login />
+    </div>
+  );
 }

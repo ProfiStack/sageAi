@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata = {
-  title: "Naimaat",
-  description: "Naimaat an open-source platform for startups",
+  title: "SageeAI",
+  description: "SageeAI lifestyle agent",
   icons: {
     icon: "./icon.ico",
   },

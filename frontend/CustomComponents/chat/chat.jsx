@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import useAuthStore from "@/store/authStore";
 import SettingsHeader from "../settingsHeader/settingsHeader";
 import BeautyQuizPopup from "../quizzPopup/QuizzPopup";
-import { cn } from "@/lib/utils";
+import { cn, isUserLoggedIn } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -23,7 +23,6 @@ import { z } from "zod";
 import { setAuthToken } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useFormToast from "../FormToast/FormToast";
-import ThanksPopup from "../thanksPopup/thanksPopup";
 
 const formSchema = z.object({
   email: z.string().refine(
@@ -54,7 +53,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const [showBeautyQuiz, setShowBeautyQuiz] = useState(false);
-  const [showThanksPopup, setShowThanksPopup] = useState(false);
   const [quizResults, setQuizResults] = useState({
     skin_type: "",
     concern: "",
@@ -70,6 +68,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       password: "",
     },
   });
+  console.log(isUserLoggedIn(userId));
 
   async function onSubmit(values) {
     try {
@@ -86,33 +85,11 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     }
   }
 
-  // Function to check if user is logged in - FIXED VERSION
-  const isUserLoggedIn = () => {
-    // Return false if we're on server side
-    if (typeof window === "undefined") return false;
-
-    // Check if userId exists in Zustand store
-    if (userId) return true;
-
-    // Check window.localStorage for user ID, but make sure it's not just a guest ID
-    const storedUserId = window.localStorage.getItem("sagee_user_id");
-    const authToken =
-      window.localStorage.getItem("authToken") ||
-      document.cookie.includes("authToken");
-
-    // Only consider logged in if we have both a user ID and auth token
-    if (storedUserId && authToken && !storedUserId.startsWith("user-")) {
-      return true;
-    }
-
-    return false;
-  };
-
   // Set mounted state after component mounts
   useEffect(() => {
     setIsMounted(true);
     // Load message count from window.localStorage after mounting
-    if (!isUserLoggedIn()) {
+    if (!isUserLoggedIn(userId)) {
       const savedCount = window.localStorage.getItem(
         "sagee_guest_message_count"
       );
@@ -144,7 +121,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
 
   // Handle logout - reset to guest state
   useEffect(() => {
-    if (isMounted && !isUserLoggedIn()) {
+    if (isMounted && !isUserLoggedIn(userId)) {
       // User is not logged in, ensure guest message count is loaded
       const savedCount = window.localStorage.getItem(
         "sagee_guest_message_count"
@@ -160,7 +137,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
   // Save message count to window.localStorage whenever it changes
   useEffect(() => {
     if (isMounted && typeof window !== "undefined") {
-      if (!isUserLoggedIn()) {
+      if (!isUserLoggedIn(userId)) {
         window.localStorage.setItem(
           "sagee_guest_message_count",
           userMessageCount.toString()
@@ -202,21 +179,13 @@ export default function ConsultationChat({ route, title, initialMessage }) {
         const guestQuizResults = localStorage.getItem(
           "sagee_guest_quiz_results"
         );
-        const hasShownThanks = localStorage.getItem(
-          "sagee_has_shown_thanks_popup"
-        );
 
         if (!guestQuizResults) {
           setShowBeautyQuiz(true);
         } else {
-          // Guest has completed quiz, show thanks popup with their results
+          // Guest has completed quiz,
           const results = JSON.parse(guestQuizResults);
           setQuizResults(results);
-          // Only show thanks popup if we haven't shown it yet (check localStorage flag)
-          if (!hasShownThanks) {
-            setShowThanksPopup(true);
-            localStorage.setItem("sagee_has_shown_thanks_popup", "true");
-          }
         }
       }
     };
@@ -243,7 +212,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
 
             // Clear guest quiz results from localStorage
             localStorage.removeItem("sagee_guest_quiz_results");
-            localStorage.removeItem("sagee_has_shown_thanks_popup");
 
             // Update local profile state
             setQuizResults(results);
@@ -360,7 +328,9 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       try {
         const userId = getUserId();
         if (!userId) return;
-        ws.current = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
+        ws.current = new WebSocket(
+          `ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`
+        );
 
         ws.current.onopen = () => {
           setConnectionStatus("connected");
@@ -421,7 +391,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       ws.current.readyState === WebSocket.OPEN
     ) {
       // Check if user is logged in
-      if (!isUserLoggedIn()) {
+      if (!isUserLoggedIn(userId)) {
         const newCount = userMessageCount + 1;
         setUserMessageCount(newCount);
 
@@ -462,7 +432,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
   };
 
   const canSendMessage = () => {
-    if (isUserLoggedIn()) return true; // Logged in users can send unlimited messages
+    if (isUserLoggedIn(userId)) return true; // Logged in users can send unlimited messages
     return userMessageCount < 3; // Non-logged in users limited to 3 messages
   };
 
@@ -471,14 +441,43 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     console.log("Beauty quiz completed with results:", results);
     setQuizResults(results);
     setShowBeautyQuiz(false);
-    setShowThanksPopup(true);
-    localStorage.setItem("sagee_has_shown_thanks_popup", "true");
-  };
+    // Compose the thank you message
+    const thankYouText = `Hi, I'm your skincare consultant. Thanks for sharing you have **${results.skin_type}** skin and you're looking to improve **${results.concern}**
 
-  // Handle thanks popup close
-  const handleThanksPopupClose = () => {
-    console.log("Thanks popup closed");
-    setShowThanksPopup(false);
+Would you like to:
+
+• Get a skincare routine that actually works for you?
+
+• Explore professional treatments that could help?
+
+• Or check if certain products are right for your skin?`;
+    setMessages((prev) => {
+      // If the initial message is present, insert after it; otherwise, append
+      if (prev.length > 0 && prev[0].sender === "Dr. Willow") {
+        return [
+          prev[0],
+          {
+            id: Date.now(),
+            sender: "Dr. Willow",
+            content: thankYouText,
+            timestamp: new Date(),
+            type: "received",
+          },
+          ...prev.slice(1),
+        ];
+      } else {
+        return [
+          ...prev,
+          {
+            id: Date.now(),
+            sender: "Dr. Willow",
+            content: thankYouText,
+            timestamp: new Date(),
+            type: "received",
+          },
+        ];
+      }
+    });
   };
 
   // Don't render anything until mounted (prevents hydration mismatch)
@@ -573,7 +572,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       </div>
 
       <div className="bg-white border-t border-gray-200 p-4 sticky inset-0  ">
-        {!isUserLoggedIn() && isMounted && (
+        {!isUserLoggedIn(userId) && isMounted && (
           <div className="mb-3 text-center">
             <span className="text-sm text-gray-600">
               Messages: {userMessageCount}/3
@@ -590,7 +589,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
           <input
             type="text"
             placeholder={
-              !isUserLoggedIn() && isMounted && userMessageCount >= 3
+              !isUserLoggedIn(userId) && isMounted && userMessageCount >= 3
                 ? "Please log in to continue"
                 : "Message"
             }
@@ -671,12 +670,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         onComplete={handleQuizCompletion}
-      />
-      <ThanksPopup
-        isOpen={showThanksPopup}
-        onClose={handleThanksPopupClose}
-        skinType={quizResults.skin_type || "combination"}
-        skinConcern={quizResults.concern || "acne and dark spots"}
       />
     </div>
   );
