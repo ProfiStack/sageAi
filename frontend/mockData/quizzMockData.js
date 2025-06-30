@@ -23,7 +23,7 @@ const beautyQuizData = [
       { id: "breakouts", label: "Breakouts" },
       { id: "discoloration", label: "Discoloration" },
       { id: "redness", label: "Redness" },
-      { id: "ageing", label: "Ageing" },
+      { id: "aging", label: "Aging" },
       { id: "dullness", label: "Dullness" },
     ],
     selectedOptions: [],

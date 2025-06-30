@@ -8,7 +8,7 @@ import useAuthStore from "@/store/authStore";
 
 const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
   const [quizData, setQuizData] = useState(beautyQuizData);
-  const { userId } = useAuthStore();
+  const userId = localStorage.getItem('sagee_user_id');
   const hasCompletedRef = useRef(false);
 
   const updateSelection = (questionId, optionId) => {

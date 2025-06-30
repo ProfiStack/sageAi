@@ -69,7 +69,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     },
   });
   console.log(isUserLoggedIn(userId));
-
+  
   async function onSubmit(values) {
     try {
       const data = await Api.client.signIn(values);
@@ -102,7 +102,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       setUserMessageCount(0);
     }
   }, [userId]);
-
+  
   useEffect(() => {
     // Handle initial message when component mounts
     if (initialMessage && messages.length === 0) {
@@ -328,7 +328,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       try {
         const userId = getUserId();
         if (!userId) return;
-        ws.current = new WebSocket(`wss://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
+        ws.current = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
 
         ws.current.onopen = () => {
           setConnectionStatus("connected");
@@ -663,12 +663,12 @@ Would you like to:
       )}
 
       <Footer />
-
-      <BeautyQuizPopup
-        isOpen={showBeautyQuiz}
-        setIsOpen={setShowBeautyQuiz}
-        onComplete={handleQuizCompletion}
-      />
+        
+        <BeautyQuizPopup
+          isOpen={showBeautyQuiz}
+          setIsOpen={setShowBeautyQuiz}
+          onComplete={handleQuizCompletion}
+        />
     </div>
   );
 }

@@ -9,14 +9,6 @@ router = APIRouter()
 @router.websocket("/ws/{feature_type}/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: str):
     await manager.connect(user_id, websocket)  # This now does accept()
-    print(feature_type, '*****************');
-    welcome_msg = {
-        "type": "message",
-        "sender": "Consultant",
-        "content": "Welcome to SAGEE skincare chat!",
-        "timestamp": datetime.now().isoformat(),
-    }
-    await manager.send_message(welcome_msg, user_id)
 
     try:
         while True:
