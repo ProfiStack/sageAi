@@ -52,7 +52,7 @@ export default function Login() {
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
-        ...(isEmail ? { email: values.email } : { phone_number: values.email })
+        ...(isEmail ? { email: values.email } : { phone_number: values.email }),
       };
       const data = await Api.client.signIn(transformedValues);
       if (data.user_id) {
@@ -104,19 +104,18 @@ export default function Login() {
   };
 
   return (
-    <div>
-      <div className="space-y-2 w-full p-4   flex justify-center flex-col items-center">
-        <div className="relative w-full h-[537px]">
+    <div className="w-full min-h-screen flex flex-col items-center px-4 py-6 space-y-6">
+      <div className="w-full max-w-md flex flex-col items-center space-y-4">
+        <div className="relative w-full h-[537px] rounded-3xl overflow-hidden">
           <Image
             src="/images/signup.png"
             alt="Signup"
             fill
-            style={{ objectFit: "fill" }}
-            className="rounded-3xl"
+            className="object-cover"
           />
         </div>
 
-        <p className=" text-2xl font-semibold pt-7">
+        <p className="text-xl sm:text-2xl font-semibold text-center pt-4">
           Get answers that actually help.
         </p>
         <p className="text-[#6B7280] text-sm text-center">
@@ -124,55 +123,45 @@ export default function Login() {
           to guide you with insight that fits you.
         </p>
       </div>
-      <div className={cn("flex px-4 w-full md-h-auto")}>
-        <div className="w-full">
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col w-full"
-            >
-              <div className="flex flex-col gap-2 w-full">
-                <div className="w-full">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            className="mb-3  rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
-                            placeholder="Email or Phone Number (starts with eg +123)"
-                            {...field}
-                          />
-                        </FormControl>
 
-                        <FormMessage className="text-red-500" />
-                      </FormItem>
-                    )}
-                  />{" "}
-                </div>
-              </div>
-
-              <Button
-                className={cn(
-                  "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
-                )}
-                type="submit"
-              >
-                Sign Up
-              </Button>
-            </form>
-          </Form>
-
-          <Button
-            className={cn(
-              "flex justify-center mt-3 text-[16px] w-full py-5 font-semibold bg-[#D4B038] text-white rounded-[24px] hover:bg-[#D4B038]"
-            )}
-            onClick={() => router.push("/home")}
+      <div className="w-full max-w-md">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col w-full gap-4"
           >
-            Skip for now
-          </Button>
-        </div>
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      className="rounded-[8px] border border-[#02331E66] w-full text-[#363636]"
+                      placeholder="Email or Phone Number (starts with eg +123)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-500" />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              className="w-full py-4 text-[16px] font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
+              type="submit"
+            >
+              Sign Up
+            </Button>
+          </form>
+        </Form>
+
+        <Button
+          className="w-full mt-3 py-4 text-[16px] font-semibold bg-[#D4B038] text-white rounded-[24px] hover:bg-[#D4B038]"
+          onClick={() => router.push("/home")}
+        >
+          Skip for now
+        </Button>
       </div>
     </div>
   );
