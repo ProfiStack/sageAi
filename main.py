@@ -21,7 +21,7 @@ app.include_router(chat.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")
 app.include_router(user.router, prefix="/api")
 app.include_router(health.router, prefix="/api")
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api")
 app.include_router(ws.router)
 
 

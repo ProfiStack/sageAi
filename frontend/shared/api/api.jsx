@@ -10,7 +10,7 @@ export const Api = {
     signUp: async (data) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/auth/signup`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/auth/signup`,
           {
             method: "POST",
             body: validatePayload(data),
@@ -27,7 +27,7 @@ export const Api = {
     signIn: async (data) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/auth/login`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/auth/login`,
           {
             method: "POST",
             body: validatePayload(data),
