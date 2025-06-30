@@ -105,13 +105,13 @@ export default function Login() {
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center px-4 py-6 space-y-6">
-      <div className="w-full max-w-md flex flex-col items-center space-y-4">
-        <div className="relative w-full h-[537px] rounded-3xl overflow-hidden">
+      <div className="w-full max-w-md flex flex-col items-center space-y-4 h-full">
+        <div className="relative w-full h-full">
           <Image
             src="/images/signup.png"
             alt="Signup"
             fill
-            className="object-cover"
+            className="object-cover rounded-[8px]"
           />
         </div>
 
