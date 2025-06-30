@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import {
-  ArrowLeft,
+  Info,
   User,
   FileText,
   MessageCircle,
@@ -36,7 +36,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     logout();
-    router.push("/login");
+    router.push("/");
   };
 
   const menuItems = [
@@ -61,7 +61,7 @@ export default function ProfilePage() {
       iconColor: "text-purple-600",
       href: "/profile/chat-logs",
     },
-    ...(isUserLoggedIn(userId)
+    ...(isUserLoggedIn()
       ? [
           {
             icon: LogOut,
@@ -79,7 +79,7 @@ export default function ProfilePage() {
             bgColor: "bg-green-50",
             iconColor: "text-green-600",
             isButton: true,
-            onClick: () => router.push("/login"),
+            onClick: () => router.push("/"),
           },
         ]),
   ];
@@ -92,13 +92,21 @@ export default function ProfilePage() {
       iconColor: "text-yellow-600",
       href: "/profile/feedback",
     },
+
+    {
+      icon: Info,
+      label: "About Us",
+      bgColor: "bg-green-50",
+      iconColor: "text-green-600",
+      href: "/about",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between">
-      <div>
-        <SettingsHeader title="Profile" />
+    <div className="h-screen bg-gray-50 max-w-md mx-auto ">
+      <SettingsHeader title="Profile" />
 
+      <div>
         {/* Profile Section */}
         <div className=" px-6 py-4 text-center">
           <div className="relative inline-block mb-1">
@@ -173,9 +181,9 @@ export default function ProfilePage() {
               <Link
                 key={index}
                 href={item.href}
-                className="w-full flex items-center p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+                className="w-full flex items-center  p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className={`p-2 rounded-lg ${item.bgColor} mr-4`}>
+                <div className={`p-2 rounded-[10px] ${item.bgColor} mr-4`}>
                   <item.icon size={20} className={item.iconColor} />
                 </div>
                 <span className="text-gray-900 font-medium flex-1 text-left">
@@ -189,16 +197,15 @@ export default function ProfilePage() {
         {/* SageeAi Logo */}
         <div className="flex items-center justify-center ">
           <Image
-            src="/images/sageLogo2.png"
+            src="/images/sagelogo2.png"
             alt="SageeAi"
             width={78}
             height={78}
           />
         </div>
       </div>
-      <div>
-        <Footer />
-      </div>
+
+      <Footer />
 
       {/* Bottom padding to account for fixed navigation */}
     </div>

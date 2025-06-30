@@ -59,7 +59,7 @@ export default function Login() {
         // Transfer guest quiz results to user profile if they exist
         await transferGuestQuizResults(data.user_id);
 
-        router.push("/");
+        router.push("/home");
         primaryToast({ description: "Login successful" });
       }
     } catch (error) {
@@ -164,7 +164,7 @@ export default function Login() {
             className={cn(
               "flex justify-center mt-3 text-[16px] w-full py-5 font-semibold bg-[#D4B038] text-white rounded-[24px] hover:bg-[#D4B038]"
             )}
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/home")}
           >
             Skip for now
           </Button>
