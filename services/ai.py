@@ -6,7 +6,7 @@ from db import SessionLocal
 from services.db_service import save_chat_message, update_user_profile
 
 load_dotenv()
-ollama = OpenAI(base_url='http://localhost:11434/v1', api_key='ollama')
+chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 user_sessions = {}
 
@@ -277,23 +277,23 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
     chat_history = user_data.get('chat_history', [])[-10:]
     messages.extend(chat_history)
     messages.append({"role": "user", "content": message})
-
-    response = ollama.chat.completions.create(
-        model="llama3.2:1b",
+    if "end chat" in message:
+        return "Thank you for chatting with us :)"
+    response = chat_gpt.chat.completions.create(
+        model="gpt-4o-mini",
         messages=messages,
         temperature=0.7,
-        max_tokens=300
     )
     ai_response = response.choices[0].message.content
     db_message = messages;
-    db_message.append({"role": "consultant", "content": ai_response})
+    db_message.append({"role": "system", "content": ai_response})
     type=feature_type
     save_chat_message(SessionLocal(), user_id, type, message, db_message)
     
     # Update chat history
     user_sessions[user_id]['chat_history'].extend([
         {"role": "user", "content": message},
-        {"role": "consultant", "content": ai_response}
+        {"role": "system", "content": ai_response}
     ])
     user_sessions[user_id]['last_active'] = datetime.now().isoformat()
 

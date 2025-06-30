@@ -11,7 +11,7 @@ export default function Chat() {
       <ConsultationChat
         route="skincare"
         title="Consultation Chat"
-        initialMessage="Hello! I'm Dr. Willow. I'm here to help with your general health questions. What would you like to discuss today?"
+        initialMessage="Hello! I'm your Consultant. I'm here to help with your general health questions. What would you like to discuss today?"
       />
     </div>
   );

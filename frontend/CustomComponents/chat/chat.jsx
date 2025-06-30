@@ -131,7 +131,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     if (initialMessage && messages.length === 0) {
       const initialMsg = {
         id: Date.now(),
-        sender: "Dr. Willow",
+        sender: "Consultant",
         content: initialMessage,
         timestamp: new Date(),
         type: "received",
@@ -360,7 +360,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       try {
         const userId = getUserId();
         if (!userId) return;
-        ws.current = new WebSocket(`wss://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
+        ws.current = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
 
         ws.current.onopen = () => {
           setConnectionStatus("connected");
@@ -375,7 +375,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
           } else if (data.type === "message") {
             const newMessage = {
               id: Date.now(),
-              sender: data.sender || "Dr. Willow",
+              sender: data.sender || "Consultant",
               content: data.content,
               timestamp: new Date(),
               type: "received",
@@ -550,7 +550,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
             </div>
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900 mb-1">
-                Dr. Willow
+                Consultant
               </div>
               <div className="bg-green-100 rounded-2xl rounded-tl-md px-4 py-3 text-gray-600 text-sm italic flex items-center space-x-1">
                 <span>Typing</span>

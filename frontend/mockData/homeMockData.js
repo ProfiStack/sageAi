@@ -15,7 +15,7 @@ export const mockPageData = {
     {
       id: "chat",
       title: "Chat",
-      description: "Chat with Dr. Willow",
+      description: "Chat with Consultant",
       icon: <MessageCircle />,
       route: "/chat",
     },
