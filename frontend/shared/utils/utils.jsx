@@ -1,13 +1,15 @@
 import Cookies from "js-cookie";
+import useAuthStore from "@/store/authStore";
 
 // https://nextjs.org/docs/app/api-reference/functions/cookies#cookiessetname-value--expires-timestamp-
-export const THIRTY_DAYS = 24 * 60 * 60 * 1000 * 90;
-export const inOneWeekServer = () => Date.now() + THIRTY_DAYS;
+// Updated constants for 2-day expiration
+export const TWO_DAYS = 24 * 60 * 60 * 1000 * 2;
+export const inTwoDaysServer = () => Date.now() + TWO_DAYS;
 
 // https://github.com/js-cookie/js-cookie/wiki/Frequently-Asked-Questions#expire-cookies-in-less-than-a-day
-export const inOneWeekClient = () =>
-  new Date(new Date().getTime() + THIRTY_DAYS);
-
+export const inTwoDaysClient = () => {
+  return new Date(Date.now() + TWO_DAYS);
+};
 export const triggerDataLayerError = ({
   type,
   category,
@@ -144,12 +146,70 @@ export const getStoreCode = () => {
   return getStoreCodeServer();
 };
 
+export async function setLoginTimestamp(timestamp) {
+  try {
+    if (isClientContext()) {
+      const Cookies = (await import("js-cookie")).default;
+      Cookies.set("loginTimestamp", timestamp, {
+        expires: inTwoDaysClient(),
+        path: "/",
+        sameSite: "strict",
+      });
+    } else {
+      const { cookies } = await import("next/headers");
+      cookies().set("loginTimestamp", timestamp, {
+        expires: inTwoDaysServer(),
+        path: "/",
+        sameSite: "strict",
+      });
+    }
+  } catch (error) {
+    console.error("Error setting login timestamp:", error);
+    throw error;
+  }
+}
+export async function getLoginTimestamp() {
+  try {
+    let timestamp = null;
+    if (isClientContext()) {
+      const Cookies = (await import("js-cookie")).default;
+      timestamp = Cookies.get("loginTimestamp") ?? null;
+    } else {
+      const { cookies } = await import("next/headers");
+      timestamp = cookies().get("loginTimestamp")?.value ?? null;
+    }
+
+    return timestamp;
+  } catch (error) {
+    console.error("Error getting login timestamp:", error);
+    return null;
+  }
+}
+export async function removeLoginTimestamp() {
+  try {
+    if (isClientContext()) {
+      const Cookies = (await import("js-cookie")).default;
+      Cookies.remove("loginTimestamp");
+    } else {
+      const { cookies } = await import("next/headers");
+      cookies().delete("loginTimestamp");
+    }
+  } catch (error) {
+    console.error("Error removing login timestamp:", error);
+  }
+}
 export async function setAuthToken(authToken) {
   if (isClientContext()) {
-    Cookies.set("authToken", authToken, { expires: inOneWeekClient() });
+    Cookies.set("authToken", authToken, {
+      expires: inTwoDaysClient(),
+      path: "/",
+    });
   } else {
     const { cookies } = await import("next/headers");
-    cookies().set("authToken", authToken, { expires: inOneWeekServer() });
+    cookies().set("authToken", authToken, {
+      expires: inTwoDaysServer(),
+      path: "/",
+    });
   }
 
   return authToken;
@@ -157,10 +217,16 @@ export async function setAuthToken(authToken) {
 
 export async function setRefreshToken(refreshToken) {
   if (isClientContext()) {
-    Cookies.set("refreshToken", refreshToken, { expires: inOneWeekClient() });
+    Cookies.set("refreshToken", refreshToken, {
+      expires: inTwoDaysClient(),
+      path: "/",
+    });
   } else {
     const { cookies } = await import("next/headers");
-    cookies().set("refreshToken", refreshToken, { expires: inOneWeekServer() });
+    cookies().set("refreshToken", refreshToken, {
+      expires: inTwoDaysServer(),
+      path: "/",
+    });
   }
 
   return refreshToken;
@@ -701,5 +767,40 @@ export async function hasGuestQuizResults() {
 export async function clearGuestQuizResults() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("sagee_guest_quiz_results");
+  }
+}
+
+// Check if login session is still valid (within 2 days)
+export async function isLoginValid() {
+  const authToken = await getAuthToken();
+  const loginTimestamp = await getLoginTimestamp();
+
+  if (!authToken || !loginTimestamp) {
+    useAuthStore.getState().setIsAuthenticated(false);
+    return false;
+  }
+
+  const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+  const currentTime = Date.now();
+
+  return currentTime - loginTimestamp <= twoDaysInMs;
+}
+
+// Auto logout function
+export async function autoLogout() {
+  await removeAuthToken();
+  await removeRefreshToken();
+  await removeLoginTimestamp();
+
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("sagee_user_id"); // legacy cleanup
+    localStorage.removeItem("auth-store"); // clear persisted Zustand store
+  }
+
+  if (typeof useAuthStore !== "undefined") {
+    const store = useAuthStore.getState();
+    store.setToken(null);
+    store.setUserId(null);
+    store.setIsAuthenticated(false);
   }
 }

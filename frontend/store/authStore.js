@@ -1,23 +1,36 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { autoLogout } from "@/shared/utils/utils";
 
-const useAuthStore = create((set) => ({
-  token: null,
-  userId: null,
-  setToken: (token) => set({ token }),
-  removeToken: () => set({ token: null }),
-  setUserId: (userId) => set({ userId }),
-  removeUserId: () => set({ userId: null }),
-  logout: () => {
-    // Clear Zustand state
-    set({ token: null, userId: null });
-
-    // Clear localStorage
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("sagee_user_id");
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("sagee_guest_message_count");
+const useAuthStore = create(
+  persist(
+    (set) => ({
+      token: null,
+      userId: null,
+      isAuthenticated: false,
+      setToken: (token) => set({ token }),
+      removeToken: () => set({ token: null }),
+      setUserId: (userId) => set({ userId }),
+      removeUserId: () => set({ userId: null }),
+      setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+      removeIsAuthenticated: () => set({ isAuthenticated: false }),
+      logout: async () => {
+        set({ token: null, userId: null, isAuthenticated: false });
+        await autoLogout();
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth-store");
+        }
+      },
+    }),
+    {
+      name: "auth-store", // 🗂 localStorage key
+      partialize: (state) => ({
+        isAuthenticated: state.isAuthenticated,
+        token: state.token,
+        userId: state.userId,
+      }),
     }
-  },
-}));
+  )
+);
 
 export default useAuthStore;

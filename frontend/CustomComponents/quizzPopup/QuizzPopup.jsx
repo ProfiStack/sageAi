@@ -7,8 +7,9 @@ import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
 
 const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
+  const { isAuthenticated } = useAuthStore();
   const [quizData, setQuizData] = useState(beautyQuizData);
-  const userId = localStorage.getItem('sagee_user_id');
+  const userId = localStorage.getItem("sagee_user_id");
   const hasCompletedRef = useRef(false);
 
   const updateSelection = (questionId, optionId) => {
@@ -73,10 +74,20 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
       const updateProfileWithQuizResults = async () => {
         const { skin_type, concern } = extractQuizResults();
 
-        if (!userId) {
+        if (!isAuthenticated) {
           // Guest user - save to localStorage
-          console.log("Guest user - saving quiz results to localStorage");
           saveQuizResultsForGuest(skin_type, concern);
+
+          try {
+            const updateData = {
+              skin_type,
+              concern,
+            };
+
+            const response = await Api.client.updateProfile(updateData, userId);
+          } catch (error) {
+            console.error("Error updating profile with quiz results:", error);
+          }
         } else {
           // Logged in user - update profile via API
           try {
@@ -86,7 +97,6 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
             };
 
             const response = await Api.client.updateProfile(updateData, userId);
-            console.log("Profile updated with quiz results:", response);
           } catch (error) {
             console.error("Error updating profile with quiz results:", error);
           }

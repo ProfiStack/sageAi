@@ -11,12 +11,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { Api } from "@/shared/api/api";
 import { useRouter } from "next/navigation";
 import useFormToast from "../FormToast/FormToast";
-import { setAuthToken } from "@/shared/utils/utils";
+import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
 import Image from "next/image";
 const formSchema = z.object({
@@ -56,9 +54,13 @@ export default function Login() {
       };
       const data = await Api.client.signIn(transformedValues);
       if (data.user_id) {
-        useAuthStore.getState().setUserId(data.user_id);
         await setAuthToken(data.user_id);
+        await setLoginTimestamp(Date.now());
         localStorage.setItem("sagee_user_id", data.user_id);
+        const store = useAuthStore.getState();
+        store.setUserId(data.user_id);
+        store.setToken(data.user_id);
+        store.setIsAuthenticated(true);
 
         // Transfer guest quiz results to user profile if they exist
         await transferGuestQuizResults(data.user_id);
@@ -90,7 +92,6 @@ export default function Login() {
             };
 
             await Api.client.updateProfile(updateData, userId);
-            console.log("Guest quiz results transferred to user profile");
 
             // Remove guest quiz results from localStorage
             localStorage.removeItem("sagee_guest_quiz_results");
@@ -151,7 +152,7 @@ export default function Login() {
               className="w-full py-4 text-[16px] font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
               type="submit"
             >
-              Sign Up
+              Sign In / Sign Up
             </Button>
           </form>
         </Form>
