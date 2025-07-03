@@ -149,8 +149,6 @@ def get_treatment_plan_prompt(user_metrics):
     lifestyle = user_metrics.get('lifestyle') or 'Not specified'
     concern = user_metrics.get('concern') or 'Not specified'
     preferred_routine = user_metrics.get('preferred_routine') or 'Not specified'
-    age = user_metrics.get('age') or 'Not specified'
-    budget = user_metrics.get('budget') or 'Not specified'
     
     return f"""You are Sagee. A smart, supportive skincare consultant who recommends concise treatment plans based on the user's skin concerns.
 
@@ -214,7 +212,7 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
         return get_trend_analysis_prompt(user_metrics)
     elif feature_type == 'ingredient_checker':
         return get_ingredient_checker_prompt(user_metrics)
-    elif feature_type == 'treatment_plan':
+    elif feature_type == 'treatment_planning':
         return get_treatment_plan_prompt(user_metrics)
     else:
         # Default to general skincare prompt
