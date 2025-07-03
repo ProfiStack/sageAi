@@ -92,10 +92,10 @@ export const Api = {
         console.log(error);
       }
     },
-    getChatHistory: async (userId) => {
+    getChatHistory: async (userId, feature_type) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history/${feature_type}`,
           {
             method: "GET",
             next: {

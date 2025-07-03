@@ -24,6 +24,26 @@ async def get_chat_history(user_id: str, limit: int = 20):
     except Exception as e:
         print(f"[get_chat_history] Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.get("/user/{user_id}/history/{feature_type}")
+async def get_chat_history(user_id: str, feature_type: str, limit: int = 20):
+    try:
+        db = SessionLocal()
+        user_data = get_user_session_data(db, user_id, feature_type)
+
+        if not user_data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        chat_history = user_data.get('chat_history', [])
+        db.close()
+        return {
+            "user_id": user_id,
+            "history": chat_history[-limit:],
+            "total_messages": len(chat_history)
+        }
+    except Exception as e:
+        print(f"[get_chat_history] Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.delete("/user/{user_id}/history")
 async def clear_chat_history(user_id: str):

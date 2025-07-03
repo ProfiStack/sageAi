@@ -129,7 +129,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
     setIsLoadingHistory(true);
     try {
-      const historyData = await Api.client.getChatHistory(userId);
+      const historyData = await Api.client.getChatHistory(userId, {feature_type: route});
       setChatHistory(historyData);
 
       const currentChatType = getChatTypeFromRoute(route);
