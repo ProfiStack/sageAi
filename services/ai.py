@@ -16,24 +16,25 @@ load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
+import json
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections = {}
 
     async def connect(self, user_id: str, websocket):
-        try:
-            self.active_connections[user_id] = websocket
-        except Exception as e:
-            print(f"[connect] Failed to connect user {user_id}: {e}")
+        # Just add/update the connection for the user_id
+        self.active_connections[user_id] = websocket
 
     def disconnect(self, user_id: str):
-        if user_id in self.active_connections:
-            del self.active_connections[user_id]
+        # Remove user_id if exists
+        self.active_connections.pop(user_id, None)
 
     async def send_message(self, message: dict, user_id: str):
-        if user_id in self.active_connections:
+        websocket = self.active_connections.get(user_id)
+        if websocket:
             try:
-                await self.active_connections[user_id].send_text(json.dumps(message))
+                await websocket.send_text(json.dumps(message))
                 return True
             except Exception as e:
                 print(f"[send_message] Error sending to {user_id}: {e}")
@@ -45,6 +46,7 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
 
 
 def get_trend_analysis_prompt(user_metrics):

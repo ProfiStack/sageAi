@@ -9,22 +9,20 @@ import traceback
 
 router = APIRouter()
 
+
 @router.websocket("/ws/{feature_type}/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: str):
-    # Accept connection once here
     await websocket.accept()
-
     await manager.connect(user_id, websocket)
     print(f"[CONNECTED] {user_id}")
 
-    # User profile init
+    # Initialize user profile
     try:
         db = SessionLocal()
         get_or_create_user_profile(db, user_id)
     finally:
         db.close()
 
-    # Start ping task
     ping_task = asyncio.create_task(ping_loop(user_id, websocket))
 
     try:
@@ -33,10 +31,9 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: s
             message_data = json.loads(data)
 
             if message_data.get("type") != "message":
-                await manager.send_message({
-                    "type": "error",
-                    "content": "Unsupported message type."
-                }, user_id)
+                await manager.send_message(
+                    {"type": "error", "content": "Unsupported message type."}, user_id
+                )
                 continue
 
             user_message = message_data.get("content", "")
@@ -52,6 +49,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: s
 
             await asyncio.sleep(0.5)
 
+            # Get AI response
             ai_response = await get_ai_response(feature_type, user_message, user_id)
 
             response_msg = {
@@ -70,10 +68,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: s
     finally:
         ping_task.cancel()
         manager.disconnect(user_id)
-        try:
-            await websocket.close()
-        except Exception as e:
-            print(f"Error closing websocket for {user_id}: {e}")
+        # Do NOT call await websocket.close() here - FastAPI handles it
 
 
 async def ping_loop(user_id: str, websocket: WebSocket):
