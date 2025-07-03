@@ -1,11 +1,13 @@
-import os, json
+import os
+import json
 from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
 from db import SessionLocal
 from services.db_service import (
-    save_chat_message, update_user_profile, get_or_create_user_profile,
-    get_user_session_data, update_user_session_metrics
+    save_chat_message, update_user_profile,
+    get_or_create_user_profile, get_user_session_data,
+    update_user_session_metrics
 )
 
 load_dotenv()
@@ -16,8 +18,11 @@ class ConnectionManager:
         self.active_connections = {}
 
     async def connect(self, user_id: str, websocket):
-        await websocket.accept()
-        self.active_connections[user_id] = websocket
+        try:
+            await websocket.accept()
+            self.active_connections[user_id] = websocket
+        except Exception as e:
+            print(f"[connect] Failed to connect user {user_id}: {e}")
 
     def disconnect(self, user_id: str):
         if user_id in self.active_connections:
@@ -28,7 +33,8 @@ class ConnectionManager:
             try:
                 await self.active_connections[user_id].send_text(json.dumps(message))
                 return True
-            except:
+            except Exception as e:
+                print(f"[send_message] Error sending to {user_id}: {e}")
                 self.disconnect(user_id)
         return False
 
@@ -36,6 +42,8 @@ class ConnectionManager:
         return list(self.active_connections.keys())
 
 manager = ConnectionManager()
+
+
 
 def get_trend_analysis_prompt(user_metrics):
     # Handle None values gracefully
@@ -199,14 +207,19 @@ Sagee:  I can help you best with skincare routines and treatment plans. Could yo
 
 # Main function to get the appropriate prompt based on feature
 def get_feature_prompt(feature_type: str, user_metrics: dict):
-    if feature_type == 'trend_analysis':
-        return get_trend_analysis_prompt(user_metrics)
-    elif feature_type == 'ingredient_checker':
-        return get_ingredient_checker_prompt(user_metrics)
-    elif feature_type == 'treatment_planning':
-        return get_treatment_plan_prompt(user_metrics)
-    else:
-        return get_system_prompt(user_metrics)
+    try:
+        if feature_type == 'trend_analysis':
+            return get_trend_analysis_prompt(user_metrics)
+        elif feature_type == 'ingredient_checker':
+            return get_ingredient_checker_prompt(user_metrics)
+        elif feature_type == 'treatment_planning':
+            return get_treatment_plan_prompt(user_metrics)
+        else:
+            return get_system_prompt(user_metrics)
+    except Exception as e:
+        print(f"[get_feature_prompt] Error: {e}")
+        return get_system_prompt({})
+
 
 def get_system_prompt(user_metrics):
     # Your existing general skincare prompt
@@ -260,48 +273,48 @@ Sagee: That’s more of a skin treatment topic! For that, I recommend asking the
 """
 
 
-def initialize_user_session(user_id: str):
-    if user_id not in user_sessions:
-        db = SessionLocal()
-        print('heereee')
-        profile = get_or_create_user_profile(db, user_id)
-
-        user_sessions[user_id] = {
-            "chat_history": [],
-            "created_at": profile.created_at.isoformat() if profile.created_at else datetime.now().isoformat(),
-            "last_active": profile.last_active.isoformat() if profile.last_active else None,
-            "skin_type": profile.skin_type,
-            "lifestyle": profile.lifestyle,
-            "concern": profile.concern,
-            "preferred_routine": profile.preferred_routine,
-        }
-
-
 async def get_ai_response(feature_type: str, message: str, user_id: str):
-    db = SessionLocal()
-    user_data = get_user_session_data(db, user_id)
-    system_prompt = get_feature_prompt(feature_type, user_data)
+    try:
+        db = SessionLocal()
+        user_data = get_user_session_data(db, user_id)
+        
+        system_prompt = get_feature_prompt(feature_type, user_data)
+        messages = [{"role": "system", "content": system_prompt}]
 
-    messages = [{"role": "system", "content": system_prompt}]
-    chat_history = user_data.get('chat_history', [])[-10:]
-    messages.extend(chat_history)
-    messages.append({"role": "user", "content": message})
+        chat_history = user_data.get('chat_history', [])[-10:]
+        messages.extend(chat_history)
+        messages.append({"role": "user", "content": message})
 
-    if "end chat" in message:
-        return "Thank you for chatting with us :)"
+        if "end chat" in message.lower():
+            return "Thank you for chatting with us :)"
 
-    response = chat_gpt.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        temperature=0.7,
-    )
+        try:
+            response = chat_gpt.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0.7,
+            )
+            ai_response = response.choices[0].message.content
+        except Exception as e:
+            print(f"[OpenAI] API call failed: {e}")
+            return "Sorry! I had trouble generating a response. Please try again in a moment."
 
-    ai_response = response.choices[0].message.content
-    db_message = messages.copy()
-    db_message.append({"role": "system", "content": ai_response})
+        # Save message to DB
+        db_message = messages.copy()
+        db_message.append({"role": "system", "content": ai_response})
 
-    save_chat_message(db, user_id, feature_type, message, db_message)
-    return ai_response
+        try:
+            save_chat_message(db, user_id, feature_type, message, db_message)
+        except Exception as db_err:
+            print(f"[DB] Error saving chat history: {db_err}")
+
+        return ai_response
+
+    except Exception as outer_err:
+        print(f"[get_ai_response] Fatal error: {outer_err}")
+        return "Oops! Something went wrong. Please try again later."
+
+
 
 
 

@@ -11,6 +11,29 @@ def get_or_create_user_profile(db: Session, user_id: str):
         db.refresh(profile)
     return profile
 
+def get_user_session_data(db, user_id: str):
+    profile = get_or_create_user_profile(db, user_id)
+    history = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.created_at.desc()).limit(10).all()
+    chat_history = [{"role": m.role, "content": m.content} for m in reversed(history)]
+    return {
+        "chat_history": chat_history,
+        "skin_type": profile.skin_type,
+        "lifestyle": profile.lifestyle,
+        "concern": profile.concern,
+        "preferred_routine": profile.preferred_routine,
+    }
+
+def get_all_user_profiles(db):
+    return db.query(UserProfile).all()
+
+def update_user_session_metrics(db, user_id: str, **kwargs):
+    profile = get_or_create_user_profile(db, user_id)
+    for key in ['skin_type', 'lifestyle', 'concern', 'preferred_routine']:
+        if key in kwargs and kwargs[key] is not None:
+            setattr(profile, key, kwargs[key])
+    profile.last_active = datetime.utcnow()
+    db.commit()
+
 def update_user_profile(db: Session, user_id: str, updates: dict):
     profile = get_or_create_user_profile(db, user_id)
     for k, v in updates.items():
