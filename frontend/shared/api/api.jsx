@@ -92,5 +92,21 @@ export const Api = {
         console.log(error);
       }
     },
+    getChatHistory: async (userId) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history`,
+          {
+            method: "GET",
+            next: {
+              revalidate: 3600, // 1 hour
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 };

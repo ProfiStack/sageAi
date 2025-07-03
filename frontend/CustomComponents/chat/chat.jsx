@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, ExternalLink, X } from "lucide-react";
+import { Send, ExternalLink, X, Loader2 } from "lucide-react";
 import { useForm as useFormHook } from "react-hook-form";
 import Footer from "@/CustomComponents/Footer/Footer";
 import ReactMarkdown from "react-markdown";
@@ -53,8 +53,9 @@ export default function ConsultationChat({ route, title, initialMessage }) {
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const [showBeautyQuiz, setShowBeautyQuiz] = useState(false);
-  const [chatLoaded, setChatLoaded] = useState(false);
   const textareaRef = useRef(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [chatHistory, setChatHistory] = useState([]);
   const [quizResults, setQuizResults] = useState({
     skin_type: "",
     concern: "",
@@ -62,6 +63,117 @@ export default function ConsultationChat({ route, title, initialMessage }) {
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
   const { primaryToast, destructiveToast } = useFormToast();
+  console.log(route);
+  // Map route to chat type
+  const getChatTypeFromRoute = (route) => {
+    const routeTypeMap = {
+      "trend-analysis": "trend_analysis",
+      skincare: "skincare",
+      "check-ingredients": "ingredient_checker",
+      "treatment-planning": "treatment_planning",
+    };
+    return routeTypeMap[route] || route;
+  };
+
+  // Convert chat history to message format
+  const convertHistoryToMessages = (historyData, currentChatType) => {
+    if (!historyData || !historyData.history) return [];
+
+    const relevantHistory = historyData.history.filter(
+      (item) => item.type === currentChatType
+    );
+
+    const convertedMessages = [];
+
+    relevantHistory.forEach((historyItem, historyIndex) => {
+      const responses = historyItem.response || [];
+
+      responses.forEach((response, responseIndex) => {
+        if (response.role === "user") {
+          convertedMessages.push({
+            id: `history-${historyIndex}-${responseIndex}-user`,
+            sender: "User",
+            content: response.content,
+            timestamp: new Date(historyItem.timestamp),
+            type: "sent",
+            isFromHistory: true,
+          });
+        } else if (
+          response.role === "system" &&
+          response.content &&
+          !response.content.startsWith("You are ")
+        ) {
+          convertedMessages.push({
+            id: `history-${historyIndex}-${responseIndex}-system`,
+            sender: "Consultant",
+            content: response.content,
+            timestamp: new Date(historyItem.timestamp),
+            type: "received",
+            isFromHistory: true,
+          });
+        }
+      });
+    });
+
+    return convertedMessages.sort((a, b) => a.timestamp - b.timestamp);
+  };
+
+  // Load chat history
+  const loadChatHistory = async () => {
+    if (!userId) return;
+
+    setIsLoadingHistory(true);
+    try {
+      const historyData = await Api.client.getChatHistory(userId);
+      setChatHistory(historyData);
+
+      const currentChatType = getChatTypeFromRoute(route);
+      const historyMessages = convertHistoryToMessages(
+        historyData,
+        currentChatType
+      );
+
+      const initialMsg = initialMessage
+        ? {
+            id: `initial-${Date.now()}`,
+            sender: "Consultant",
+            content: initialMessage,
+            timestamp: new Date(),
+            type: "received",
+            isFromHistory: false,
+          }
+        : null;
+
+      const allMessages = [];
+
+      if (initialMsg) {
+        allMessages.push(initialMsg);
+      }
+
+      if (historyMessages.length > 0) {
+        allMessages.push(...historyMessages);
+      }
+
+      if (allMessages.length > 0) {
+        setMessages(allMessages);
+      }
+    } catch (error) {
+      console.error("Error loading chat history:", error);
+      if (initialMessage) {
+        const initialMsg = {
+          id: `initial-${Date.now()}`,
+          sender: "Consultant",
+          content: initialMessage,
+          timestamp: new Date(),
+          type: "received",
+          isFromHistory: false,
+        };
+        setMessages([initialMsg]);
+      }
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const form = useFormHook({
     resolver: zodResolver(formSchema),
@@ -70,55 +182,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       password: "",
     },
   });
-
-  // Helper function to get chat storage key
-  const getChatStorageKey = () => {
-    const userIdentifier = userId || "guest";
-    return `sagee_chat_${route}_${userIdentifier}`;
-  };
-
-  // Helper function to save chat to localStorage
-  const saveChatToStorage = (messagesToSave) => {
-    if (typeof window !== "undefined" && route) {
-      try {
-        const chatData = {
-          messages: messagesToSave,
-          timestamp: new Date().toISOString(),
-          userMessageCount: userMessageCount,
-        };
-        localStorage.setItem(getChatStorageKey(), JSON.stringify(chatData));
-      } catch (error) {
-        console.error("Error saving chat to localStorage:", error);
-      }
-    }
-  };
-
-  // Helper function to load chat from localStorage
-  const loadChatFromStorage = () => {
-    if (typeof window !== "undefined" && route) {
-      try {
-        const savedChat = localStorage.getItem(getChatStorageKey());
-        if (savedChat) {
-          const chatData = JSON.parse(savedChat);
-          return chatData;
-        }
-      } catch (error) {
-        console.error("Error loading chat from localStorage:", error);
-      }
-    }
-    return null;
-  };
-
-  // Helper function to clear chat from storage
-  const clearChatFromStorage = () => {
-    if (typeof window !== "undefined" && route) {
-      try {
-        localStorage.removeItem(getChatStorageKey());
-      } catch (error) {
-        console.error("Error clearing chat from localStorage:", error);
-      }
-    }
-  };
+  console.log(isUserLoggedIn(userId));
 
   async function onSubmit(values) {
     try {
@@ -139,11 +203,24 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       destructiveToast(error.message);
     }
   }
+  const handleInitialMessage = () => {
+    if (!userId && initialMessage && messages.length === 0) {
+      const initialMsg = {
+        id: `initial-${Date.now()}`,
+        sender: "Consultant",
+        content: initialMessage,
+        timestamp: new Date(),
+        type: "received",
+        isFromHistory: false,
+      };
+      setMessages([initialMsg]);
+    }
+  };
 
   // Set mounted state after component mounts
   useEffect(() => {
     setIsMounted(true);
-    // Load message count from localStorage after mounting
+    // Load message count from window.localStorage after mounting
     if (!isUserLoggedIn(userId)) {
       const savedCount = window.localStorage.getItem(
         "sagee_guest_message_count"
@@ -158,41 +235,19 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     }
   }, [userId]);
 
-  // Load chat history when component mounts or userId changes
+  // Load chat history when component mounts or route changes
   useEffect(() => {
-    if (isMounted && route) {
-      const savedChat = loadChatFromStorage();
-      if (savedChat && savedChat.messages) {
-        setMessages(savedChat.messages);
-        if (savedChat.userMessageCount) {
-          setUserMessageCount(savedChat.userMessageCount);
-        }
-        setChatLoaded(true);
-      } else {
-        setChatLoaded(true);
-      }
+    if (isMounted && userId) {
+      setMessages([]);
+      loadChatHistory();
     }
-  }, [isMounted, route, userId]);
+  }, [userId, route, isMounted]);
 
-  // Handle initial message when component mounts
   useEffect(() => {
-    if (initialMessage && chatLoaded) {
-      setMessages((prevMessages) => {
-        // Only add initial message if there are no existing messages
-        if (prevMessages.length === 0) {
-          const initialMsg = {
-            id: Date.now(),
-            sender: "Consultant",
-            content: initialMessage,
-            timestamp: new Date(),
-            type: "received",
-          };
-          return [initialMsg];
-        }
-        return prevMessages;
-      });
+    if (isMounted) {
+      handleInitialMessage();
     }
-  }, [initialMessage, chatLoaded]);
+  }, [isMounted, initialMessage, userId]);
 
   // Handle logout - reset to guest state
   useEffect(() => {
@@ -209,7 +264,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     }
   }, [userId, isMounted]);
 
-  // Save message count to localStorage whenever it changes
+  // Save message count to window.localStorage whenever it changes
   useEffect(() => {
     if (isMounted && typeof window !== "undefined") {
       if (!isUserLoggedIn(userId)) {
@@ -224,13 +279,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       }
     }
   }, [userMessageCount, userId, isMounted]);
-
-  // Save chat to localStorage whenever messages change
-  useEffect(() => {
-    if (isMounted && chatLoaded && messages.length > 0) {
-      saveChatToStorage(messages);
-    }
-  }, [messages, isMounted, chatLoaded, userMessageCount]);
 
   // Check user profile and determine if beauty quiz is needed
   useEffect(() => {
@@ -248,6 +296,8 @@ export default function ConsultationChat({ route, title, initialMessage }) {
 
           if (!hasValidSkinType || !hasValidConcern) {
             setShowBeautyQuiz(true);
+          } else {
+            console.log("User has complete profile, no quiz needed");
           }
         } catch (error) {
           console.error("Error loading user profile:", error);
@@ -448,6 +498,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
         };
 
         ws.current.onclose = () => {
+          console.log("WebSocket disconnected");
           setConnectionStatus("disconnected");
           setTimeout(connectWebSocket, 3000);
         };
@@ -526,7 +577,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     if (isUserLoggedIn(userId)) return true; // Logged in users can send unlimited messages
     return userMessageCount < 3; // Non-logged in users limited to 3 messages
   };
-
   // Add this useEffect to watch for message changes
   useEffect(() => {
     if (message === "") {
@@ -536,6 +586,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
 
   // Handle beauty quiz completion
   const handleQuizCompletion = (results) => {
+    console.log("Beauty quiz completed with results:", results);
     setQuizResults(results);
     setShowBeautyQuiz(false);
     // Compose the thank you message
@@ -577,20 +628,50 @@ Would you like to:
     });
   };
 
-  // Don't render anything until mounted and chat is loaded (prevents hydration mismatch)
-  if (!isMounted || !chatLoaded) {
+  // Loading state
+  if (!isMounted || isLoadingHistory) {
     return (
       <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
         <div className="sticky top-0 z-10 inset-0">
           <SettingsHeader title={title} />
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
+            <div className="text-gray-500">
+              {isLoadingHistory ? "Loading chat history..." : "Loading..."}
+            </div>
+          </div>
         </div>
         <Footer />
       </div>
     );
   }
+
+  // Connection status indicator
+  const ConnectionIndicator = () => {
+    if (connectionStatus === "connected") return null;
+
+    return (
+      <div className="bg-orange-100 border-l-4 border-orange-500 p-3 mb-4">
+        <div className="flex items-center">
+          {connectionStatus === "disconnected" && (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-orange-500 mr-2" />
+              <span className="text-sm text-orange-700">
+                Connecting to consultant...
+              </span>
+            </>
+          )}
+          {connectionStatus === "error" && (
+            <span className="text-sm text-red-700">
+              Connection error. Retrying...
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
@@ -599,6 +680,8 @@ Would you like to:
       </div>
 
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+        <ConnectionIndicator />
+
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -624,7 +707,7 @@ Would you like to:
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                {new Date(msg.timestamp).toLocaleTimeString([], {
+                {msg.timestamp.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
