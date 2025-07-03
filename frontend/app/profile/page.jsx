@@ -20,7 +20,7 @@ import { isUserLoggedIn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { logout, userId } = useAuthStore();
+  const { logout, isAuthenticated } = useAuthStore();
   const [profileImage, setProfileImage] = useState(null);
 
   const handleImageUpload = (event) => {
@@ -52,7 +52,7 @@ export default function ProfilePage() {
       label: "Results",
       bgColor: "bg-blue-50",
       iconColor: "text-blue-600",
-      href: "/profile/results",
+      href: "/results",
     },
     {
       icon: MessageCircle,
@@ -134,7 +134,9 @@ export default function ProfilePage() {
             </label>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Guest User</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {isAuthenticated ? "User" : "Guest User"}
+          </h2>
         </div>
 
         {/* Account Section */}

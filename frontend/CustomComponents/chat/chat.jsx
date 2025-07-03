@@ -44,7 +44,7 @@ const formSchema = z.object({
 });
 
 export default function ConsultationChat({ route, title, initialMessage }) {
-  const { userId } = useAuthStore();
+  const { userId, isAuthenticated } = useAuthStore();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -53,6 +53,8 @@ export default function ConsultationChat({ route, title, initialMessage }) {
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const [showBeautyQuiz, setShowBeautyQuiz] = useState(false);
+  const [chatLoaded, setChatLoaded] = useState(false);
+  const textareaRef = useRef(null);
   const [quizResults, setQuizResults] = useState({
     skin_type: "",
     concern: "",
@@ -68,11 +70,64 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       password: "",
     },
   });
-  console.log(isUserLoggedIn(userId));
-  
+
+  // Helper function to get chat storage key
+  const getChatStorageKey = () => {
+    const userIdentifier = userId || "guest";
+    return `sagee_chat_${route}_${userIdentifier}`;
+  };
+
+  // Helper function to save chat to localStorage
+  const saveChatToStorage = (messagesToSave) => {
+    if (typeof window !== "undefined" && route) {
+      try {
+        const chatData = {
+          messages: messagesToSave,
+          timestamp: new Date().toISOString(),
+          userMessageCount: userMessageCount,
+        };
+        localStorage.setItem(getChatStorageKey(), JSON.stringify(chatData));
+      } catch (error) {
+        console.error("Error saving chat to localStorage:", error);
+      }
+    }
+  };
+
+  // Helper function to load chat from localStorage
+  const loadChatFromStorage = () => {
+    if (typeof window !== "undefined" && route) {
+      try {
+        const savedChat = localStorage.getItem(getChatStorageKey());
+        if (savedChat) {
+          const chatData = JSON.parse(savedChat);
+          return chatData;
+        }
+      } catch (error) {
+        console.error("Error loading chat from localStorage:", error);
+      }
+    }
+    return null;
+  };
+
+  // Helper function to clear chat from storage
+  const clearChatFromStorage = () => {
+    if (typeof window !== "undefined" && route) {
+      try {
+        localStorage.removeItem(getChatStorageKey());
+      } catch (error) {
+        console.error("Error clearing chat from localStorage:", error);
+      }
+    }
+  };
+
   async function onSubmit(values) {
     try {
-      const data = await Api.client.signIn(values);
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
+      const transformedValues = {
+        name: values.name,
+        ...(isEmail ? { email: values.email } : { phone_number: values.email }),
+      };
+      const data = await Api.client.signIn(transformedValues);
       if (data.user_id) {
         useAuthStore.getState().setUserId(data.user_id);
         await setAuthToken(data.user_id);
@@ -88,7 +143,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
   // Set mounted state after component mounts
   useEffect(() => {
     setIsMounted(true);
-    // Load message count from window.localStorage after mounting
+    // Load message count from localStorage after mounting
     if (!isUserLoggedIn(userId)) {
       const savedCount = window.localStorage.getItem(
         "sagee_guest_message_count"
@@ -102,22 +157,42 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       setUserMessageCount(0);
     }
   }, [userId]);
-  
-  useEffect(() => {
-    // Handle initial message when component mounts
-    if (initialMessage && messages.length === 0) {
-      const initialMsg = {
-        id: Date.now(),
-        sender: "Consultant",
-        content: initialMessage,
-        timestamp: new Date(),
-        type: "received",
-      };
 
-      // Add the initial message immediately
-      setMessages([initialMsg]);
+  // Load chat history when component mounts or userId changes
+  useEffect(() => {
+    if (isMounted && route) {
+      const savedChat = loadChatFromStorage();
+      if (savedChat && savedChat.messages) {
+        setMessages(savedChat.messages);
+        if (savedChat.userMessageCount) {
+          setUserMessageCount(savedChat.userMessageCount);
+        }
+        setChatLoaded(true);
+      } else {
+        setChatLoaded(true);
+      }
     }
-  }, [initialMessage, messages.length]);
+  }, [isMounted, route, userId]);
+
+  // Handle initial message when component mounts
+  useEffect(() => {
+    if (initialMessage && chatLoaded) {
+      setMessages((prevMessages) => {
+        // Only add initial message if there are no existing messages
+        if (prevMessages.length === 0) {
+          const initialMsg = {
+            id: Date.now(),
+            sender: "Consultant",
+            content: initialMessage,
+            timestamp: new Date(),
+            type: "received",
+          };
+          return [initialMsg];
+        }
+        return prevMessages;
+      });
+    }
+  }, [initialMessage, chatLoaded]);
 
   // Handle logout - reset to guest state
   useEffect(() => {
@@ -134,7 +209,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     }
   }, [userId, isMounted]);
 
-  // Save message count to window.localStorage whenever it changes
+  // Save message count to localStorage whenever it changes
   useEffect(() => {
     if (isMounted && typeof window !== "undefined") {
       if (!isUserLoggedIn(userId)) {
@@ -149,6 +224,13 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       }
     }
   }, [userMessageCount, userId, isMounted]);
+
+  // Save chat to localStorage whenever messages change
+  useEffect(() => {
+    if (isMounted && chatLoaded && messages.length > 0) {
+      saveChatToStorage(messages);
+    }
+  }, [messages, isMounted, chatLoaded, userMessageCount]);
 
   // Check user profile and determine if beauty quiz is needed
   useEffect(() => {
@@ -166,8 +248,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
 
           if (!hasValidSkinType || !hasValidConcern) {
             setShowBeautyQuiz(true);
-          } else {
-            console.log("User has complete profile, no quiz needed");
           }
         } catch (error) {
           console.error("Error loading user profile:", error);
@@ -267,6 +347,18 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     return content.match(imageRegex) || [];
   };
 
+  const handleInputChange = (e) => {
+    setMessage(e.target.value);
+  };
+
+  // Add this function to reset height
+  const resetTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = "28px";
+    }
+  };
+
   // Function to render message content with images and links
   const renderMessageContent = (content) => {
     const images = detectImages(content);
@@ -328,7 +420,9 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       try {
         const userId = getUserId();
         if (!userId) return;
-        ws.current = new WebSocket(`wss://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`);
+        ws.current = new WebSocket(
+          `ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`
+        );
 
         ws.current.onopen = () => {
           setConnectionStatus("connected");
@@ -354,7 +448,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
         };
 
         ws.current.onclose = () => {
-          console.log("WebSocket disconnected");
           setConnectionStatus("disconnected");
           setTimeout(connectWebSocket, 3000);
         };
@@ -402,7 +495,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
 
       const userMessage = {
         id: Date.now(),
-        sender: "Olivia",
+        sender: "User",
         content: message.trim(),
         timestamp: new Date(),
         type: "sent",
@@ -434,9 +527,15 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     return userMessageCount < 3; // Non-logged in users limited to 3 messages
   };
 
+  // Add this useEffect to watch for message changes
+  useEffect(() => {
+    if (message === "") {
+      resetTextareaHeight();
+    }
+  }, [message]);
+
   // Handle beauty quiz completion
   const handleQuizCompletion = (results) => {
-    console.log("Beauty quiz completed with results:", results);
     setQuizResults(results);
     setShowBeautyQuiz(false);
     // Compose the thank you message
@@ -478,8 +577,8 @@ Would you like to:
     });
   };
 
-  // Don't render anything until mounted (prevents hydration mismatch)
-  if (!isMounted) {
+  // Don't render anything until mounted and chat is loaded (prevents hydration mismatch)
+  if (!isMounted || !chatLoaded) {
     return (
       <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
         <div className="sticky top-0 z-10 inset-0">
@@ -520,12 +619,12 @@ Would you like to:
                 {msg.sender}
               </div>
               <div
-                className={`rounded-2xl px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-yellow-100 rounded-tr-md" : "bg-green-100 rounded-tl-md"}`}
+                className={`rounded-2xl overflow-x-hidden flex flex-wrap px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-yellow-100 rounded-tr-md" : "bg-green-100 rounded-tl-md"}`}
               >
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                {msg.timestamp.toLocaleTimeString([], {
+                {new Date(msg.timestamp).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
@@ -583,8 +682,9 @@ Would you like to:
           </div>
         )}
 
-        <div className="flex  items-center space-x-3 bg-gray-100 rounded-full px-4 py-3">
-          <input
+        <div className="relative flex items-center space-x-3 bg-gray-100 rounded-[20px] px-4 min-h-[44px]">
+          <textarea
+            ref={textareaRef}
             type="text"
             placeholder={
               !isUserLoggedIn(userId) && isMounted && userMessageCount >= 3
@@ -592,19 +692,32 @@ Would you like to:
                 : "Message"
             }
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyPress}
             disabled={!canSendMessage() || connectionStatus !== "connected"}
-            className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-500 disabled:opacity-50"
+            className="flex-1 bg-transparent border-none outline-none py-1 text-gray-700 placeholder-gray-500 disabled:opacity-50 resize-none overflow-hidden min-h-[28px] max-h-[200px]"
+            rows={1}
+            style={{
+              height: "auto",
+              minHeight: "28px",
+            }}
+            onInput={(e) => {
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
           />
           <button
-            onClick={sendMessage}
+            onClick={() => {
+              sendMessage();
+              // Reset textarea height after sending
+              resetTextareaHeight();
+            }}
             disabled={
               !message.trim() ||
               connectionStatus !== "connected" ||
               !canSendMessage()
             }
-            className="p-2 text-green-600 hover:bg-green-50 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-2 text-green-600 hover:bg-green-50 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -612,7 +725,7 @@ Would you like to:
       </div>
 
       {/* Login Popup Modal */}
-      {showLoginPopup && (
+      {!isAuthenticated && userMessageCount >= 3 && (
         <div className="fixed inset-0   flex items-end bottom-[78px] justify-center z-50">
           <div className=" bg-white p-6 w-full">
             <div className="text-center mb-3">
@@ -663,12 +776,12 @@ Would you like to:
       )}
 
       <Footer />
-        
-        <BeautyQuizPopup
-          isOpen={showBeautyQuiz}
-          setIsOpen={setShowBeautyQuiz}
-          onComplete={handleQuizCompletion}
-        />
+
+      <BeautyQuizPopup
+        isOpen={showBeautyQuiz}
+        setIsOpen={setShowBeautyQuiz}
+        onComplete={handleQuizCompletion}
+      />
     </div>
   );
 }
