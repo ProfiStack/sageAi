@@ -276,11 +276,15 @@ Sagee: That’s more of a skin treatment topic! For that, I recommend asking the
 async def get_ai_response(feature_type: str, message: str, user_id: str):
     try:
         db = SessionLocal()
-        user_data = get_user_session_data(db, user_id)
-        
-        system_prompt = get_feature_prompt(feature_type, user_data)
-        messages = [{"role": "system", "content": system_prompt}]
+        try:
+            user_data = get_user_session_data(db, user_id)
+        finally:
+            db.close()
 
+        system_prompt = get_feature_prompt(feature_type, user_data)
+        print(system_prompt)
+
+        messages = [{"role": "system", "content": system_prompt}]
         chat_history = user_data.get('chat_history', [])[-10:]
         messages.extend(chat_history)
         messages.append({"role": "user", "content": message})
@@ -289,6 +293,7 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
             return "Thank you for chatting with us :)"
 
         try:
+            # Assuming synchronous SDK call; consider async if available
             response = chat_gpt.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=messages,
@@ -299,12 +304,15 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
             print(f"[OpenAI] API call failed: {e}")
             return "Sorry! I had trouble generating a response. Please try again in a moment."
 
-        # Save message to DB
         db_message = messages.copy()
         db_message.append({"role": "system", "content": ai_response})
 
         try:
-            save_chat_message(db, user_id, feature_type, message, db_message)
+            db = SessionLocal()
+            try:
+                save_chat_message(db, user_id, feature_type, message, db_message)
+            finally:
+                db.close()
         except Exception as db_err:
             print(f"[DB] Error saving chat history: {db_err}")
 

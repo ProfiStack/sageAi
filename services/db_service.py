@@ -11,6 +11,26 @@ def get_or_create_user_profile(db: Session, user_id: str):
         db.refresh(profile)
     return profile
 
+import json
+
+def parse_json_field(field):
+    if isinstance(field, dict):
+        return field
+    try:
+        return json.loads(field)
+    except Exception:
+        return {}
+
+import json
+
+def parse_json_field(field):
+    if isinstance(field, dict):
+        return field
+    try:
+        return json.loads(field)
+    except Exception:
+        return {}
+
 def get_user_session_data(db, user_id: str):
     profile = get_or_create_user_profile(db, user_id)
     
@@ -24,19 +44,24 @@ def get_user_session_data(db, user_id: str):
     )
     
     chat_history = []
-    # Reverse so oldest first
+    
+    # Reverse to chronological order
     for record in reversed(history):
-        # Append user message
-        if record.message:
+        message_obj = parse_json_field(record.message)
+        response_obj = parse_json_field(record.response)
+        
+        # Append user message if valid
+        if message_obj and isinstance(message_obj, dict):
             chat_history.append({
-                "role": record.message.get("role", "user"),
-                "content": record.message.get("content", "")
+                "role": message_obj.get("role", "user"),
+                "content": message_obj.get("content", "")
             })
-        # Append AI response
-        if record.response:
+        
+        # Append assistant response if valid
+        if response_obj and isinstance(response_obj, dict):
             chat_history.append({
-                "role": record.response.get("role", "assistant"),
-                "content": record.response.get("content", "")
+                "role": response_obj.get("role", "assistant"),
+                "content": response_obj.get("content", "")
             })
     
     return {
@@ -46,6 +71,8 @@ def get_user_session_data(db, user_id: str):
         "concern": profile.concern,
         "preferred_routine": profile.preferred_routine,
     }
+
+
 
 def get_all_user_profiles(db):
     return db.query(UserProfile).all()
