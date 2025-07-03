@@ -13,7 +13,7 @@ def get_or_create_user_profile(db: Session, user_id: str):
 
 def get_user_session_data(db, user_id: str):
     profile = get_or_create_user_profile(db, user_id)
-    history = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.created_at.desc()).limit(10).all()
+    history = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.timestamp.desc()).limit(10).all()
     chat_history = [{"role": m.role, "content": m.content} for m in reversed(history)]
     return {
         "chat_history": chat_history,
