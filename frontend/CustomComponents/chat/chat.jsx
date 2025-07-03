@@ -23,6 +23,7 @@ import { z } from "zod";
 import { setAuthToken } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useFormToast from "../FormToast/FormToast";
+import { WebSocketProvider, useWebSocketContext } from "@/app/providers/chatProvider";
 
 const formSchema = z.object({
   email: z.string().refine(
@@ -43,12 +44,17 @@ const formSchema = z.object({
   ),
 });
 
-export default function ConsultationChat({ route, title, initialMessage }) {
+function ConsultationChatComponent({ route, title, initialMessage }) {
   const { userId, isAuthenticated } = useAuthStore();
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const {
+    messages,
+    isTyping,
+    isReady,
+    sendMessage,
+    setMessages,
+    connectionStatus,
+  } = useWebSocketContext();
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
@@ -60,10 +66,9 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     skin_type: "",
     concern: "",
   });
-  const ws = useRef(null);
   const messagesEndRef = useRef(null);
   const { primaryToast, destructiveToast } = useFormToast();
-  console.log(route);
+
   // Map route to chat type
   const getChatTypeFromRoute = (route) => {
     const routeTypeMap = {
@@ -182,7 +187,6 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       password: "",
     },
   });
-  console.log(isUserLoggedIn(userId));
 
   async function onSubmit(values) {
     try {
@@ -203,6 +207,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
       destructiveToast(error.message);
     }
   }
+
   const handleInitialMessage = () => {
     if (!userId && initialMessage && messages.length === 0) {
       const initialMsg = {
@@ -462,114 +467,40 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     );
   };
 
-  useEffect(() => {
-    // Don't connect WebSocket on server side
-    if (typeof window === "undefined") return;
-
-    const connectWebSocket = () => {
-      try {
-        const userId = getUserId();
-        if (!userId) return;
-        ws.current = new WebSocket(
-          `wss://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`
-        );
-
-        ws.current.onopen = () => {
-          setConnectionStatus("connected");
-        };
-
-        ws.current.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          if (data.type === "typing") {
-            setIsTyping(true);
-          } else if (data.type === "typing_stop") {
-            setIsTyping(false);
-          } else if (data.type === "message") {
-            const newMessage = {
-              id: Date.now(),
-              sender: data.sender || "Consultant",
-              content: data.content,
-              timestamp: new Date(),
-              type: "received",
-            };
-            setMessages((prev) => [...prev, newMessage]);
-            setIsTyping(false);
-          }
-        };
-
-        ws.current.onclose = () => {
-          console.log("WebSocket disconnected");
-          setConnectionStatus("disconnected");
-          setTimeout(connectWebSocket, 3000);
-        };
-
-        ws.current.onerror = (error) => {
-          console.error("WebSocket error:", error);
-          setConnectionStatus("error");
-        };
-      } catch (error) {
-        console.error("Failed to connect WebSocket:", error);
-        setConnectionStatus("error");
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
-    };
-  }, [route]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const sendMessage = () => {
-    if (
-      message.trim() &&
-      ws.current &&
-      ws.current.readyState === WebSocket.OPEN
-    ) {
-      // Check if user is logged in
-      if (!isUserLoggedIn(userId)) {
-        const newCount = userMessageCount + 1;
-        setUserMessageCount(newCount);
-
-        // If user has sent 3 messages, show login popup
-        if (newCount >= 3) {
-          setShowLoginPopup(true);
-          return;
-        }
-      }
-
-      const userMessage = {
+  const handleSend = () => {
+    if (!isReady) {
+      console.warn("WebSocket not ready yet, skipping send");
+      return;
+    }
+  
+    sendMessage({
+      type: "message",
+      content: message.trim(),
+      sender: "user",
+      timestamp: new Date().toISOString(),
+    });
+  
+    setMessages((prev) => [
+      ...prev,
+      {
         id: Date.now(),
         sender: "User",
         content: message.trim(),
         timestamp: new Date(),
         type: "sent",
-      };
-      setMessages((prev) => [...prev, userMessage]);
-
-      ws.current.send(
-        JSON.stringify({
-          type: "message",
-          content: message.trim(),
-          sender: "user",
-          timestamp: new Date().toISOString(),
-        })
-      );
-
-      setMessage("");
-    }
+      },
+    ]);
+    setMessage("");
   };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSend();
     }
   };
 
@@ -577,6 +508,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
     if (isUserLoggedIn(userId)) return true; // Logged in users can send unlimited messages
     return userMessageCount < 3; // Non-logged in users limited to 3 messages
   };
+
   // Add this useEffect to watch for message changes
   useEffect(() => {
     if (message === "") {
@@ -650,7 +582,7 @@ Would you like to:
 
   // Connection status indicator
   const ConnectionIndicator = () => {
-    if (connectionStatus === "connected") return null;
+    if (isReady) return null;
 
     return (
       <div className="bg-orange-100 border-l-4 border-orange-500 p-3 mb-4">
@@ -777,7 +709,7 @@ Would you like to:
             value={message}
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
-            disabled={!canSendMessage() || connectionStatus !== "connected"}
+            disabled={!canSendMessage() || !isReady}
             className="flex-1 bg-transparent border-none outline-none py-1 text-gray-700 placeholder-gray-500 disabled:opacity-50 resize-none overflow-hidden min-h-[28px] max-h-[200px]"
             rows={1}
             style={{
@@ -791,7 +723,7 @@ Would you like to:
           />
           <button
             onClick={() => {
-              sendMessage();
+              handleSend();
               // Reset textarea height after sending
               resetTextareaHeight();
             }}
@@ -868,3 +800,5 @@ Would you like to:
     </div>
   );
 }
+
+export default ConsultationChatComponent;
