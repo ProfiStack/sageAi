@@ -3,13 +3,13 @@ from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
 from db import SessionLocal
-from services.db_service import save_chat_message, update_user_profile
-from services.db_service import get_or_create_user_profile, save_chat_message
+from services.db_service import (
+    save_chat_message, update_user_profile, get_or_create_user_profile,
+    get_user_session_data, update_user_session_metrics
+)
 
 load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-user_sessions = {}
 
 class ConnectionManager:
     def __init__(self):
@@ -22,8 +22,6 @@ class ConnectionManager:
     def disconnect(self, user_id: str):
         if user_id in self.active_connections:
             del self.active_connections[user_id]
-        if user_id in user_sessions:
-            user_sessions[user_id]["last_active"] = datetime.now().isoformat()
 
     async def send_message(self, message: dict, user_id: str):
         if user_id in self.active_connections:
@@ -201,13 +199,6 @@ Sagee:  I can help you best with skincare routines and treatment plans. Could yo
 
 # Main function to get the appropriate prompt based on feature
 def get_feature_prompt(feature_type: str, user_metrics: dict):
-    """
-    Get the appropriate system prompt based on feature type
-    
-    Args:
-        feature_type: 'general', 'trend_analysis', 'ingredient_checker', or 'treatment_plan'
-        user_metrics: Dictionary containing user's skin data
-    """
     if feature_type == 'trend_analysis':
         return get_trend_analysis_prompt(user_metrics)
     elif feature_type == 'ingredient_checker':
@@ -215,7 +206,6 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
     elif feature_type == 'treatment_planning':
         return get_treatment_plan_prompt(user_metrics)
     else:
-        # Default to general skincare prompt
         return get_system_prompt(user_metrics)
 
 def get_system_prompt(user_metrics):
@@ -287,56 +277,40 @@ def initialize_user_session(user_id: str):
         }
 
 
-def update_user_metrics(user_id: str, **kwargs):
-    """Update user metrics like skin_type, lifestyle, etc."""
-    if user_id in user_sessions:
-        for key, value in kwargs.items():
-            if key in ['skin_type', 'lifestyle', 'concern', 'preferred_routine']:
-                user_sessions[user_id][key] = value
-
 async def get_ai_response(feature_type: str, message: str, user_id: str):
-    # Initialize user session if it doesn't exist
-    initialize_user_session(user_id)
-    user_data = user_sessions[user_id]
+    db = SessionLocal()
+    user_data = get_user_session_data(db, user_id)
     system_prompt = get_feature_prompt(feature_type, user_data)
-    print("Generated system prompt:")
-    print(system_prompt)
-    print("-" * 50)
-    
+
     messages = [{"role": "system", "content": system_prompt}]
     chat_history = user_data.get('chat_history', [])[-10:]
     messages.extend(chat_history)
     messages.append({"role": "user", "content": message})
+
     if "end chat" in message:
         return "Thank you for chatting with us :)"
+
     response = chat_gpt.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
         temperature=0.7,
     )
-    ai_response = response.choices[0].message.content
-    db_message = messages;
-    db_message.append({"role": "system", "content": ai_response})
-    type=feature_type
-    save_chat_message(SessionLocal(), user_id, type, message, db_message)
-    
-    # Update chat history
-    user_sessions[user_id]['chat_history'].extend([
-        {"role": "user", "content": message},
-        {"role": "system", "content": ai_response}
-    ])
-    user_sessions[user_id]['last_active'] = datetime.now().isoformat()
 
+    ai_response = response.choices[0].message.content
+    db_message = messages.copy()
+    db_message.append({"role": "system", "content": ai_response})
+
+    save_chat_message(db, user_id, feature_type, message, db_message)
     return ai_response
 
 
 
 # Example usage functions
 async def handle_user_onboarding(user_id: str, skin_type: str, lifestyle: str, concern: str, preferred_routine: str):
-    """Call this when user completes onboarding"""
-    initialize_user_session(user_id)
-    update_user_metrics(
-        user_id, 
+    db = SessionLocal()
+    update_user_session_metrics(
+        db,
+        user_id,
         skin_type=skin_type,
         lifestyle=lifestyle,
         concern=concern,
