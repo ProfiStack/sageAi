@@ -306,34 +306,10 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
 
         db_message = messages.copy()
         db_message.append({"role": "system", "content": ai_response})
-
-        try:
-            db = SessionLocal()
-            try:
-                save_chat_message(db, user_id, feature_type, message, db_message)
-            finally:
-                db.close()
-        except Exception as db_err:
-            print(f"[DB] Error saving chat history: {db_err}")
-
+        save_chat_message(db, user_id, feature_type, message, db_message)
+        db.close()
         return ai_response
-
     except Exception as outer_err:
         print(f"[get_ai_response] Fatal error: {outer_err}")
         return "Oops! Something went wrong. Please try again later."
 
-
-
-
-
-# Example usage functions
-async def handle_user_onboarding(user_id: str, skin_type: str, lifestyle: str, concern: str, preferred_routine: str):
-    db = SessionLocal()
-    update_user_session_metrics(
-        db,
-        user_id,
-        skin_type=skin_type,
-        lifestyle=lifestyle,
-        concern=concern,
-        preferred_routine=preferred_routine
-    )

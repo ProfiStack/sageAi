@@ -21,10 +21,5 @@ async def health_check():
                 "active_users": manager.get_active_users()
             }
         }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "timestamp": datetime.now().isoformat(),
-            "error": str(e)
-        }
+    finally:
+        db.close()

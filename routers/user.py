@@ -15,12 +15,12 @@ async def get_chat_history(user_id: str, limit: int = 20):
             raise HTTPException(status_code=404, detail="User not found")
 
         chat_history = user_data.get('chat_history', [])
+        db.close()
         return {
             "user_id": user_id,
             "history": chat_history[-limit:],
             "total_messages": len(chat_history)
         }
-
     except Exception as e:
         print(f"[get_chat_history] Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -36,6 +36,7 @@ async def clear_chat_history(user_id: str):
 
         # Reset history in DB
         update_user_session_metrics(db, user_id, chat_history=[])
+        db.close()
         return {"message": "Chat history cleared", "user_id": user_id}
 
     except Exception as e:
@@ -65,7 +66,7 @@ async def get_all_users():
                 "message_count": len(chat_history),
                 "is_connected": profile.user_id in manager.active_connections
             })
-
+        db.close()
         return {
             "total_users": len(users),
             "active_connections": len(manager.active_connections),

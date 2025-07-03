@@ -51,6 +51,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: s
                     "content": ai_response,
                     "timestamp": datetime.now().isoformat(),
                 }
+                db.close()
                 await manager.send_message(response_msg, user_id)
 
             except json.JSONDecodeError:
