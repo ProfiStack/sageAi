@@ -33,12 +33,12 @@ def parse_json_field(field):
     except Exception:
         return {}
 
-def get_user_session_data(db, user_id: str):
+def get_user_session_data(db, user_id: str, feature_type: str):
     profile = get_or_create_user_profile(db, user_id)
     # Fetch last 10 chat messages ordered by timestamp descending
     history = (
         db.query(ChatMessage)
-        .filter(ChatMessage.user_id == user_id)
+        .filter(ChatMessage.user_id == user_id, ChatMessage.type == feature_type)
         .order_by(ChatMessage.timestamp.desc())
         .limit(10)
         .all()

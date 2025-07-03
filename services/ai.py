@@ -280,7 +280,7 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
     try:
         db = SessionLocal()
         try:
-            user_data = get_user_session_data(db, user_id)
+            user_data = get_user_session_data(db, user_id, feature_type)
         finally:
             db.close()
 
