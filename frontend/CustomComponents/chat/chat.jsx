@@ -421,7 +421,7 @@ export default function ConsultationChat({ route, title, initialMessage }) {
         const userId = getUserId();
         if (!userId) return;
         ws.current = new WebSocket(
-          `ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`
+          `wss://${process.env.NEXT_PUBLIC_BASE_URL}/ws/${route}/${userId}`
         );
 
         ws.current.onopen = () => {
