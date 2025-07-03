@@ -13,8 +13,32 @@ def get_or_create_user_profile(db: Session, user_id: str):
 
 def get_user_session_data(db, user_id: str):
     profile = get_or_create_user_profile(db, user_id)
-    history = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.timestamp.desc()).limit(10).all()
-    chat_history = [{"role": m.role, "content": m.content} for m in reversed(history)]
+    
+    # Fetch last 10 chat messages ordered by timestamp descending
+    history = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.user_id == user_id)
+        .order_by(ChatMessage.timestamp.desc())
+        .limit(10)
+        .all()
+    )
+    
+    chat_history = []
+    # Reverse so oldest first
+    for record in reversed(history):
+        # Append user message
+        if record.message:
+            chat_history.append({
+                "role": record.message.get("role", "user"),
+                "content": record.message.get("content", "")
+            })
+        # Append AI response
+        if record.response:
+            chat_history.append({
+                "role": record.response.get("role", "assistant"),
+                "content": record.response.get("content", "")
+            })
+    
     return {
         "chat_history": chat_history,
         "skin_type": profile.skin_type,
