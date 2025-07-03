@@ -4,14 +4,17 @@ from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
 from db import SessionLocal
-from services.db_service import (
-    save_chat_message, update_user_profile,
-    get_or_create_user_profile, get_user_session_data,
-    update_user_session_metrics
-)
+import asyncio
+from services.db_service import save_chat_message, get_user_session_data
+
+from concurrent.futures import ThreadPoolExecutor
+
+executor = ThreadPoolExecutor()
+
 
 load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 class ConnectionManager:
     def __init__(self):
@@ -19,7 +22,6 @@ class ConnectionManager:
 
     async def connect(self, user_id: str, websocket):
         try:
-            await websocket.accept()
             self.active_connections[user_id] = websocket
         except Exception as e:
             print(f"[connect] Failed to connect user {user_id}: {e}")
@@ -41,17 +43,17 @@ class ConnectionManager:
     def get_active_users(self):
         return list(self.active_connections.keys())
 
-manager = ConnectionManager()
 
+manager = ConnectionManager()
 
 
 def get_trend_analysis_prompt(user_metrics):
     # Handle None values gracefully
-    skin_type = user_metrics.get('skin_type') or 'Not specified'
-    lifestyle = user_metrics.get('lifestyle') or 'Not specified'
-    concern = user_metrics.get('concern') or 'Not specified'
-    preferred_routine = user_metrics.get('preferred_routine') or 'Not specified'
-    
+    skin_type = user_metrics.get("skin_type") or "Not specified"
+    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
+    preferred_routine = user_metrics.get("preferred_routine") or "Not specified"
+
     return f"""You are Sagee. A trend-savvy skincare companion who highlights what’s hot and trending in the skincare world, based on popularity, social mentions, and new launches.
 
 You are one of many chat bots that have been deployed into our APP.
@@ -99,11 +101,11 @@ Sagee: That sounds like a skincare treatment! You should ask the Skin Treatment 
 
 def get_ingredient_checker_prompt(user_metrics):
     # Handle None values gracefully
-    skin_type = user_metrics.get('skin_type') or 'Not specified'
-    lifestyle = user_metrics.get('lifestyle') or 'Not specified'
-    concern = user_metrics.get('concern') or 'Not specified'
-    preferred_routine = user_metrics.get('preferred_routine') or 'Not specified'
-    
+    skin_type = user_metrics.get("skin_type") or "Not specified"
+    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
+    preferred_routine = user_metrics.get("preferred_routine") or "Not specified"
+
     return f"""You are Sagee. A knowledgeable skincare ingredients expert that helps users understand what goes into their products — whether it's safe, beneficial, or suited to their skin type.
 
 You are one of many chat bots that have been deployed into our APP.
@@ -151,11 +153,11 @@ Sagee: I focus only on ingredients. For product advice, the Skincare Chat bot ca
 
 def get_treatment_plan_prompt(user_metrics):
     # Handle None values gracefully
-    skin_type = user_metrics.get('skin_type') or 'Not specified'
-    lifestyle = user_metrics.get('lifestyle') or 'Not specified'
-    concern = user_metrics.get('concern') or 'Not specified'
-    preferred_routine = user_metrics.get('preferred_routine') or 'Not specified'
-    
+    skin_type = user_metrics.get("skin_type") or "Not specified"
+    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
+    preferred_routine = user_metrics.get("preferred_routine") or "Not specified"
+
     return f"""You are Sagee. A smart, supportive skincare consultant who recommends concise treatment plans based on the user's skin concerns.
 
 You are one of many chat bots that been deployed into our APP.
@@ -204,15 +206,14 @@ Sagee:  I can help you best with skincare routines and treatment plans. Could yo
 """
 
 
-
 # Main function to get the appropriate prompt based on feature
 def get_feature_prompt(feature_type: str, user_metrics: dict):
     try:
-        if feature_type == 'trend_analysis':
+        if feature_type == "trend_analysis":
             return get_trend_analysis_prompt(user_metrics)
-        elif feature_type == 'ingredient_checker':
+        elif feature_type == "ingredient_checker":
             return get_ingredient_checker_prompt(user_metrics)
-        elif feature_type == 'treatment_planning':
+        elif feature_type == "treatment_planning":
             return get_treatment_plan_prompt(user_metrics)
         else:
             return get_system_prompt(user_metrics)
@@ -223,11 +224,11 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
 
 def get_system_prompt(user_metrics):
     # Your existing general skincare prompt
-    skin_type = user_metrics.get('skin_type') or 'Not specified'
-    lifestyle = user_metrics.get('lifestyle') or 'Not specified'
-    concern = user_metrics.get('concern') or 'Not specified'
-    preferred_routine = user_metrics.get('preferred_routine') or 'Not specified'
-    
+    skin_type = user_metrics.get("skin_type") or "Not specified"
+    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
+    preferred_routine = user_metrics.get("preferred_routine") or "Not specified"
+
     return f"""You are Sagee. A friendly, concise skincare chatbot who helps users with daily skincare routines, product recommendations, and general skin wellness advice.
 
 You are one of many chat bots that have been deployed into our APP.
@@ -285,7 +286,7 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
         print(system_prompt)
 
         messages = [{"role": "system", "content": system_prompt}]
-        chat_history = user_data.get('chat_history', [])[-10:]
+        chat_history = user_data.get("chat_history", [])[-10:]
         messages.extend(chat_history)
         messages.append({"role": "user", "content": message})
 
@@ -294,10 +295,13 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
 
         try:
             # Assuming synchronous SDK call; consider async if available
-            response = chat_gpt.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
-                temperature=0.7,
+            response = await asyncio.get_event_loop().run_in_executor(
+                executor,
+                lambda: chat_gpt.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    temperature=0.7,
+                ),
             )
             ai_response = response.choices[0].message.content
         except Exception as e:
@@ -312,4 +316,3 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
     except Exception as outer_err:
         print(f"[get_ai_response] Fatal error: {outer_err}")
         return "Oops! Something went wrong. Please try again later."
-
