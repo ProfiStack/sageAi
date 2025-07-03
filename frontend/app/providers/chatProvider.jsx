@@ -68,72 +68,85 @@ export const WebSocketProvider = ({ children, route }) => {
 
   useEffect(() => {
     if (!userId || !route) return;
-  
+
     let retryTimeout = null;
-  
+
     const connect = () => {
       if (ws.current) {
-        ws.current.close();
-        ws.current = null;
-      }
-  
-      ws.current = new WebSocket(socketUrl);
-  
-      ws.current.onopen = () => {
-        setIsReady(true);
-        setConnectionStatus("connected");
-        queuedMessages.current.forEach((msg) => ws.current.send(JSON.stringify(msg)));
-        queuedMessages.current = [];
-        loadHistory();
-      };
-  
-      ws.current.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "typing") {
-          setIsTyping(true);
-        } else if (data.type === "typing_stop") {
-          setIsTyping(false);
-        } else if (data.type === "message") {
-          const newMessage = {
-            id: Date.now(),
-            sender: data.sender || "Consultant",
-            content: data.content,
-            timestamp: new Date(),
-            type: "received",
-          };
-          setMessages((prev) => [...prev, newMessage]);
-          setIsTyping(false);
-        }
-      };
-  
-      ws.current.onclose = () => {
-        setConnectionStatus("disconnected");
-        setIsReady(false);
-        setIsTyping(false);
-        ws.current = null;
-        retryTimeout = setTimeout(connect, 3000); // reconnect in 3s
-      };
-  
-      ws.current.onerror = (err) => {
-        setConnectionStatus("error");
-        console.error("WebSocket error:", err);
-        if(ws.current) {
+          ws.current.onopen = null;
+          ws.current.onmessage = null;
+          ws.current.onerror = null;
+          ws.current.onclose = null;
           ws.current.close();
+          ws.current.close();
+          ws.current = null;
+        }
+
+        ws.current = new WebSocket(socketUrl);
+
+        ws.current.onopen = () => {
+          setIsReady(true);
+          setConnectionStatus("connected");
+          queuedMessages.current.forEach((msg) => ws.current.send(JSON.stringify(msg)));
+          queuedMessages.current = [];
+          loadHistory();
+        };
+
+        ws.current.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          console.log("[WS RECEIVED]:", data); // <--- see what's coming in
+          if (data.type === "typing") {
+            setIsTyping(true);
+          } else if (data.type === "typing_stop") {
+            setIsTyping(false);
+          } else if (data.type === "message") {
+            const newMessage = {
+              id: Date.now(),
+              sender: data.sender || "Consultant",
+              content: data.content,
+              timestamp: new Date(),
+              type: "received",
+            };
+            setMessages((prev) => [...prev, newMessage]);
+            setIsTyping(false);
+          }
+        };
+
+        ws.current.onclose = () => {
+          setConnectionStatus("disconnected");
+          setIsReady(false);
+          setIsTyping(false);
+          ws.current = null;
+          retryTimeout = setTimeout(connect, 3000); // reconnect in 3s
+        };
+
+        ws.current.onerror = (err) => {
+          setConnectionStatus("error");
+          console.error("WebSocket error:", err);
+          if (ws.current) {
+            ws.current.close();
+          }
+        };
+      };
+
+      connect();
+
+      return () => {
+        if (retryTimeout) clearTimeout(retryTimeout);
+          if (ws.current) {
+            ws.current.onopen = null;
+            ws.current.onmessage = null;
+            ws.current.onerror = null;
+            ws.current.onclose = null;
+            ws.current.close();
+            ws.current = null;
         }
       };
-    };
-  
-    connect();
-  
-    return () => {
-      if (retryTimeout) clearTimeout(retryTimeout);
-      if (ws.current) {
-        ws.current.close();
-        ws.current = null;
-      }
-    };
-  }, [userId, route, socketUrl, loadHistory]);
-  
+    }, [userId, route, socketUrl, loadHistory]);
+    useEffect(() => {
+      setMessages([]);  // Clear messages on route change
+      setIsTyping(false);
+    }, [route]);
 
   // Send message helper
   const sendMessage = (msg) => {
