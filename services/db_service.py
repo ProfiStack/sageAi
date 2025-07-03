@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from models.db_models import UserProfile, ChatMessage
 from datetime import datetime
+import json
+
 
 def get_or_create_user_profile(db: Session, user_id: str):
     profile = db.query(UserProfile).filter_by(user_id=user_id).first()
@@ -11,7 +13,7 @@ def get_or_create_user_profile(db: Session, user_id: str):
         db.refresh(profile)
     return profile
 
-import json
+
 
 def parse_json_field(field):
     if isinstance(field, dict):
@@ -21,7 +23,7 @@ def parse_json_field(field):
     except Exception:
         return {}
 
-import json
+
 
 def parse_json_field(field):
     if isinstance(field, dict):
@@ -33,7 +35,6 @@ def parse_json_field(field):
 
 def get_user_session_data(db, user_id: str):
     profile = get_or_create_user_profile(db, user_id)
-    
     # Fetch last 10 chat messages ordered by timestamp descending
     history = (
         db.query(ChatMessage)
@@ -42,30 +43,15 @@ def get_user_session_data(db, user_id: str):
         .limit(10)
         .all()
     )
-    
-    chat_history = []
-    
-    # Reverse to chronological order
-    for record in reversed(history):
-        message_obj = parse_json_field(record.message)
-        response_obj = parse_json_field(record.response)
-        
-        # Append user message if valid
-        if message_obj and isinstance(message_obj, dict):
-            chat_history.append({
-                "role": message_obj.get("role", "user"),
-                "content": message_obj.get("content", "")
-            })
-        
-        # Append assistant response if valid
-        if response_obj and isinstance(response_obj, dict):
-            chat_history.append({
-                "role": response_obj.get("role", "assistant"),
-                "content": response_obj.get("content", "")
-            })
-    
+    responses = []
+    for msg in history:
+        resp = json.loads(msg.response) if isinstance(msg.response, str) else msg.response
+        if isinstance(resp, list):
+            responses.extend(resp)  # flatten list of messages
+        else:
+            responses.append(resp)  # single message object
     return {
-        "chat_history": chat_history,
+        "chat_history": responses,
         "skin_type": profile.skin_type,
         "lifestyle": profile.lifestyle,
         "concern": profile.concern,
@@ -73,17 +59,18 @@ def get_user_session_data(db, user_id: str):
     }
 
 
-
 def get_all_user_profiles(db):
     return db.query(UserProfile).all()
 
+
 def update_user_session_metrics(db, user_id: str, **kwargs):
     profile = get_or_create_user_profile(db, user_id)
-    for key in ['skin_type', 'lifestyle', 'concern', 'preferred_routine']:
+    for key in ["skin_type", "lifestyle", "concern", "preferred_routine"]:
         if key in kwargs and kwargs[key] is not None:
             setattr(profile, key, kwargs[key])
     profile.last_active = datetime.utcnow()
     db.commit()
+
 
 def update_user_profile(db: Session, user_id: str, updates: dict):
     profile = get_or_create_user_profile(db, user_id)
@@ -93,7 +80,10 @@ def update_user_profile(db: Session, user_id: str, updates: dict):
     db.commit()
     return profile
 
-def save_chat_message(db: Session, user_id: str,type: str, message: str, response: str):
+
+def save_chat_message(
+    db: Session, user_id: str, type: str, message: str, response: str
+):
     # Ensure user profile exists and update last_active
     profile = get_or_create_user_profile(db, user_id)
     profile.last_active = datetime.utcnow()
@@ -112,7 +102,7 @@ def save_chat_message(db: Session, user_id: str,type: str, message: str, respons
             type=type,
             message=message,
             response=response,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
         db.add(new_chat)
 

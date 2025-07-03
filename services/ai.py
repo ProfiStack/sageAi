@@ -283,10 +283,9 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
             db.close()
 
         system_prompt = get_feature_prompt(feature_type, user_data)
-        print(system_prompt)
-
         messages = [{"role": "system", "content": system_prompt}]
         chat_history = user_data.get("chat_history", [])[-10:]
+
         messages.extend(chat_history)
         messages.append({"role": "user", "content": message})
 
