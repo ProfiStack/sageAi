@@ -5,6 +5,29 @@ from services.db_service import get_user_session_data, update_user_session_metri
 
 router = APIRouter()
 
+
+@router.get("/user/{user_id}/history/{feature_type}")
+async def get_chat_history(user_id: str, feature_type: str, limit: int = 20):
+    try:
+        print(f"[get_chat_history] Feature type: {feature_type}")
+        db = SessionLocal()
+        user_data = get_user_session_data(db, user_id, feature_type)
+
+        if not user_data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        chat_history = user_data.get("chat_history", [])
+        db.close()
+        return {
+            "user_id": user_id,
+            "history": chat_history[-limit:],
+            "total_messages": len(chat_history),
+        }
+    except Exception as e:
+        print(f"[get_chat_history] Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get("/user/{user_id}/history")
 async def get_chat_history(user_id: str, limit: int = 20):
     try:
@@ -14,36 +37,17 @@ async def get_chat_history(user_id: str, limit: int = 20):
         if not user_data:
             raise HTTPException(status_code=404, detail="User not found")
 
-        chat_history = user_data.get('chat_history', [])
+        chat_history = user_data.get("chat_history", [])
         db.close()
         return {
             "user_id": user_id,
             "history": chat_history[-limit:],
-            "total_messages": len(chat_history)
+            "total_messages": len(chat_history),
         }
     except Exception as e:
         print(f"[get_chat_history] Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
-@router.get("/user/{user_id}/history/{feature_type}")
-async def get_chat_history(user_id: str, feature_type: str, limit: int = 20):
-    try:
-        db = SessionLocal()
-        user_data = get_user_session_data(db, user_id, feature_type)
 
-        if not user_data:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        chat_history = user_data.get('chat_history', [])
-        db.close()
-        return {
-            "user_id": user_id,
-            "history": chat_history[-limit:],
-            "total_messages": len(chat_history)
-        }
-    except Exception as e:
-        print(f"[get_chat_history] Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.delete("/user/{user_id}/history")
 async def clear_chat_history(user_id: str):
@@ -63,6 +67,7 @@ async def clear_chat_history(user_id: str):
         print(f"[clear_chat_history] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to clear chat history")
 
+
 @router.get("/users")
 async def get_all_users():
     try:
@@ -72,25 +77,28 @@ async def get_all_users():
         # Simulate listing users from DB if you have a profile table
         # This part assumes `get_all_user_profiles` exists (can help you write it if needed)
         from services.db_service import get_all_user_profiles
+
         all_profiles = get_all_user_profiles(db)
 
         for profile in all_profiles:
             user_data = get_user_session_data(db, profile.user_id)
-            chat_history = user_data.get('chat_history', []) if user_data else []
-            users.append({
-                "user_id": profile.user_id,
-                "skin_type": profile.skin_type,
-                "concern": profile.concern,
-                "created_at": profile.created_at,
-                "last_active": profile.last_active,
-                "message_count": len(chat_history),
-                "is_connected": profile.user_id in manager.active_connections
-            })
+            chat_history = user_data.get("chat_history", []) if user_data else []
+            users.append(
+                {
+                    "user_id": profile.user_id,
+                    "skin_type": profile.skin_type,
+                    "concern": profile.concern,
+                    "created_at": profile.created_at,
+                    "last_active": profile.last_active,
+                    "message_count": len(chat_history),
+                    "is_connected": profile.user_id in manager.active_connections,
+                }
+            )
         db.close()
         return {
             "total_users": len(users),
             "active_connections": len(manager.active_connections),
-            "users": users
+            "users": users,
         }
 
     except Exception as e:

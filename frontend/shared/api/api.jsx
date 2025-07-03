@@ -94,8 +94,9 @@ export const Api = {
     },
     getChatHistory: async (userId, feature_type) => {
       try {
+        if (!feature_type) {return;}
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history/${feature_type}`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history/${feature_type.feature_type}`,
           {
             method: "GET",
             next: {

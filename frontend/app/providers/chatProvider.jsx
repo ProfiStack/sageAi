@@ -89,7 +89,7 @@ export const WebSocketProvider = ({ children, route }) => {
           setConnectionStatus("connected");
           queuedMessages.current.forEach((msg) => ws.current.send(JSON.stringify(msg)));
           queuedMessages.current = [];
-          loadHistory();
+          // loadHistory();
         };
 
         ws.current.onmessage = (event) => {

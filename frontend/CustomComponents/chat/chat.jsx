@@ -84,15 +84,11 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
   const convertHistoryToMessages = (historyData, currentChatType) => {
     if (!historyData || !historyData.history) return [];
 
-    const relevantHistory = historyData.history.filter(
-      (item) => item.type === currentChatType
-    );
-
+    const relevantHistory = [...historyData.history]
     const convertedMessages = [];
 
     relevantHistory.forEach((historyItem, historyIndex) => {
       const responses = historyItem.response || [];
-
       responses.forEach((response, responseIndex) => {
         if (response.role === "user") {
           convertedMessages.push({
@@ -125,8 +121,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
   // Load chat history
   const loadChatHistory = async () => {
-    if (!userId) return;
-
+    if (!userId && !route) return;
     setIsLoadingHistory(true);
     try {
       const historyData = await Api.client.getChatHistory(userId, {feature_type: route});
@@ -137,7 +132,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         historyData,
         currentChatType
       );
-
       const initialMsg = initialMessage
         ? {
             id: `initial-${Date.now()}`,
@@ -160,8 +154,10 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       }
 
       if (allMessages.length > 0) {
+        
         setMessages(allMessages);
       }
+      
     } catch (error) {
       console.error("Error loading chat history:", error);
       if (initialMessage) {
@@ -173,6 +169,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
           type: "received",
           isFromHistory: false,
         };
+        console.log('hereee1');
         setMessages([initialMsg]);
       }
     } finally {
@@ -218,6 +215,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         type: "received",
         isFromHistory: false,
       };
+      console.log('hereee2');
       setMessages([initialMsg]);
     }
   };
@@ -242,7 +240,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
   // Load chat history when component mounts or route changes
   useEffect(() => {
-    if (isMounted && userId) {
+    if (isMounted && userId && route) {
+      console.log("loading chat history");
       setMessages([]);
       loadChatHistory();
     }
@@ -521,6 +520,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     console.log("Beauty quiz completed with results:", results);
     setQuizResults(results);
     setShowBeautyQuiz(false);
+    console.log('hereee3');
     // Compose the thank you message
     const thankYouText = `Hi, I'm your skincare consultant. Thanks for sharing you have **${results.skin_type}** skin and you're looking to improve **${results.concern}**
 
@@ -604,7 +604,7 @@ Would you like to:
       </div>
     );
   };
-
+  console.log(messages);
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
       <div className="sticky top-0 z-10 inset-0">
