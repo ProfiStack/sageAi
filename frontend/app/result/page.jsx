@@ -33,7 +33,7 @@ const ChatButtons = () => {
         console.log(history);
         const updated = mergeChatIdIntoMockData(resultPageData, history);
         setData(updated);
-        console.log(data)
+        console.log(updated)
         // Create a map: type => chatId
        
       } catch (err) {

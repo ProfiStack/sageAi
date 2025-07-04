@@ -110,7 +110,7 @@ export const resultPageData = {
       description: "Real-time trend analysis with expert insights.",
       icon: <TrendingUp />,
       route: "/trend-analysis",
-      type: "trend-analysis"
+      type: "trend_analysis"
     },
     {
       id: "check-ingredients",
@@ -129,7 +129,7 @@ export const resultPageData = {
       description: "Professional treatment options and explanations.",
       icon: <Calendar />,
       route: "/treatment-planning",
-      type: "treatment-planning"
+      type: "treatment_plan"
     },
   ],
 
