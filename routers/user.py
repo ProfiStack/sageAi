@@ -39,6 +39,7 @@ executor = ThreadPoolExecutor()
 @router.get("/user/{user_id}/chat/{chat_id}")
 async def get_or_create_chat_results(user_id: str, chat_id: str):
     db = SessionLocal()
+    print(user_id, chat_id);
     chat_data = get_user_chat_data(db, user_id, chat_id)
     
     if "results" in chat_data:
@@ -61,7 +62,6 @@ async def get_or_create_chat_results(user_id: str, chat_id: str):
             ),
         )
         ai_response = response.choices[0].message.content
-        print(ai_response);
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
 
@@ -75,7 +75,7 @@ async def get_or_create_chat_results(user_id: str, chat_id: str):
     db.add(new_result)
     db.commit()
 
-    return {"results": ai_response}
+    return {"results": ai_response.replace("\n", "").replace("\r", "")}
 
 @router.get("/user/{user_id}/history/{feature_type}")
 async def get_chat_history(user_id: str, feature_type: str, limit: int = 20):

@@ -70,8 +70,6 @@ def get_user_chat_data(db: Session, user_id: str, chat_id: str):
     history = (
         db.query(ChatMessage)
         .filter(ChatMessage.user_id == user_id, ChatMessage.id == chat_id)
-        .order_by(ChatMessage.timestamp.desc())
-        .limit(10)
         .all()
     )
 

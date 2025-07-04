@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, JSON, DateTime, TEXT
+from sqlalchemy import Column, String, JSON, DateTime, TEXT, UniqueConstraint
 from db import Base
 
 class UserProfile(Base):
@@ -35,3 +35,6 @@ class ChatResults(Base):
     chat_id = Column(String, index=True)
     results = Column(TEXT)  # e.g. skincare, nutrition
     timestamp = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (
+        UniqueConstraint('user_id', 'chat_id', name='uq_user_chat'),
+    )
