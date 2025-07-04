@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, JSON, DateTime
+from sqlalchemy import Column, String, JSON, DateTime, TEXT
 from db import Base
 
 class UserProfile(Base):
@@ -26,4 +26,12 @@ class ChatMessage(Base):
     type = Column(String)  # e.g. skincare, nutrition
     message = Column(JSON)
     response = Column(JSON)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class ChatResults(Base):
+    __tablename__ = "chat_results"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, index=True)
+    chat_id = Column(String, index=True)
+    results = Column(TEXT)  # e.g. skincare, nutrition
     timestamp = Column(DateTime, default=datetime.utcnow)

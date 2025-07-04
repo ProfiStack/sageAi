@@ -33,10 +33,28 @@ def get_profile(user_id: str, db: Session = Depends(get_db)):
         last_active=profile.last_active.isoformat()
     )
 
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
 @router.post("/user/{user_id}/profile")
 def update_profile(user_id: str, profile_data: UserProfileRequest, db: Session = Depends(get_db)):
-    update_user_profile(db, user_id, profile_data.dict(exclude_unset=True))
-    return {"message": "Profile updated successfully", "user_id": user_id}
+    updated_profile = update_user_profile(db, user_id, profile_data.dict(exclude_unset=True))
+    return {
+        "message": "Profile updated successfully",
+        "user_id": user_id,
+        "profile": {
+            "email": updated_profile.email,
+            "phone_number": updated_profile.phone_number,
+            "gender": updated_profile.gender,
+            "skin_type": updated_profile.skin_type,
+            "name": updated_profile.name,
+            "age": updated_profile.age,
+            "lifestyle": updated_profile.lifestyle,
+            "concern": updated_profile.concern,
+            "preferred_routine": updated_profile.preferred_routine,
+            "last_active": updated_profile.last_active.isoformat(),
+        }
+    }
 
 
 @router.get("/user/{user_id}/history")

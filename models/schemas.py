@@ -12,7 +12,14 @@ class ChatResponse(BaseModel):
     user_id: str
     timestamp: str
 
+class ChatResultResponse(BaseModel):
+    response: str
+    timestamp: str
+
 class UserProfileRequest(BaseModel):
+    name: Optional[str] = None
+    age: Optional[str] = None
+    gender: Optional[str] = None
     skin_type: Optional[str] = None
     lifestyle: Optional[str] = None
     concern: Optional[str] = None

@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
-from models.db_models import UserProfile, ChatMessage
+from models.db_models import UserProfile, ChatMessage, ChatResults
 from datetime import datetime
 import json
 
 
 def get_or_create_user_profile(db: Session, user_id: str):
-    profile = db.query(UserProfile).filter_by(user_id=user_id).first()
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
     if not profile:
         profile = UserProfile(user_id=user_id)
         db.add(profile)
@@ -58,6 +58,33 @@ def get_user_session_data(db, user_id: str, feature_type: str):
         "preferred_routine": profile.preferred_routine,
     }
 
+def get_user_chat_data(db: Session, user_id: str, chat_id: str):
+    existing = (
+        db.query(ChatResults)
+        .filter(ChatResults.user_id == user_id, ChatResults.chat_id == chat_id)
+        .first()
+    )
+    if existing:
+        return {"results": existing.results.replace("\n", "").replace("\r", "")}
+
+    history = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.user_id == user_id, ChatMessage.id == chat_id)
+        .order_by(ChatMessage.timestamp.desc())
+        .limit(10)
+        .all()
+    )
+
+    responses = []
+    for msg in history:
+        resp = json.loads(msg.response) if isinstance(msg.response, str) else msg.response
+        if isinstance(resp, list):
+            responses.extend(resp)
+        else:
+            responses.append(resp)
+
+    return {"chat_history": responses}
+
 
 def get_all_user_profiles(db):
     return db.query(UserProfile).all()
@@ -75,9 +102,18 @@ def update_user_session_metrics(db, user_id: str, **kwargs):
 def update_user_profile(db: Session, user_id: str, updates: dict):
     profile = get_or_create_user_profile(db, user_id)
     for k, v in updates.items():
-        setattr(profile, k, v)
+        if hasattr(profile, k):
+            setattr(profile, k, v)
+        else:
+            print(f"Warning: UserProfile has no attribute '{k}'")
+
     profile.last_active = datetime.utcnow()
-    db.commit()
+
+    db.flush()  # flush changes
+    db.commit()  # commit transaction
+
+    db.refresh(profile)  # refresh to get latest from DB
+
     return profile
 
 

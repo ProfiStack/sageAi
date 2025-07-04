@@ -1,10 +1,81 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from services.ai import manager
+from sqlalchemy.orm import Session
+from models.db_models import ChatResults  # Your SQLAlchemy models
 from db import SessionLocal
-from services.db_service import get_user_session_data, update_user_session_metrics
+from services.db_service import get_user_session_data, update_user_session_metrics, get_user_chat_data
+from concurrent.futures import ThreadPoolExecutor
+import uuid
+from datetime import datetime
+import asyncio
+from openai import OpenAI
+from dotenv import load_dotenv
+import os
 
 router = APIRouter()
+load_dotenv()
+chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+
+system_prompt = (
+    "You are Sagee, a skincare ingredients expert who generates beautiful, detailed HTML summaries from user conversations.\n\n"
+    "Your task:\n"
+    "Given the full conversation history with a user, generate a visually clear HTML output summarizing:\n\n"
+    "1. Chat interaction summary (what user asked, confusion if present)\n"
+    "2. Clarified intent (if possible — even if user typed random inputs)\n"
+    "3. Product recommendations (broad categories like \"serum with niacinamide\")\n"
+    "4. Ingredient recommendations or alerts (e.g. **warn about allergens**)\n\n"
+    "Output Format:\n"
+    "- Use <div>, <h2>, <p>, <ul>, <li>, <strong>, <em> etc. for clear structure\n"
+    "- Use 1 emoji maximum to keep tone friendly\n"
+    "- Add subtle inline styles like padding, font-family, color for readability\n"
+    "- Avoid hardcoding specific products unless the user names them\n"
+    "- Mention if the chat was confusing, and how Sagee tried to guide the user"
+)
+
+router = APIRouter()
+executor = ThreadPoolExecutor()
+
+@router.get("/user/{user_id}/chat/{chat_id}")
+async def get_or_create_chat_results(user_id: str, chat_id: str):
+    db = SessionLocal()
+    chat_data = get_user_chat_data(db, user_id, chat_id)
+    
+    if "results" in chat_data:
+        return {"results": chat_data["results"]}
+
+    chat_history = chat_data["chat_history"]
+    if not chat_history:
+        raise HTTPException(status_code=404, detail="No chat messages found.")
+    
+    messages = [{"role": "system", "content": system_prompt}]
+
+    messages.extend(chat_history)
+    try:
+        response = await asyncio.get_event_loop().run_in_executor(
+            executor,
+            lambda: chat_gpt.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0.7,
+            ),
+        )
+        ai_response = response.choices[0].message.content
+        print(ai_response);
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+
+    new_result = ChatResults(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        chat_id=chat_id,
+        results=ai_response,
+        timestamp=datetime.utcnow(),
+    )
+    db.add(new_result)
+    db.commit()
+
+    return {"results": ai_response}
 
 @router.get("/user/{user_id}/history/{feature_type}")
 async def get_chat_history(user_id: str, feature_type: str, limit: int = 20):
