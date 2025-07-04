@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from services.ai import manager
 from sqlalchemy.orm import Session
-from models.db_models import ChatResults  # Your SQLAlchemy models
+from models.db_models import ChatResults, ChatMessage  # Your SQLAlchemy models
 from db import SessionLocal
 from services.db_service import get_user_session_data, update_user_session_metrics, get_user_chat_data
 from concurrent.futures import ThreadPoolExecutor
@@ -35,6 +35,28 @@ system_prompt = (
 
 router = APIRouter()
 executor = ThreadPoolExecutor()
+
+@router.get("/user/{user_id}/history")
+def get_chat_history_by_type(user_id: str, limit: int = 20):
+    db = SessionLocal()
+    history = db.query(ChatMessage)\
+                .filter_by(user_id=user_id)\
+                .order_by(ChatMessage.timestamp.desc())\
+                .limit(limit)\
+                .all()
+    
+    return {
+        "user_id": user_id,
+        "history": [
+            {
+                "message": chat.message,
+                "id": chat.id,
+                "response": chat.response,
+                "timestamp": chat.timestamp,
+                "type": chat.type
+            } for chat in history
+        ]
+    }
 
 @router.get("/user/{user_id}/chat/{chat_id}")
 async def get_or_create_chat_results(user_id: str, chat_id: str):
@@ -99,25 +121,6 @@ async def get_chat_history(user_id: str, feature_type: str, limit: int = 20):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/user/{user_id}/history")
-async def get_chat_history(user_id: str, limit: int = 20):
-    try:
-        db = SessionLocal()
-        user_data = get_user_session_data(db, user_id)
-
-        if not user_data:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        chat_history = user_data.get("chat_history", [])
-        db.close()
-        return {
-            "user_id": user_id,
-            "history": chat_history[-limit:],
-            "total_messages": len(chat_history),
-        }
-    except Exception as e:
-        print(f"[get_chat_history] Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/user/{user_id}/history")

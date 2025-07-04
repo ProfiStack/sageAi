@@ -14,7 +14,6 @@ def get_or_create_user_profile(db: Session, user_id: str):
     return profile
 
 
-
 def parse_json_field(field):
     if isinstance(field, dict):
         return field
@@ -24,7 +23,6 @@ def parse_json_field(field):
         return {}
 
 
-
 def parse_json_field(field):
     if isinstance(field, dict):
         return field
@@ -32,6 +30,7 @@ def parse_json_field(field):
         return json.loads(field)
     except Exception:
         return {}
+
 
 def get_user_session_data(db, user_id: str, feature_type: str):
     profile = get_or_create_user_profile(db, user_id)
@@ -45,7 +44,9 @@ def get_user_session_data(db, user_id: str, feature_type: str):
     )
     responses = []
     for msg in history:
-        resp = json.loads(msg.response) if isinstance(msg.response, str) else msg.response
+        resp = (
+            json.loads(msg.response) if isinstance(msg.response, str) else msg.response
+        )
         if isinstance(resp, list):
             responses.extend(resp)  # flatten list of messages
         else:
@@ -75,7 +76,9 @@ def get_user_chat_data(db: Session, user_id: str, chat_id: str):
 
     responses = []
     for msg in history:
-        resp = json.loads(msg.response) if isinstance(msg.response, str) else msg.response
+        resp = (
+            json.loads(msg.response) if isinstance(msg.response, str) else msg.response
+        )
         if isinstance(resp, list):
             responses.extend(resp)
         else:
