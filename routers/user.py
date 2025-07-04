@@ -3,7 +3,11 @@ from services.ai import manager
 from sqlalchemy.orm import Session
 from models.db_models import ChatResults, ChatMessage  # Your SQLAlchemy models
 from db import SessionLocal
-from services.db_service import get_user_session_data, update_user_session_metrics, get_user_chat_data
+from services.db_service import (
+    get_user_session_data,
+    update_user_session_metrics,
+    get_user_chat_data,
+)
 from concurrent.futures import ThreadPoolExecutor
 import uuid
 from datetime import datetime
@@ -23,7 +27,7 @@ system_prompt = (
     "Given the full conversation history with a user, generate a visually clear HTML output summarizing:\n\n"
     "1. Chat interaction summary (what user asked, confusion if present)\n"
     "2. Clarified intent (if possible — even if user typed random inputs)\n"
-    "3. Product recommendations (broad categories like \"serum with niacinamide\")\n"
+    '3. Product recommendations (broad categories like "serum with niacinamide")\n'
     "4. Ingredient recommendations or alerts (e.g. **warn about allergens**)\n\n"
     "Output Format:\n"
     "- Use <div>, <h2>, <p>, <ul>, <li>, <strong>, <em> etc. for clear structure\n"
@@ -36,15 +40,18 @@ system_prompt = (
 router = APIRouter()
 executor = ThreadPoolExecutor()
 
+
 @router.get("/user/{user_id}/history")
 def get_chat_history_by_type(user_id: str, limit: int = 20):
     db = SessionLocal()
-    history = db.query(ChatMessage)\
-                .filter_by(user_id=user_id)\
-                .order_by(ChatMessage.timestamp.desc())\
-                .limit(limit)\
-                .all()
-    
+    history = (
+        db.query(ChatMessage)
+        .filter_by(user_id=user_id)
+        .order_by(ChatMessage.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    db.close()
     return {
         "user_id": user_id,
         "history": [
@@ -53,24 +60,26 @@ def get_chat_history_by_type(user_id: str, limit: int = 20):
                 "id": chat.id,
                 "response": chat.response,
                 "timestamp": chat.timestamp,
-                "type": chat.type
-            } for chat in history
-        ]
+                "type": chat.type,
+            }
+            for chat in history
+        ],
     }
+
 
 @router.get("/user/{user_id}/chat/{chat_id}")
 async def get_or_create_chat_results(user_id: str, chat_id: str):
     db = SessionLocal()
-    print(user_id, chat_id);
+    print(user_id, chat_id)
     chat_data = get_user_chat_data(db, user_id, chat_id)
-    
+
     if "results" in chat_data:
         return {"results": chat_data["results"]}
 
     chat_history = chat_data["chat_history"]
     if not chat_history:
         raise HTTPException(status_code=404, detail="No chat messages found.")
-    
+
     messages = [{"role": "system", "content": system_prompt}]
 
     messages.extend(chat_history)
@@ -96,31 +105,35 @@ async def get_or_create_chat_results(user_id: str, chat_id: str):
     )
     db.add(new_result)
     db.commit()
-
+    db.close()
     return {"results": ai_response.replace("\n", "").replace("\r", "")}
 
-@router.get("/user/{user_id}/history/{feature_type}")
-async def get_chat_history(user_id: str, feature_type: str, limit: int = 20):
-    try:
-        print(f"[get_chat_history] Feature type: {feature_type}")
-        db = SessionLocal()
-        user_data = get_user_session_data(db, user_id, feature_type)
 
-        if not user_data:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        chat_history = user_data.get("chat_history", [])
-        db.close()
-        return {
-            "user_id": user_id,
-            "history": chat_history[-limit:],
-            "total_messages": len(chat_history),
-        }
-    except Exception as e:
-        print(f"[get_chat_history] Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
+@router.get("/user/{user_id}/history/{type}")
+def get_chat_history_by_type(
+    user_id: str, type: str, limit: int = 20
+):
+    db = SessionLocal()
+    history = (
+        db.query(ChatMessage)
+        .filter_by(user_id=user_id, type=type)
+        .order_by(ChatMessage.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    db.close()
+    return {
+        "user_id": user_id,
+        "type": type,
+        "history": [
+            {
+                "message": chat.message,
+                "response": chat.response,
+                "timestamp": chat.timestamp,
+            }
+            for chat in history
+        ],
+    }
 
 
 @router.delete("/user/{user_id}/history")
