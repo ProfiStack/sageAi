@@ -94,9 +94,45 @@ export const Api = {
     },
     getChatHistory: async (userId, feature_type) => {
       try {
-        if (!feature_type) {return;}
+        if (!feature_type) {
+          return;
+        }
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history/${feature_type.feature_type}`,
+          ({ globalBaseUrl }) =>
+            `${globalBaseUrl}/api/user/${userId}/history/${feature_type.feature_type}`,
+          {
+            method: "GET",
+            next: {
+              revalidate: 3600, // 1 hour
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getAllChatHistory: async (userId) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history`,
+          {
+            method: "GET",
+            next: {
+              revalidate: 3600, // 1 hour
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getResults: async (userId, chatId) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) =>
+            `${globalBaseUrl}/api/user/${userId}/chat/${chatId}`,
           {
             method: "GET",
             next: {

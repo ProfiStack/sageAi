@@ -23,7 +23,10 @@ import { z } from "zod";
 import { setAuthToken } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useFormToast from "../FormToast/FormToast";
-import { WebSocketProvider, useWebSocketContext } from "@/app/providers/chatProvider";
+import {
+  WebSocketProvider,
+  useWebSocketContext,
+} from "@/app/providers/chatProvider";
 
 const formSchema = z.object({
   email: z.string().refine(
@@ -84,7 +87,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
   const convertHistoryToMessages = (historyData, currentChatType) => {
     if (!historyData || !historyData.history) return [];
 
-    const relevantHistory = [...historyData.history]
+    const relevantHistory = [...historyData.history];
     const convertedMessages = [];
 
     relevantHistory.forEach((historyItem, historyIndex) => {
@@ -124,7 +127,9 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     if (!userId && !route) return;
     setIsLoadingHistory(true);
     try {
-      const historyData = await Api.client.getChatHistory(userId, {feature_type: route});
+      const historyData = await Api.client.getChatHistory(userId, {
+        feature_type: route,
+      });
       setChatHistory(historyData);
 
       const currentChatType = getChatTypeFromRoute(route);
@@ -154,10 +159,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       }
 
       if (allMessages.length > 0) {
-        
         setMessages(allMessages);
       }
-      
     } catch (error) {
       console.error("Error loading chat history:", error);
       if (initialMessage) {
@@ -169,7 +172,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
           type: "received",
           isFromHistory: false,
         };
-        console.log('hereee1');
+        console.log("hereee1");
         setMessages([initialMsg]);
       }
     } finally {
@@ -215,7 +218,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         type: "received",
         isFromHistory: false,
       };
-      console.log('hereee2');
+      console.log("hereee2");
       setMessages([initialMsg]);
     }
   };
@@ -471,14 +474,14 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       console.warn("WebSocket not ready yet, skipping send");
       return;
     }
-  
+
     sendMessage({
       type: "message",
       content: message.trim(),
       sender: "user",
       timestamp: new Date().toISOString(),
     });
-  
+
     setMessages((prev) => [
       ...prev,
       {
@@ -520,7 +523,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     console.log("Beauty quiz completed with results:", results);
     setQuizResults(results);
     setShowBeautyQuiz(false);
-    console.log('hereee3');
+    console.log("hereee3");
     // Compose the thank you message
     const thankYouText = `Hi, I'm your skincare consultant. Thanks for sharing you have **${results.skin_type}** skin and you're looking to improve **${results.concern}**
 
@@ -683,7 +686,7 @@ Would you like to:
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-white border-t border-gray-200 p-4 sticky inset-0  ">
+      <div className="bg-white border-t border-gray-200 p-4 sticky bottom-[76px]  ">
         {!isUserLoggedIn(userId) && isMounted && (
           <div className="mb-3 text-center">
             <span className="text-sm text-gray-600">

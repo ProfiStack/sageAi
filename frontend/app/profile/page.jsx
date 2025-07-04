@@ -50,17 +50,11 @@ export default function ProfilePage() {
     {
       icon: FileText,
       label: "Results",
-      bgColor: "bg-blue-50",
-      iconColor: "text-blue-600",
-      href: "/results",
-    },
-    {
-      icon: MessageCircle,
-      label: "Chat Logs",
       bgColor: "bg-purple-50",
-      iconColor: "text-purple-600",
-      href: "/profile/chat-logs",
+      iconColor: " text-purple-600",
+      href: "/result",
     },
+
     ...(isUserLoggedIn()
       ? [
           {
@@ -96,8 +90,8 @@ export default function ProfilePage() {
     {
       icon: Info,
       label: "About Us",
-      bgColor: "bg-green-50",
-      iconColor: "text-green-600",
+      bgColor: "bg-blue-50",
+      iconColor: "text-blue-600",
       href: "/about",
     },
   ];

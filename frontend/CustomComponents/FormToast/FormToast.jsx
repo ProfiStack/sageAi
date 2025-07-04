@@ -5,8 +5,8 @@ const useFormToast = () => {
 
   const destructiveToast = (msg) => {
     toast({
-      variant: 'destructive',
-      description: msg,
+      variant: "destructive",
+      title: msg,
     });
   };
 
@@ -18,8 +18,8 @@ const useFormToast = () => {
     icon = null,
   }) => {
     toast({
-      variant: 'success',
-      title: 'Success',
+      variant: "success",
+      title: "Success",
       description,
       boldText,
       boldClassName,

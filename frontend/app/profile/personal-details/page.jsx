@@ -6,8 +6,11 @@ import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import useAuthStore from "@/store/authStore";
 import { Api } from "@/shared/api/api";
 import { useRouter } from "next/navigation";
+import useFormToast from "@/CustomComponents/FormToast/FormToast";
 
 export default function PersonalDetailsPage() {
+  const { primaryToast, destructiveToast } = useFormToast();
+
   const router = useRouter();
   const { userId } = useAuthStore();
   const [formData, setFormData] = useState({
@@ -28,15 +31,6 @@ export default function PersonalDetailsPage() {
       }
       try {
         const profileData = await Api.client.getProfile(userId);
-        console.log("Profile data from API:", profileData);
-        console.log("Profile data fields:", {
-          name: profileData?.name,
-          age: profileData?.age,
-          gender: profileData?.gender,
-          skin_type: profileData?.skin_type,
-          concern: profileData?.concern,
-        });
-
         if (profileData) {
           setFormData((prev) => ({
             ...prev,
@@ -66,7 +60,7 @@ export default function PersonalDetailsPage() {
 
   const handleSaveChanges = async () => {
     if (!userId) {
-      alert("Please log in to save your profile");
+      destructiveToast("Please log in to save your profile");
       return;
     }
 
@@ -74,15 +68,16 @@ export default function PersonalDetailsPage() {
     try {
       const response = await Api.client.updateProfile(formData, userId);
       console.log("Profile updated:", response);
-      alert("Profile updated successfully!");
-      router.push("/profile");
+      primaryToast({ description: "Profile updated successfully!" });
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
+      destructiveToast("Failed to update profile. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  console.log(isLoading);
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-md mx-auto">
@@ -91,7 +86,7 @@ export default function PersonalDetailsPage() {
 
       {/* Form Content */}
       <div className="p-6 space-y-6">
-        {!userId && (
+        {!userId && isLoading && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <p className="text-yellow-800 text-sm">
               Please log in to save your profile information.
