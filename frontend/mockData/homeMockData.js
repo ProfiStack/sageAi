@@ -18,6 +18,7 @@ export const mockPageData = {
       description: "Chat with Consultant",
       icon: <MessageCircle />,
       route: "/chat",
+      type: "skincare"
     },
   ],
 
@@ -28,6 +29,7 @@ export const mockPageData = {
       description: "Real-time trend analysis with expert insights.",
       icon: <TrendingUp />,
       route: "/trend-analysis",
+      type: "trend-analysis"
     },
     {
       id: "check-ingredients",
@@ -35,6 +37,7 @@ export const mockPageData = {
       description: "Check product ingredients for compatibility.",
       icon: <AlertTriangle />,
       route: "/check-ingredients",
+      type: "ingredient_checker"
     },
   ],
 
@@ -45,6 +48,7 @@ export const mockPageData = {
       description: "Professional treatment options and explanations.",
       icon: <Calendar />,
       route: "/treatment-planning",
+      type: "treatment-planning"
     },
     {
       id: "find-providers",
@@ -85,4 +89,48 @@ export const mockPageData = {
       route: "/styling",
     },
   ],
+};
+
+export const resultPageData = {
+  main: [
+    {
+      id: "chat",
+      title: "Chat",
+      description: "Chat with Consultant",
+      icon: <MessageCircle />,
+      route: "/chat",
+      type: "skincare"
+    },
+  ],
+
+  insights: [
+    {
+      id: "trend-analysis",
+      title: "Trend Analysis",
+      description: "Real-time trend analysis with expert insights.",
+      icon: <TrendingUp />,
+      route: "/trend-analysis",
+      type: "trend-analysis"
+    },
+    {
+      id: "check-ingredients",
+      title: "Check Ingredients",
+      description: "Check product ingredients for compatibility.",
+      icon: <AlertTriangle />,
+      route: "/check-ingredients",
+      type: "ingredient_checker"
+    },
+  ],
+
+  professional: [
+    {
+      id: "treatment-planning",
+      title: "Treatment Planning",
+      description: "Professional treatment options and explanations.",
+      icon: <Calendar />,
+      route: "/treatment-planning",
+      type: "treatment-planning"
+    },
+  ],
+
 };

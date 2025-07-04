@@ -3,6 +3,7 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
+import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -14,6 +15,7 @@ export default function ResultPage() {
   const chatId = searchParams.get("chatId");
   const params = useParams();
   const type = params.type;
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [formData, setFormData] = useState({
     skin_type: "",
     concern: "",
@@ -41,8 +43,10 @@ export default function ResultPage() {
   useEffect(() => {
     const results = async () => {
       try {
+        setIsLoadingHistory(true);
         const resultData = await Api.client.getResults(userId, chatId);
         setHtmlContent(resultData.results);
+        setIsLoadingHistory(false);
       } catch (error) {
         console.error("Error loading profile:", error);
       }
@@ -54,20 +58,20 @@ export default function ResultPage() {
   return (
     <div className="px-2 flex flex-col justify-between h-screen">
       <div>
-        <SettingsHeader title={type} />
+        <SettingsHeader title={type?.toUpperCase()} />
 
         {formData.skin_type !== "Unknown" && formData.concern !== "Unknown" ? (
           <div className="ps-4">
             <p className="font-semibold text-[22px] text-[#0F1717] mt-3">
               {" "}
-              Skin Snapshot
+              Results Snapshot
             </p>
             <div className="flex items-center gap-3">
               <p className="flex items-center text-[#0F1717] bg-gray-200 px-4 py-2 rounded-[20px] font-semibold text-[14px] mt-2">
-                {formData.skin_type}
+                {formData.skin_type.toUpperCase()}
               </p>
               <p className="flex items-center text-[#0F1717] bg-gray-200 px-4 py-2 rounded-[20px] font-semibold text-[14px] mt-2">
-                {formData.concern}
+                {formData.concern.toUpperCase()}
               </p>
             </div>
           </div>
@@ -104,7 +108,15 @@ export default function ResultPage() {
             )}
           </>
         )}
-        <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+         {isLoadingHistory && <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
+            <div className="text-gray-500">
+              {"Loading chat results..."}
+            </div>
+          </div>
+        </div>}
+        {!isLoadingHistory && <div className="mt-8" dangerouslySetInnerHTML={{ __html: htmlContent }} />}
       </div>
       <Footer />
     </div>
