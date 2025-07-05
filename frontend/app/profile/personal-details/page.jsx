@@ -67,7 +67,6 @@ export default function PersonalDetailsPage() {
     setIsLoading(true);
     try {
       const response = await Api.client.updateProfile(formData, userId);
-      console.log("Profile updated:", response);
       primaryToast({ description: "Profile updated successfully!" });
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -77,7 +76,6 @@ export default function PersonalDetailsPage() {
     }
   };
 
-  console.log(isLoading);
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-md mx-auto">

@@ -95,8 +95,8 @@ export const resultPageData = {
   main: [
     {
       id: "chat",
-      title: "Chat",
-      description: "Chat with Consultant",
+      title: "Skincare",
+      description: "Personalized skincare routine",
       icon: <MessageCircle />,
       route: "/chat",
       type: "skincare"
@@ -106,16 +106,19 @@ export const resultPageData = {
   insights: [
     {
       id: "trend-analysis",
-      title: "Trend Analysis",
-      description: "Real-time trend analysis with expert insights.",
+      title: "Skincare Trends",
+      description: "Popular skincare ingredients",
       icon: <TrendingUp />,
       route: "/trend-analysis",
       type: "trend_analysis"
     },
+  ],
+
+  otherCategories: [
     {
       id: "check-ingredients",
-      title: "Check Ingredients",
-      description: "Check product ingredients for compatibility.",
+      title: "Ingredients Analyzer",
+      description: "The ingredients analyzer has identified the following matches and mismatches for your skin type:",
       icon: <AlertTriangle />,
       route: "/check-ingredients",
       type: "ingredient_checker"
@@ -125,8 +128,8 @@ export const resultPageData = {
   professional: [
     {
       id: "treatment-planning",
-      title: "Treatment Planning",
-      description: "Professional treatment options and explanations.",
+      title: "Treatments",
+      description: "Recommended treatments",
       icon: <Calendar />,
       route: "/treatment-planning",
       type: "treatment_plan"

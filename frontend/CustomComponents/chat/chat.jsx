@@ -172,7 +172,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
           type: "received",
           isFromHistory: false,
         };
-        console.log("hereee1");
         setMessages([initialMsg]);
       }
     } finally {
@@ -218,7 +217,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         type: "received",
         isFromHistory: false,
       };
-      console.log("hereee2");
       setMessages([initialMsg]);
     }
   };
@@ -244,7 +242,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
   // Load chat history when component mounts or route changes
   useEffect(() => {
     if (isMounted && userId && route) {
-      console.log("loading chat history");
       setMessages([]);
       loadChatHistory();
     }
@@ -520,10 +517,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
   // Handle beauty quiz completion
   const handleQuizCompletion = (results) => {
-    console.log("Beauty quiz completed with results:", results);
     setQuizResults(results);
     setShowBeautyQuiz(false);
-    console.log("hereee3");
     // Compose the thank you message
     const thankYouText = `Hi, I'm your skincare consultant. Thanks for sharing you have **${results.skin_type}** skin and you're looking to improve **${results.concern}**
 
@@ -607,7 +602,6 @@ Would you like to:
       </div>
     );
   };
-  console.log(messages);
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
       <div className="sticky top-0 z-10 inset-0">
