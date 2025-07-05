@@ -21,7 +21,6 @@ import { Api } from "@/shared/api/api";
 export default function ProfilePageContent() {
   const router = useRouter();
   const { logout, isAuthenticated, userId } = useAuthStore();
-  const [profileImage, setProfileImage] = useState(null);
   const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,17 +42,6 @@ export default function ProfilePageContent() {
 
     loadProfile();
   }, [userId, isAuthenticated]);
-
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -125,28 +113,9 @@ export default function ProfilePageContent() {
         {/* Profile Section */}
         <div className=" px-6 py-4 text-center">
           <div className="relative inline-block mb-1">
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt="Profile"
-                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-              />
-            ) : (
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-200 to-orange-200 flex items-center justify-center border-4 border-white shadow-lg">
-                <User size={48} className="text-gray-400" />
-              </div>
-            )}
-
-            {/* Upload Button */}
-            <label className="absolute bottom-2 right-2 bg-white rounded-full p-2 shadow-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <Camera size={16} className="text-gray-600" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-200 to-orange-200 flex items-center justify-center border-4 border-white shadow-lg">
+              <User size={48} className="text-gray-400" />
+            </div>
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
