@@ -118,7 +118,7 @@ export const resultPageData = {
     {
       id: "check-ingredients",
       title: "Ingredients Analyzer",
-      description: "The ingredients analyzer has identified the following matches and mismatches for your skin type:",
+      description: "Beneficial ingredients",
       icon: <AlertTriangle />,
       route: "/check-ingredients",
       type: "ingredient_checker"
