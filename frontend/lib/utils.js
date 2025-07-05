@@ -35,3 +35,23 @@ export const isUserLoggedIn = (userId) => {
 
   return false;
 };
+
+// Add this function to track guest messages
+export const incrementGuestMessageCount = () => {
+  if (typeof window === "undefined") return 0;
+
+  const currentCount = parseInt(
+    localStorage.getItem("sagee_guest_message_count") || "0",
+    10
+  );
+  const newCount = currentCount + 1;
+  localStorage.setItem("sagee_guest_message_count", newCount.toString());
+  return newCount;
+};
+
+// Add this function to reset guest message count (call when user logs in)
+export const resetGuestMessageCount = () => {
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem("sagee_guest_message_count");
+};

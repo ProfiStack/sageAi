@@ -8,7 +8,12 @@ import ReactMarkdown from "react-markdown";
 import useAuthStore from "@/store/authStore";
 import SettingsHeader from "../settingsHeader/settingsHeader";
 import BeautyQuizPopup from "../quizzPopup/QuizzPopup";
-import { cn, isUserLoggedIn } from "@/lib/utils";
+import {
+  cn,
+  isUserLoggedIn,
+  incrementGuestMessageCount,
+  resetGuestMessageCount,
+} from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -60,17 +65,13 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     connectionStatus,
   } = useWebSocketContext();
   const { logEvent } = useAmplitude();
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const [showBeautyQuiz, setShowBeautyQuiz] = useState(false);
   const textareaRef = useRef(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [chatHistory, setChatHistory] = useState([]);
-  const [quizResults, setQuizResults] = useState({
-    skin_type: "",
-    concern: "",
-  });
+  const [userName, setUserName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const { primaryToast, destructiveToast } = useFormToast();
 
@@ -132,7 +133,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       const historyData = await Api.client.getChatHistory(userId, {
         feature_type: route,
       });
-      setChatHistory(historyData);
 
       const currentChatType = getChatTypeFromRoute(route);
       const historyMessages = convertHistoryToMessages(
@@ -141,13 +141,13 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       );
       const initialMsg = initialMessage
         ? {
-          id: `initial-${Date.now()}`,
-          sender: "Consultant",
-          content: initialMessage,
-          timestamp: new Date(),
-          type: "received",
-          isFromHistory: false,
-        }
+            id: `initial-${Date.now()}`,
+            sender: "Consultant",
+            content: initialMessage,
+            timestamp: new Date(),
+            type: "received",
+            isFromHistory: false,
+          }
         : null;
 
       const allMessages = [];
@@ -189,12 +189,33 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     },
   });
 
+  useEffect(() => {
+    setIsLoading(true);
+    const loadProfile = async () => {
+      try {
+        const profileData = await Api.client.getProfile(userId);
+        if (profileData?.name) {
+          setUserName(profileData.name);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading profile:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [userId, isAuthenticated, userName]);
+
+  console.log(userName);
+
   async function onSubmit(values) {
     try {
-      logEvent('Onboard Option Clicked', {
-        click_value: 'Sign Up',
-        click_location: 'Chat'
-      })
+      logEvent("Onboard Option Clicked", {
+        click_value: "Sign Up",
+        click_location: "Chat",
+      });
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
@@ -205,7 +226,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         useAuthStore.getState().setUserId(data.user_id);
         await setAuthToken(data.user_id);
         window.localStorage.setItem("sagee_user_id", data.user_id);
-        setShowLoginPopup(false);
+        resetGuestMessageCount();
+        setUserMessageCount(0);
         primaryToast({ description: "Login successful" });
       }
     } catch (error) {
@@ -325,7 +347,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         } else {
           // Guest has completed quiz,
           const results = JSON.parse(guestQuizResults);
-          setQuizResults(results);
         }
       }
     };
@@ -354,7 +375,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
             localStorage.removeItem("sagee_guest_quiz_results");
 
             // Update local profile state
-            setQuizResults(results);
           } catch (error) {
             console.error("Error saving guest quiz results:", error);
           }
@@ -364,15 +384,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
     saveGuestQuizResults();
   }, [userId, isMounted]);
-
-  const getUserId = () => {
-    let uid = window.localStorage.getItem("sagee_user_id");
-    if (!uid) {
-      uid = `user-${Date.now()}`;
-      window.localStorage.setItem("sagee_user_id", uid);
-    }
-    return uid;
-  };
 
   // Function to detect and format URLs in text
   const formatMessageContent = (content) => {
@@ -478,10 +489,16 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       return;
     }
 
+    if (!isUserLoggedIn(userId)) {
+      const newCount = incrementGuestMessageCount();
+      setUserMessageCount(newCount);
+    }
+
     sendMessage({
       type: "message",
       content: message.trim(),
-      sender: "user",
+      sender:
+        isAuthenticated && !isLoading && userName ? userName : "guest user",
       timestamp: new Date().toISOString(),
     });
 
@@ -489,7 +506,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       ...prev,
       {
         id: Date.now(),
-        sender: "User",
+        sender:
+          isAuthenticated && !isLoading && userName ? userName : "guest user",
         content: message.trim(),
         timestamp: new Date(),
         type: "sent",
@@ -523,7 +541,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
   // Handle beauty quiz completion
   const handleQuizCompletion = (results) => {
-    setQuizResults(results);
     setShowBeautyQuiz(false);
     // Compose the thank you message
     const thankYouText = `Hi, I'm your skincare consultant. Thanks for sharing you have **${results.skin_type}** skin and you're looking to improve **${results.concern}**
@@ -634,7 +651,11 @@ Would you like to:
               <div
                 className={`text-sm font-medium mb-1 ${msg.type === "sent" ? "text-orange-500 mr-2" : "text-gray-900"}`}
               >
-                {msg.sender}
+                {msg.type === "received"
+                  ? "Consultant"
+                  : isAuthenticated && !isLoading && userName
+                    ? userName
+                    : "guest user"}
               </div>
               <div
                 className={`rounded-2xl overflow-x-hidden flex flex-wrap px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-yellow-100 rounded-tr-md" : "bg-green-100 rounded-tl-md"}`}

@@ -49,10 +49,10 @@ export default function Login() {
   });
   async function onSubmit(values) {
     try {
-      logEvent('Onboard Option Clicked', {
-        click_value: 'Sign Up',
-        click_location: 'Onboarding'
-      })
+      logEvent("Onboard Option Clicked", {
+        click_value: "Sign Up",
+        click_location: "Onboarding",
+      });
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
@@ -67,7 +67,7 @@ export default function Login() {
         store.setUserId(data.user_id);
         store.setToken(data.user_id);
         store.setIsAuthenticated(true);
-        logEvent('Onboard Sucessful')
+        logEvent("Onboard Sucessful");
         // Transfer guest quiz results to user profile if they exist
         await transferGuestQuizResults(data.user_id);
 
@@ -166,11 +166,11 @@ export default function Login() {
         <Button
           className="w-full mt-3 py-4 text-[16px] font-semibold bg-[#D4B038] text-white rounded-[24px] hover:bg-[#D4B038]"
           onClick={() => {
-            logEvent('Onboard Option Clicked', {
-              click_value: 'Skip',
-              click_location: 'Onboarding'
-            })
-            router.push("/home")
+            logEvent("Onboard Option Clicked", {
+              click_value: "Skip",
+              click_location: "Onboarding",
+            });
+            router.push("/home");
           }}
         >
           Skip for now

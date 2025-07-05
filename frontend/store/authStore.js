@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { autoLogout } from "@/shared/utils/utils";
+import {
+  autoLogout,
+  removeAuthToken,
+  removeLoginTimestamp,
+  removeRefreshToken,
+} from "@/shared/utils/utils";
 
 const useAuthStore = create(
   persist(
@@ -15,11 +20,19 @@ const useAuthStore = create(
       setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
       removeIsAuthenticated: () => set({ isAuthenticated: false }),
       logout: async () => {
+        // Clear store state first
         set({ token: null, userId: null, isAuthenticated: false });
-        await autoLogout();
+
+        // Clear localStorage
         if (typeof window !== "undefined") {
+          localStorage.removeItem("sagee_user_id");
           localStorage.removeItem("auth-store");
         }
+
+        // Call other cleanup functions but don't manipulate store again
+        await removeAuthToken();
+        await removeRefreshToken();
+        await removeLoginTimestamp();
       },
     }),
     {

@@ -4,26 +4,33 @@ import { useEffect } from "react";
 import useAuthStore from "@/store/authStore";
 
 export default function AuthInitializer() {
-  const { setUserId } = useAuthStore();
+  const { setUserId, userId } = useAuthStore();
 
   useEffect(() => {
-    // Initialize auth state from localStorage
+    console.log("AuthInitializer effect running:", { userId });
+
     if (typeof window !== "undefined") {
       const storedUserId = localStorage.getItem("sagee_user_id");
-      if (storedUserId) {
-        console.log(
-          "AuthInitializer: Setting userId from localStorage:",
-          storedUserId
-        );
+
+      // If we don't have a userId in store and no stored ID, create a new guest user
+      if (!userId && !storedUserId) {
+        const newGuestId = `user-${Date.now()}`;
+        localStorage.setItem("sagee_user_id", newGuestId);
+        setUserId(newGuestId);
+        console.log("AuthInitializer: Created new guest user:", newGuestId);
+      }
+      // If we have a stored ID but no userId in store, use the stored one
+      else if (storedUserId && !userId) {
         setUserId(storedUserId);
-      } else {
-       let uid = `user-${Date.now()}`;
-        window.localStorage.setItem("sagee_user_id", uid);
-        setUserId(uid);
+        console.log("AuthInitializer: Using stored userId:", storedUserId);
+      }
+      // If we have userId in store but no stored ID, save it to localStorage
+      else if (userId && !storedUserId) {
+        localStorage.setItem("sagee_user_id", userId);
+        console.log("AuthInitializer: Saved userId to localStorage:", userId);
       }
     }
-  }, [setUserId]);
+  }, [userId, setUserId]);
 
-  // This component doesn't render anything
   return null;
 }
