@@ -3,6 +3,7 @@ import CategoryCard from "./categoryCard/CategoryCard";
 import Image from "next/image";
 import Footer from "../Footer/Footer";
 import { useRouter } from "next/navigation";
+import { logEvent } from "@/shared/utils/analytics";
 
 const SectionHeader = ({ title }) => (
   <h2 className="text-lg font-bold text-gray-900 mb-4 px-4">{title}</h2>
@@ -13,6 +14,9 @@ export default function HomePage() {
   const data = mockPageData;
 
   const handleCategoryClick = (item) => {
+    logEvent('Home Section Clicked', {
+      click_value: item.title,
+    })
     router.push(item.route);
   };
 

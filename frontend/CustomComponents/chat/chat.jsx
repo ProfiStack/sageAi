@@ -189,6 +189,10 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
   async function onSubmit(values) {
     try {
+      logEvent('Onboard Option Clicked', {
+        click_value: 'Sign Up',
+        click_location: 'Chat'
+      })
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
