@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { setAuthToken } from "@/shared/utils/utils";
+import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useFormToast from "../FormToast/FormToast";
 import {
@@ -206,9 +206,13 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     };
 
     loadProfile();
-  }, [userId, isAuthenticated, userName]);
+  }, [userId, isAuthenticated]);
 
-  console.log(userName);
+  console.log("Rendering sender with:", {
+    userName,
+    isAuthenticated,
+    isLoading,
+  });
 
   async function onSubmit(values) {
     try {
@@ -223,9 +227,13 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       };
       const data = await Api.client.signIn(transformedValues);
       if (data.user_id) {
-        useAuthStore.getState().setUserId(data.user_id);
+        await setLoginTimestamp(Date.now());
         await setAuthToken(data.user_id);
         window.localStorage.setItem("sagee_user_id", data.user_id);
+        const store = useAuthStore.getState();
+        store.setUserId(data.user_id);
+        store.setToken(data.user_id);
+        store.setIsAuthenticated(true);
         resetGuestMessageCount();
         setUserMessageCount(0);
         primaryToast({ description: "Login successful" });
