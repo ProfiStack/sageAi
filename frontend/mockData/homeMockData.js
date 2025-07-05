@@ -103,28 +103,6 @@ export const resultPageData = {
     },
   ],
 
-  insights: [
-    {
-      id: "trend-analysis",
-      title: "Skincare Trends",
-      description: "Popular skincare ingredients",
-      icon: <TrendingUp />,
-      route: "/trend-analysis",
-      type: "trend_analysis"
-    },
-  ],
-
-  otherCategories: [
-    {
-      id: "check-ingredients",
-      title: "Ingredients Analyzer",
-      description: "Beneficial ingredients",
-      icon: <AlertTriangle />,
-      route: "/check-ingredients",
-      type: "ingredient_checker"
-    },
-  ],
-
   professional: [
     {
       id: "treatment-planning",
