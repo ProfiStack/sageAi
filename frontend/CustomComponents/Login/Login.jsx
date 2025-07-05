@@ -17,7 +17,7 @@ import useFormToast from "../FormToast/FormToast";
 import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
 import Image from "next/image";
-import { logEvent } from "@/shared/utils/analytics";
+import { useAmplitude } from "@/app/providers/amplitudeProvider";
 const formSchema = z.object({
   email: z.string().refine(
     (value) => {
@@ -38,6 +38,7 @@ const formSchema = z.object({
 });
 export default function Login() {
   const router = useRouter();
+  const { logEvent } = useAmplitude();
   const { primaryToast, destructiveToast } = useFormToast();
   const form = useFormHook({
     resolver: zodResolver(formSchema),

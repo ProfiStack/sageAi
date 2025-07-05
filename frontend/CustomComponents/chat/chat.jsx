@@ -27,6 +27,7 @@ import {
   WebSocketProvider,
   useWebSocketContext,
 } from "@/app/providers/chatProvider";
+import { useAmplitude } from "@/app/providers/amplitudeProvider";
 
 const formSchema = z.object({
   email: z.string().refine(
@@ -58,6 +59,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     setMessages,
     connectionStatus,
   } = useWebSocketContext();
+  const { logEvent } = useAmplitude();
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
@@ -139,13 +141,13 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       );
       const initialMsg = initialMessage
         ? {
-            id: `initial-${Date.now()}`,
-            sender: "Consultant",
-            content: initialMessage,
-            timestamp: new Date(),
-            type: "received",
-            isFromHistory: false,
-          }
+          id: `initial-${Date.now()}`,
+          sender: "Consultant",
+          content: initialMessage,
+          timestamp: new Date(),
+          type: "received",
+          isFromHistory: false,
+        }
         : null;
 
       const allMessages = [];
