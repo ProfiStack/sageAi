@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from db import SessionLocal
 import asyncio
 from services.db_service import save_chat_message, get_user_session_data
-
+from agents import trace
 from concurrent.futures import ThreadPoolExecutor
 
 executor = ThreadPoolExecutor()
@@ -19,6 +19,7 @@ chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 import json
+
 
 class ConnectionManager:
     def __init__(self):
@@ -47,7 +48,9 @@ class ConnectionManager:
                     await websocket.send_text(json.dumps(message))
                     return True
                 except Exception as e:
-                    print(f"[send_message] Error sending to {user_id}/{feature_type}: {e}")
+                    print(
+                        f"[send_message] Error sending to {user_id}/{feature_type}: {e}"
+                    )
                     self.disconnect(user_id, feature_type)
         return False
 
@@ -55,11 +58,10 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-
 def get_trend_analysis_prompt(user_metrics):
     # Handle None values gracefully
     skin_type = user_metrics.get("skin_type") or "Not specified"
-    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
     preferred_routine = user_metrics.get("preferred_routine") or "Minimal"
 
     return f"""You are Sagee. A trend-savvy skincare companion who highlights what’s hot and trending in the skincare world, based on popularity, social mentions, and new launches.
@@ -87,7 +89,7 @@ Rules:
 Personalize advice using the following:
  {{
   "skin_type": {repr(skin_type)},
-  "lifestyle": {repr(lifestyle)},
+  "concern": {repr(concern)},
   "preferred_routine": {repr(preferred_routine)}
 }}
 
@@ -110,7 +112,7 @@ Sagee: That sounds like a skincare treatment! You should ask the Skin Treatment 
 def get_ingredient_checker_prompt(user_metrics):
     # Handle None values gracefully
     skin_type = user_metrics.get("skin_type") or "Not specified"
-    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
     preferred_routine = user_metrics.get("preferred_routine") or "Minimal"
 
     return f"""You are Sagee. A knowledgeable skincare ingredients expert that helps users understand what goes into their products — whether it's safe, beneficial, or suited to their skin type.
@@ -140,7 +142,7 @@ Rules:
 Personalize advice using the following:
  {{
   "skin_type": {repr(skin_type)},
-  "lifestyle": {repr(lifestyle)},
+  "concern": {repr(concern)},
   "preferred_routine": {repr(preferred_routine)}
 }}
 
@@ -161,12 +163,10 @@ Sagee: I focus only on ingredients. For product advice, the Skincare Chat bot ca
 """
 
 
-
-
 def get_treatment_plan_prompt(user_metrics):
     # Handle None values gracefully
     skin_type = user_metrics.get("skin_type") or "Not specified"
-    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
     preferred_routine = user_metrics.get("preferred_routine") or "Minimal"
 
     return f"""You are Sagee. A smart, supportive skincare consultant who recommends concise treatment plans based on the user's skin concerns.
@@ -200,7 +200,7 @@ Rules:
 Personalize advice using the following:
  {{
   "skin_type": {repr(skin_type)},
-  "lifestyle": {repr(lifestyle)},
+  "concern": {repr(concern)},
   "preferred_routine": {repr(preferred_routine)}
 }}
 How to respond:
@@ -219,7 +219,6 @@ Sagee: Platelet-Rich Plasma, is a medical treatment that uses a patient's own bl
 User: What is life?
 Sagee:  I can help you best with skincare routines and treatment plans. Could you tell me more about your skin type or concerns so I can provide some helpful advice? 🌟
 """
-
 
 
 # Main function to get the appropriate prompt based on feature
@@ -241,7 +240,7 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
 def get_system_prompt(user_metrics):
     # Your existing general skincare prompt
     skin_type = user_metrics.get("skin_type") or "Not specified"
-    lifestyle = user_metrics.get("lifestyle") or "Not specified"
+    concern = user_metrics.get("concern") or "Not specified"
     preferred_routine = user_metrics.get("preferred_routine") or "Minimal"
 
     return f"""You are Sagee. A friendly, concise skincare chatbot who helps users with daily skincare routines, product recommendations, and general skin wellness advice.
@@ -269,7 +268,7 @@ Rules:
 Personalize advice using the following:
  {{
   "skin_type": {repr(skin_type)},
-  "lifestyle": {repr(lifestyle)},
+  "concern": {repr(concern)},
   "preferred_routine": {repr(preferred_routine)}
 }}
 
@@ -289,45 +288,43 @@ Sagee: That’s more of a skin treatment topic! For that, I recommend asking the
 """
 
 
-
 async def get_ai_response(feature_type: str, message: str, user_id: str):
-    try:
-        db = SessionLocal()
+    with trace("Skin manager bot"):
         try:
-            user_data = get_user_session_data(db, user_id, feature_type)
-        finally:
+            db = SessionLocal()
+            try:
+                user_data = get_user_session_data(db, user_id, feature_type)
+            finally:
+                db.close()
+
+            system_prompt = get_feature_prompt(feature_type, user_data)
+            messages = [{"role": "system", "content": system_prompt}]
+            chat_history = user_data.get("chat_history", [])[-10:]
+            messages.extend(chat_history)
+            messages.append({"role": "user", "content": message})
+            if "end chat" in message.lower():
+                return "Thank you for chatting with us :)"
+
+            try:
+                # Assuming synchronous SDK call; consider async if available
+                response = await asyncio.get_event_loop().run_in_executor(
+                    executor,
+                    lambda: chat_gpt.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=messages,
+                        temperature=0.7,
+                    ),
+                )
+                ai_response = response.choices[0].message.content
+            except Exception as e:
+                print(f"[OpenAI] API call failed: {e}")
+                return "Sorry! I had trouble generating a response. Please try again in a moment."
+
+            db_message = messages.copy()
+            db_message.append({"role": "system", "content": ai_response})
+            save_chat_message(db, user_id, feature_type, message, db_message)
             db.close()
-
-        system_prompt = get_feature_prompt(feature_type, user_data)
-        messages = [{"role": "system", "content": system_prompt}]
-        chat_history = user_data.get("chat_history", [])[-10:]
-
-        messages.extend(chat_history)
-        messages.append({"role": "user", "content": message})
-
-        if "end chat" in message.lower():
-            return "Thank you for chatting with us :)"
-
-        try:
-            # Assuming synchronous SDK call; consider async if available
-            response = await asyncio.get_event_loop().run_in_executor(
-                executor,
-                lambda: chat_gpt.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=messages,
-                    temperature=0.7,
-                ),
-            )
-            ai_response = response.choices[0].message.content
-        except Exception as e:
-            print(f"[OpenAI] API call failed: {e}")
-            return "Sorry! I had trouble generating a response. Please try again in a moment."
-
-        db_message = messages.copy()
-        db_message.append({"role": "system", "content": ai_response})
-        save_chat_message(db, user_id, feature_type, message, db_message)
-        db.close()
-        return ai_response
-    except Exception as outer_err:
-        print(f"[get_ai_response] Fatal error: {outer_err}")
-        return "Oops! Something went wrong. Please try again later."
+            return ai_response
+        except Exception as outer_err:
+            print(f"[get_ai_response] Fatal error: {outer_err}")
+            return "Oops! Something went wrong. Please try again later."
