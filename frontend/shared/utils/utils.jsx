@@ -776,7 +776,7 @@ export async function isLoginValid() {
   const loginTimestamp = await getLoginTimestamp();
 
   if (!authToken || !loginTimestamp) {
-    useAuthStore.getState().setIsAuthenticated(false);
+    await useAuthStore.getState().logout();
     return false;
   }
 
@@ -791,4 +791,16 @@ export async function autoLogout() {
   await removeAuthToken();
   await removeRefreshToken();
   await removeLoginTimestamp();
+
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("sagee_user_id"); // legacy cleanup
+    localStorage.removeItem("auth-store"); // clear persisted Zustand store
+  }
+
+  if (typeof useAuthStore !== "undefined") {
+    const store = useAuthStore.getState();
+    store.setToken(null);
+    store.setUserId(null);
+    store.setIsAuthenticated(false);
+  }
 }

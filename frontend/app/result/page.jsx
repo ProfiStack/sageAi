@@ -52,8 +52,8 @@ const ChatButtons = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-md mx-auto bg-white min-h-screen">
+    <div className="h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between">
+      <div className="max-w-md mx-auto bg-[#fdfdfd] min-h-screen">
         <div className="relative w-[78px] h-[78px] mx-auto">
           <Image
             src="/images/sagelogo2.png"
@@ -66,7 +66,7 @@ const ChatButtons = () => {
 
         {/* Main Section */}
         {data.main.length > 0 && (
-          <div className="pt-6 pb-4">
+          <div className="pt-6 pb-4 ">
             <SectionHeader title="Consultant chat" />
             <p className="px-5 py-2">
               Based on your chat with our consultant, here are some key

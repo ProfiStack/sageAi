@@ -14,14 +14,14 @@ export default function HomePage() {
   const data = mockPageData;
   const { logEvent } = useAmplitude();
   const handleCategoryClick = (item) => {
-    logEvent('Home Section Clicked', {
+    logEvent("Home Section Clicked", {
       click_value: item.title,
-    })
+    });
     router.push(item.route);
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between">
       <div className="max-w-md mx-auto bg-white min-h-screen">
         <div className="relative w-[78px] h-[78px] mx-auto">
           <Image
