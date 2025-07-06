@@ -67,7 +67,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
   const { logEvent } = useAmplitude();
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
-  const [showBeautyQuiz, setShowBeautyQuiz] = useState(false);
   const textareaRef = useRef(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [userName, setUserName] = useState("");
@@ -208,12 +207,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     loadProfile();
   }, [userId, isAuthenticated]);
 
-  console.log("Rendering sender with:", {
-    userName,
-    isAuthenticated,
-    isLoading,
-  });
-
   async function onSubmit(values) {
     try {
       logEvent("Onboard Option Clicked", {
@@ -237,11 +230,42 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         resetGuestMessageCount();
         setUserMessageCount(0);
         primaryToast({ description: "Login successful" });
+        transferGuestQuizResults(data.user_id);
       }
     } catch (error) {
       destructiveToast(error.message);
     }
   }
+  // Transfer guest quiz results to user profile
+  const transferGuestQuizResults = async (userId) => {
+    try {
+      if (typeof window !== "undefined") {
+        const guestQuizResults = localStorage.getItem(
+          "sagee_guest_quiz_results"
+        );
+
+        if (guestQuizResults) {
+          const { skin_type, concern } = JSON.parse(guestQuizResults);
+
+          if (skin_type || concern) {
+            // Update user profile with guest quiz results
+            const updateData = {
+              skin_type: skin_type || "",
+              concern: concern || "",
+            };
+
+            await Api.client.updateProfile(updateData, userId);
+
+            // Remove guest quiz results from localStorage
+            localStorage.removeItem("sagee_guest_quiz_results");
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error transferring guest quiz results:", error);
+      // Don't block login if transfer fails
+    }
+  };
 
   const handleInitialMessage = () => {
     if (!userId && initialMessage && messages.length === 0) {
@@ -319,79 +343,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       }
     }
   }, [userMessageCount, userId, isMounted]);
-
-  // Check user profile and determine if beauty quiz is needed
-  useEffect(() => {
-    const checkUserProfile = async () => {
-      if (!isMounted) return;
-      if (userId) {
-        // User is logged in - check their profile
-        try {
-          const profileData = await Api.client.getProfile(userId);
-          // Check if user has skin_type and concern
-          const hasValidSkinType =
-            profileData?.skin_type && profileData.skin_type !== "Unknown";
-          const hasValidConcern =
-            profileData?.concern && profileData.concern !== "Unknown";
-
-          if (!hasValidSkinType || !hasValidConcern) {
-            setShowBeautyQuiz(true);
-          } else {
-            console.log("User has complete profile, no quiz needed");
-          }
-        } catch (error) {
-          console.error("Error loading user profile:", error);
-          // If we can't load profile, show quiz to be safe
-          setShowBeautyQuiz(true);
-        }
-      } else {
-        // User is not logged in - check localStorage for guest quiz results
-        const guestQuizResults = localStorage.getItem(
-          "sagee_guest_quiz_results"
-        );
-
-        if (!guestQuizResults) {
-          setShowBeautyQuiz(true);
-        } else {
-          // Guest has completed quiz,
-          const results = JSON.parse(guestQuizResults);
-        }
-      }
-    };
-
-    checkUserProfile();
-  }, [userId, isMounted]);
-
-  // Handle saving guest quiz results when user logs in
-  useEffect(() => {
-    const saveGuestQuizResults = async () => {
-      if (userId && isMounted) {
-        const guestQuizResults = localStorage.getItem(
-          "sagee_guest_quiz_results"
-        );
-        if (guestQuizResults) {
-          try {
-            const results = JSON.parse(guestQuizResults);
-            const updateData = {
-              skin_type: results.skin_type,
-              concern: results.concern,
-            };
-
-            await Api.client.updateProfile(updateData, userId);
-
-            // Clear guest quiz results from localStorage
-            localStorage.removeItem("sagee_guest_quiz_results");
-
-            // Update local profile state
-          } catch (error) {
-            console.error("Error saving guest quiz results:", error);
-          }
-        }
-      }
-    };
-
-    saveGuestQuizResults();
-  }, [userId, isMounted]);
 
   // Function to detect and format URLs in text
   const formatMessageContent = (content) => {
@@ -546,48 +497,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       resetTextareaHeight();
     }
   }, [message]);
-
-  // Handle beauty quiz completion
-  const handleQuizCompletion = (results) => {
-    setShowBeautyQuiz(false);
-    // Compose the thank you message
-    const thankYouText = `Hi, I'm your skincare consultant. Thanks for sharing you have **${results.skin_type}** skin and you're looking to improve **${results.concern}**
-
-Would you like to:
-
-• Get a skincare routine that actually works for you?
-
-• Explore professional treatments that could help?
-
-• Or check if certain products are right for your skin?`;
-    setMessages((prev) => {
-      // If the initial message is present, insert after it; otherwise, append
-      if (prev.length > 0 && prev[0].sender === "Dr. Willow") {
-        return [
-          prev[0],
-          {
-            id: Date.now(),
-            sender: "Dr. Willow",
-            content: thankYouText,
-            timestamp: new Date(),
-            type: "received",
-          },
-          ...prev.slice(1),
-        ];
-      } else {
-        return [
-          ...prev,
-          {
-            id: Date.now(),
-            sender: "Dr. Willow",
-            content: thankYouText,
-            timestamp: new Date(),
-            type: "received",
-          },
-        ];
-      }
-    });
-  };
 
   // Loading state
   if (!isMounted || isLoadingHistory) {
@@ -823,12 +732,6 @@ Would you like to:
       )}
 
       <Footer />
-
-      <BeautyQuizPopup
-        isOpen={showBeautyQuiz}
-        setIsOpen={setShowBeautyQuiz}
-        onComplete={handleQuizCompletion}
-      />
     </div>
   );
 }
