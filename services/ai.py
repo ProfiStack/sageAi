@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from db import SessionLocal
 import asyncio
 from services.db_service import save_chat_message, get_user_session_data
-from agents import trace
 from concurrent.futures import ThreadPoolExecutor
 
 executor = ThreadPoolExecutor()
@@ -86,12 +85,13 @@ Rules:
 - Use emojis sparingly to match a modern tone.
 - Highlight any *ingredient buzzwords* or brand names in **bold**.
 
-Personalize advice using the following:
+Current User Data
  {{
-  "skin_type": {repr(skin_type)},
-  "concern": {repr(concern)},
-  "preferred_routine": {repr(preferred_routine)}
+  "Skin Type": {repr(skin_type)},
+  "Concern": {repr(concern)},
+  "Routine": {repr(preferred_routine)}
 }}
+Use this information to personalize recommendations without asking for it again.
 
 How to respond:
 - Mention 1–2 popular products per category.
@@ -139,12 +139,14 @@ Rules:
 - If asked about a product, analyze 2–3 key ingredients only, not full lists.
 - If you are unaware of a product that the user names, ask the user to give more description about the product.
 
-Personalize advice using the following:
+Current User Data
  {{
-  "skin_type": {repr(skin_type)},
-  "concern": {repr(concern)},
-  "preferred_routine": {repr(preferred_routine)}
+  "Skin Type": {repr(skin_type)},
+  "Concern": {repr(concern)},
+  "Routine": {repr(preferred_routine)}
 }}
+Use this information to personalize recommendations without asking for it again.
+
 
 How to respond:
 - Quickly define ingredients.
@@ -197,12 +199,14 @@ Rules:
 - When recommending treatments add average / potential cost of them in GBP
 - Any part of the message you deem needs highlighting please make it BOLD text
 
-Personalize advice using the following:
+Current User Data
  {{
-  "skin_type": {repr(skin_type)},
-  "concern": {repr(concern)},
-  "preferred_routine": {repr(preferred_routine)}
+  "Skin Type": {repr(skin_type)},
+  "Concern": {repr(concern)},
+  "Routine": {repr(preferred_routine)}
 }}
+Use this information to personalize recommendations without asking for it again.
+
 How to respond:
 - Suggest a short, treatment plan if requested
 - Reply back with a 2 - 3 sentence message if its regarding a generic inquiry about a procedure
@@ -265,12 +269,13 @@ Rules:
 - When recommending products, mention approximate cost in GBP and general availability.
 - Highlight key actions or tips in **bold** text.
 
-Personalize advice using the following:
+Current User Data
  {{
-  "skin_type": {repr(skin_type)},
-  "concern": {repr(concern)},
-  "preferred_routine": {repr(preferred_routine)}
+  "Skin Type": {repr(skin_type)},
+  "Concern": {repr(concern)},
+  "Routine": {repr(preferred_routine)}
 }}
+Use this information to personalize recommendations without asking for it again.
 
 How to respond:
 - Offer quick, simple routine tips or product layering advice.
@@ -289,42 +294,41 @@ Sagee: That’s more of a skin treatment topic! For that, I recommend asking the
 
 
 async def get_ai_response(feature_type: str, message: str, user_id: str):
-    with trace("Skin manager bot"):
+    try:
+        db = SessionLocal()
         try:
-            db = SessionLocal()
-            try:
-                user_data = get_user_session_data(db, user_id, feature_type)
-            finally:
-                db.close()
-
-            system_prompt = get_feature_prompt(feature_type, user_data)
-            messages = [{"role": "system", "content": system_prompt}]
-            chat_history = user_data.get("chat_history", [])[-10:]
-            messages.extend(chat_history)
-            messages.append({"role": "user", "content": message})
-            if "end chat" in message.lower():
-                return "Thank you for chatting with us :)"
-
-            try:
-                # Assuming synchronous SDK call; consider async if available
-                response = await asyncio.get_event_loop().run_in_executor(
-                    executor,
-                    lambda: chat_gpt.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=messages,
-                        temperature=0.7,
-                    ),
-                )
-                ai_response = response.choices[0].message.content
-            except Exception as e:
-                print(f"[OpenAI] API call failed: {e}")
-                return "Sorry! I had trouble generating a response. Please try again in a moment."
-
-            db_message = messages.copy()
-            db_message.append({"role": "system", "content": ai_response})
-            save_chat_message(db, user_id, feature_type, message, db_message)
+            user_data = get_user_session_data(db, user_id, feature_type)
+        finally:
             db.close()
-            return ai_response
-        except Exception as outer_err:
-            print(f"[get_ai_response] Fatal error: {outer_err}")
-            return "Oops! Something went wrong. Please try again later."
+
+        system_prompt = get_feature_prompt(feature_type, user_data)
+        messages = [{"role": "system", "content": system_prompt}]
+        chat_history = user_data.get("chat_history", [])[-10:]
+        messages.extend(chat_history)
+        messages.append({"role": "user", "content": message})
+        if "end chat" in message.lower():
+            return "Thank you for chatting with us :)"
+
+        try:
+            # Assuming synchronous SDK call; consider async if available
+            response = await asyncio.get_event_loop().run_in_executor(
+                executor,
+                lambda: chat_gpt.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    temperature=0.7,
+                ),
+            )
+            ai_response = response.choices[0].message.content
+        except Exception as e:
+            print(f"[OpenAI] API call failed: {e}")
+            return "Sorry! I had trouble generating a response. Please try again in a moment."
+
+        db_message = messages.copy()
+        db_message.append({"role": "system", "content": ai_response})
+        save_chat_message(db, user_id, feature_type, message, db_message)
+        db.close()
+        return ai_response
+    except Exception as outer_err:
+        print(f"[get_ai_response] Fatal error: {outer_err}")
+        return "Oops! Something went wrong. Please try again later."
