@@ -22,7 +22,7 @@ export default function HomePage() {
 
   return (
     <div className="h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between">
-      <div className="max-w-md mx-auto bg-white min-h-screen">
+      <div className="max-w-md mx-auto bg-white">
         <div className="relative w-[78px] h-[78px] mx-auto">
           <Image
             src={"/images/sagelogo2.png"}

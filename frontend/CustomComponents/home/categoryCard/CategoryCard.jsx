@@ -3,8 +3,8 @@
 export default function CategoryCard  ({ item, onClick }) {
     
     return (
-      <div 
-        className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+      <button 
+        className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer w-full text-left"
         onClick={() => onClick(item)}
       >
         <div className="flex items-start space-x-3">
@@ -20,6 +20,6 @@ export default function CategoryCard  ({ item, onClick }) {
             </p>
           </div>
         </div>
-      </div>
+      </button>
     );
   };
