@@ -7,7 +7,7 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import ReactMarkdown from "react-markdown";
 import useAuthStore from "@/store/authStore";
 import SettingsHeader from "../settingsHeader/settingsHeader";
-import BeautyQuizPopup from "../quizzPopup/QuizzPopup";
+import BeautyQuizPopup from "../Popups/QuizzPopup";
 import {
   cn,
   isUserLoggedIn,

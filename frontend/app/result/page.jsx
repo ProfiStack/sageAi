@@ -9,11 +9,13 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import { resultPageData } from "@/mockData/homeMockData";
 import CategoryCard from "@/CustomComponents/home/categoryCard/CategoryCard";
 import { mergeChatIdIntoMockData } from "@/shared/api/utils";
+import useFormToast from "@/CustomComponents/FormToast/FormToast";
 
 const SectionHeader = ({ title }) => (
   <h2 className="text-lg font-bold text-gray-900 mb-4 px-4">{title}</h2>
 );
 const ChatButtons = () => {
+  const { destructiveToast } = useFormToast();
   const { userId } = useAuthStore();
   const router = useRouter();
   const [data, setData] = useState({
@@ -33,7 +35,6 @@ const ChatButtons = () => {
         const updated = mergeChatIdIntoMockData(resultPageData, history);
         setData(updated);
         // Create a map: type => chatId
-       
       } catch (err) {
         console.error("Failed to fetch chat history:", err);
       }
@@ -45,6 +46,8 @@ const ChatButtons = () => {
   const handleCategoryClick = (item) => {
     if (item.chatId && item.id) {
       router.push(`/result/${item.id}?chatId=${item.chatId}`);
+    } else {
+      destructiveToast("No results found");
     }
   };
 
@@ -65,7 +68,10 @@ const ChatButtons = () => {
         {data.main.length > 0 && (
           <div className="pt-6 pb-4">
             <SectionHeader title="Consultant chat" />
-            <p className="px-5 py-2">Based on your chat with our consultant, here are some key takeaways and recommendations:</p>
+            <p className="px-5 py-2">
+              Based on your chat with our consultant, here are some key
+              takeaways and recommendations:
+            </p>
             <div className="px-4 space-y-3">
               {data.main.map((item) => (
                 <CategoryCard
@@ -82,7 +88,10 @@ const ChatButtons = () => {
         {data.insights.length > 0 && (
           <div className="py-4">
             <SectionHeader title="Trend Analysis" />
-            <p className="px-5 py-2">Our trend analysis reveals the following insights relevant to your preferences:</p>
+            <p className="px-5 py-2">
+              Our trend analysis reveals the following insights relevant to your
+              preferences:
+            </p>
             <div className="px-4 space-y-3">
               {data.insights.map((item) => (
                 <CategoryCard
@@ -99,7 +108,9 @@ const ChatButtons = () => {
         {data.professional.length > 0 && (
           <div className="py-4">
             <SectionHeader title="Treatment Planning" />
-            <p className="px-5 py-2">Based on your analysis, here's a suggested treatment plan:</p>
+            <p className="px-5 py-2">
+              Based on your analysis, here's a suggested treatment plan:
+            </p>
             <div className="px-4 space-y-3">
               {data.professional.map((item) => (
                 <CategoryCard
@@ -116,7 +127,10 @@ const ChatButtons = () => {
         {data.otherCategories.length > 0 && (
           <div className="py-4 pb-8">
             <SectionHeader title="Ingredients analyser" />
-            <p className="px-5 py-2">The ingredients analyzer has identified the following matches and mismatches for your skin type:</p>
+            <p className="px-5 py-2">
+              The ingredients analyzer has identified the following matches and
+              mismatches for your skin type:
+            </p>
             <div className="px-4 space-y-3">
               {data.otherCategories.map((item) => (
                 <CategoryCard

@@ -17,12 +17,14 @@ import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { isUserLoggedIn } from "@/lib/utils";
 import { Api } from "@/shared/api/api";
+import LogoutPopup from "../Popups/LogoutPopup";
 
 export default function ProfilePageContent() {
   const router = useRouter();
   const { logout, isAuthenticated, userId } = useAuthStore();
   const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -44,8 +46,7 @@ export default function ProfilePageContent() {
   }, [userId, isAuthenticated]);
 
   const handleLogout = () => {
-    logout();
-    router.push("/");
+    setIsOpen(true);
   };
 
   const menuItems = [
@@ -106,7 +107,7 @@ export default function ProfilePageContent() {
   ];
 
   return (
-    <div className="h-screen bg-gray-50 max-w-md mx-auto ">
+    <div className="h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between ">
       <SettingsHeader title="Profile" />
 
       <div>
@@ -118,11 +119,13 @@ export default function ProfilePageContent() {
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {isAuthenticated && !isLoading && userName
-              ? userName
-              : "guest user"}
-          </h2>
+          {isLoading ? (
+            <div className="h-6 bg-gray-200 rounded w-32 mx-auto animate-pulse  mb-2 mt-2" />
+          ) : (
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {isAuthenticated && userName ? userName : "guest user"}
+            </h2>
+          )}
         </div>
 
         {/* Account Section */}
@@ -194,6 +197,8 @@ export default function ProfilePageContent() {
       </div>
 
       <Footer />
+
+      <LogoutPopup isOpen={isOpen} setIsOpen={setIsOpen} />
 
       {/* Bottom padding to account for fixed navigation */}
     </div>

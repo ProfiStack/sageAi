@@ -1,5 +1,10 @@
 "use client";
-import { House, UserRound, MessageCircleMore, TvMinimalPlay } from "lucide-react";
+import {
+  House,
+  UserRound,
+  MessageCircleMore,
+  TvMinimalPlay,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 export default function Footer() {
