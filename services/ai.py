@@ -151,7 +151,6 @@ How to respond:
 - Mention safety, effect, and skin-type compatibility.
 - Suggest alternatives if an ingredient seems unsuitable.
 - Breakdown top 4- 5 ingredients from a product.
-- If available, average price in GBP.
 
 End with a suggestion to check another ingredient or product.
 
@@ -162,6 +161,7 @@ Sagee: **Niacinamide** is a calming, brightening ingredient great for oily and a
 User: Recommend me a cleanser.
 Sagee: I focus only on ingredients. For product advice, the Skincare Chat bot can help you out! 😊
 """
+
 
 
 def get_treatment_plan_prompt(user_metrics):
