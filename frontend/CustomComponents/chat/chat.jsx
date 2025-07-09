@@ -1,57 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, ExternalLink, X, Loader2 } from "lucide-react";
-import { useForm as useFormHook } from "react-hook-form";
+import { Send, ExternalLink, Loader2 } from "lucide-react";
 import Footer from "@/CustomComponents/Footer/Footer";
 import ReactMarkdown from "react-markdown";
 import useAuthStore from "@/store/authStore";
 import SettingsHeader from "../settingsHeader/settingsHeader";
-import BeautyQuizPopup from "../Popups/QuizzPopup";
-import {
-  cn,
-  isUserLoggedIn,
-  incrementGuestMessageCount,
-  resetGuestMessageCount,
-} from "@/lib/utils";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { cn, isUserLoggedIn, incrementGuestMessageCount } from "@/lib/utils";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
-import useFormToast from "../FormToast/FormToast";
-import {
-  WebSocketProvider,
-  useWebSocketContext,
-} from "@/app/providers/chatProvider";
-import { useAmplitude } from "@/app/providers/amplitudeProvider";
-
-const formSchema = z.object({
-  email: z.string().refine(
-    (value) => {
-      // Email regex pattern
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      // Phone regex pattern (supports various formats)
-      const phonePattern = /^[\+]?[1-9][\d]{0,15}$/;
-
-      return (
-        emailPattern.test(value) ||
-        phonePattern.test(value.replace(/[\s\-\(\)]/g, ""))
-      );
-    },
-    {
-      message: "Please enter a valid email address or phone number.",
-    }
-  ),
-});
+import { useWebSocketContext } from "@/app/providers/chatProvider";
 
 function ConsultationChatComponent({ route, title, initialMessage }) {
   const { userId, isAuthenticated } = useAuthStore();
@@ -64,15 +25,16 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     setMessages,
     connectionStatus,
   } = useWebSocketContext();
-  const { logEvent } = useAmplitude();
-  const [userMessageCount, setUserMessageCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const textareaRef = useRef(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const { primaryToast, destructiveToast } = useFormToast();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Map route to chat type
   const getChatTypeFromRoute = (route) => {
@@ -180,14 +142,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     }
   };
 
-  const form = useFormHook({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
   useEffect(() => {
     setIsLoading(true);
     const loadProfile = async () => {
@@ -207,66 +161,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     loadProfile();
   }, [userId, isAuthenticated]);
 
-  async function onSubmit(values) {
-    try {
-      logEvent("Onboard Option Clicked", {
-        click_value: "Sign Up",
-        click_location: "Chat",
-      });
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
-      const transformedValues = {
-        name: values.name,
-        ...(isEmail ? { email: values.email } : { phone_number: values.email }),
-      };
-      const data = await Api.client.signIn(transformedValues);
-      if (data.user_id) {
-        await setLoginTimestamp(Date.now());
-        await setAuthToken(data.user_id);
-        window.localStorage.setItem("sagee_user_id", data.user_id);
-        const store = useAuthStore.getState();
-        store.setUserId(data.user_id);
-        store.setToken(data.user_id);
-        store.setIsAuthenticated(true);
-        resetGuestMessageCount();
-        setUserMessageCount(0);
-        primaryToast({ description: "Login successful" });
-        transferGuestQuizResults(data.user_id);
-      }
-    } catch (error) {
-      destructiveToast(error.message);
-    }
-  }
-  // Transfer guest quiz results to user profile
-  const transferGuestQuizResults = async (userId) => {
-    try {
-      if (typeof window !== "undefined") {
-        const guestQuizResults = localStorage.getItem(
-          "sagee_guest_quiz_results"
-        );
-
-        if (guestQuizResults) {
-          const { skin_type, concern } = JSON.parse(guestQuizResults);
-
-          if (skin_type || concern) {
-            // Update user profile with guest quiz results
-            const updateData = {
-              skin_type: skin_type || "",
-              concern: concern || "",
-            };
-
-            await Api.client.updateProfile(updateData, userId);
-
-            // Remove guest quiz results from localStorage
-            localStorage.removeItem("sagee_guest_quiz_results");
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error transferring guest quiz results:", error);
-      // Don't block login if transfer fails
-    }
-  };
-
   const handleInitialMessage = () => {
     if (!userId && initialMessage && messages.length === 0) {
       const initialMsg = {
@@ -281,24 +175,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     }
   };
 
-  // Set mounted state after component mounts
-  useEffect(() => {
-    setIsMounted(true);
-    // Load message count from window.localStorage after mounting
-    if (!isUserLoggedIn(userId)) {
-      const savedCount = window.localStorage.getItem(
-        "sagee_guest_message_count"
-      );
-      if (savedCount) {
-        setUserMessageCount(parseInt(savedCount, 10));
-      }
-    } else {
-      // Clear the count when user is logged in
-      window.localStorage.removeItem("sagee_guest_message_count");
-      setUserMessageCount(0);
-    }
-  }, [userId]);
-
   // Load chat history when component mounts or route changes
   useEffect(() => {
     if (isMounted && userId && route) {
@@ -312,37 +188,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       handleInitialMessage();
     }
   }, [isMounted, initialMessage, userId]);
-
-  // Handle logout - reset to guest state
-  useEffect(() => {
-    if (isMounted && !isUserLoggedIn(userId)) {
-      // User is not logged in, ensure guest message count is loaded
-      const savedCount = window.localStorage.getItem(
-        "sagee_guest_message_count"
-      );
-      if (savedCount) {
-        setUserMessageCount(parseInt(savedCount, 10));
-      } else {
-        setUserMessageCount(0);
-      }
-    }
-  }, [userId, isMounted]);
-
-  // Save message count to window.localStorage whenever it changes
-  useEffect(() => {
-    if (isMounted && typeof window !== "undefined") {
-      if (!isUserLoggedIn(userId)) {
-        window.localStorage.setItem(
-          "sagee_guest_message_count",
-          userMessageCount.toString()
-        );
-      } else {
-        // Clear the count when user logs in
-        window.localStorage.removeItem("sagee_guest_message_count");
-        setUserMessageCount(0);
-      }
-    }
-  }, [userMessageCount, userId, isMounted]);
 
   // Function to detect and format URLs in text
   const formatMessageContent = (content) => {
@@ -486,11 +331,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     }
   };
 
-  const canSendMessage = () => {
-    if (isUserLoggedIn(userId)) return true; // Logged in users can send unlimited messages
-    return userMessageCount < 3; // Non-logged in users limited to 3 messages
-  };
-
   // Add this useEffect to watch for message changes
   useEffect(() => {
     if (message === "") {
@@ -625,32 +465,15 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       </div>
 
       <div className="bg-white border-t border-gray-200 p-4 sticky bottom-[76px]  ">
-        {!isUserLoggedIn(userId) && isMounted && (
-          <div className="mb-3 text-center">
-            <span className="text-sm text-gray-600">
-              Messages: {userMessageCount}/3
-            </span>
-            {userMessageCount >= 3 && (
-              <p className="text-xs text-red-500 mt-1">
-                Please log in to continue chatting
-              </p>
-            )}
-          </div>
-        )}
-
         <div className="relative flex items-center space-x-3 bg-gray-100 rounded-[20px] px-4 min-h-[44px]">
           <textarea
             ref={textareaRef}
             type="text"
-            placeholder={
-              !isUserLoggedIn(userId) && isMounted && userMessageCount >= 3
-                ? "Please log in to continue"
-                : "Message"
-            }
+            placeholder="Message"
             value={message}
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
-            disabled={!canSendMessage() || !isReady}
+            disabled={!isReady}
             className="flex-1 bg-transparent border-none outline-none py-1 text-gray-700 placeholder-gray-500 disabled:opacity-50 resize-none overflow-hidden min-h-[28px] max-h-[200px]"
             rows={1}
             style={{
@@ -668,69 +491,13 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
               // Reset textarea height after sending
               resetTextareaHeight();
             }}
-            disabled={
-              !message.trim() ||
-              connectionStatus !== "connected" ||
-              !canSendMessage()
-            }
+            disabled={!message.trim() || connectionStatus !== "connected"}
             className="p-2 text-green-600 hover:bg-green-50 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="w-5 h-5" />
           </button>
         </div>
       </div>
-
-      {/* Login Popup Modal */}
-      {!isAuthenticated && userMessageCount >= 3 && (
-        <div className="fixed inset-0   flex items-end bottom-[78px] justify-center z-50">
-          <div className=" bg-white p-6 w-full">
-            <div className="text-center mb-3">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="flex flex-col w-full"
-                >
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="w-full">
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                className="mb-3  rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
-                                placeholder="Email or Phone Number (starts with eg +123)"
-                                {...field}
-                              />
-                            </FormControl>
-
-                            <FormMessage className="text-red-500" />
-                          </FormItem>
-                        )}
-                      />{" "}
-                    </div>
-                  </div>
-
-                  <Button
-                    className={cn(
-                      "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
-                    )}
-                    type="submit"
-                  >
-                    Sign Up
-                  </Button>
-                </form>
-              </Form>
-
-              <div className="w-full py-2 px-4 text-[#02331E] mt-3 rounded-[10px] bg-[#E8F0F2] text-start">
-                Free signup to unlock message
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <Footer />
     </div>
   );

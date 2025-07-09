@@ -1,3 +1,4 @@
+import ProtectedRoute from "@/CustomComponents/ProtectedRoute";
 import dynamic from "next/dynamic";
 
 const ProfilePageContent = dynamic(
@@ -6,5 +7,9 @@ const ProfilePageContent = dynamic(
 );
 
 export default function ProfilePage() {
-  return <ProfilePageContent />;
+  return (
+    <ProtectedRoute requireAuth={true}>
+      <ProfilePageContent />
+    </ProtectedRoute>
+  );
 }

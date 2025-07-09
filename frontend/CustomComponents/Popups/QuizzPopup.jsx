@@ -1,13 +1,14 @@
 "use client";
 
 import { beautyQuizData } from "@/mockData/quizzMockData";
-import { X } from "lucide-react";
+import { Info, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Api } from "@/shared/api/api";
-import useAuthStore from "@/store/authStore";
+import SkinTypePopup from "./SkinTypePopup";
 
 const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
-  const { isAuthenticated } = useAuthStore();
+  const [isOpenSkinType, setIsOpenSkinType] = useState(false);
+
   const [quizData, setQuizData] = useState(beautyQuizData);
   const userId = localStorage.getItem("sagee_user_id");
   const hasCompletedRef = useRef(false);
@@ -46,20 +47,6 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
     return { skin_type, concern };
   };
 
-  // Save quiz results to localStorage for guest users
-  const saveQuizResultsForGuest = (skin_type, concern) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "sagee_guest_quiz_results",
-        JSON.stringify({
-          skin_type,
-          concern,
-          timestamp: Date.now(),
-        })
-      );
-    }
-  };
-
   // Reset completion flag when popup opens
   useEffect(() => {
     if (isOpen) {
@@ -74,32 +61,16 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
       const updateProfileWithQuizResults = async () => {
         const { skin_type, concern } = extractQuizResults();
 
-        if (!isAuthenticated) {
-          // Guest user - save to localStorage
-          saveQuizResultsForGuest(skin_type, concern);
+        // Logged in user - update profile via API
+        try {
+          const updateData = {
+            skin_type,
+            concern,
+          };
 
-          try {
-            const updateData = {
-              skin_type,
-              concern,
-            };
-
-            const response = await Api.client.updateProfile(updateData, userId);
-          } catch (error) {
-            console.error("Error updating profile with quiz results:", error);
-          }
-        } else {
-          // Logged in user - update profile via API
-          try {
-            const updateData = {
-              skin_type,
-              concern,
-            };
-
-            const response = await Api.client.updateProfile(updateData, userId);
-          } catch (error) {
-            console.error("Error updating profile with quiz results:", error);
-          }
+          await Api.client.updateProfile(updateData, userId);
+        } catch (error) {
+          console.error("Error updating profile with quiz results:", error);
         }
 
         // Call onComplete callback with results
@@ -127,18 +98,24 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex justify-between p-6 border-b border-gray-100">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   Skin Analysis
                 </h2>
+                <div className="flex items-center gap-2 text-gray-500 ">
+                  <p>Not sure about skin type?</p>
+                  <button onClick={() => setIsOpenSkinType(true)}>
+                    <Info size={20} fill="#d1fae5" color="#059669" />
+                  </button>
+                </div>
                 <p className="text-sm text-gray-500 mt-1">
                   Complete {getCompletionCount()}/{quizData.length} sections
                 </p>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="pt-1 hover:bg-gray-100 rounded-full transition-colors flex justify-start items-start"
               >
                 <X className="w-5 h-5 text-gray-400" />
               </button>
@@ -214,6 +191,7 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
           </div>
         </div>
       )}
+      <SkinTypePopup isOpen={isOpenSkinType} setIsOpen={setIsOpenSkinType} />
     </div>
   );
 };

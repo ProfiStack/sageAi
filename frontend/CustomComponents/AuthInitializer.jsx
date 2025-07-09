@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import useAuthStore from "@/store/authStore";
 
 export default function AuthInitializer() {
-  const { setUserId, userId } = useAuthStore();
+  const { setUserId, userId, setIsAuthenticated } = useAuthStore();
 
   useEffect(() => {
     console.log("AuthInitializer effect running:", { userId });
@@ -14,10 +14,7 @@ export default function AuthInitializer() {
 
       // If we don't have a userId in store and no stored ID, create a new guest user
       if (!userId && !storedUserId) {
-        const newGuestId = `user-${Date.now()}`;
-        localStorage.setItem("sagee_user_id", newGuestId);
-        setUserId(newGuestId);
-        console.log("AuthInitializer: Created new guest user:", newGuestId);
+        setIsAuthenticated(false);
       }
       // If we have a stored ID but no userId in store, use the stored one
       else if (storedUserId && !userId) {
