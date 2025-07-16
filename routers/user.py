@@ -1,4 +1,6 @@
+from typing import Annotated
 from fastapi import APIRouter, HTTPException, Depends
+from routers.auth import get_current_user
 from services.ai import manager
 from sqlalchemy.orm import Session
 from models.db_models import ChatResults, ChatMessage  # Your SQLAlchemy models
@@ -20,6 +22,7 @@ router = APIRouter()
 load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+user_dependency = Annotated[Session, Depends(get_current_user)]
 
 system_prompt = (
     """You are Sagee, a skincare expert who generates beautiful, detailed HTML summaries from user conversations.
@@ -120,19 +123,19 @@ router = APIRouter()
 executor = ThreadPoolExecutor()
 
 
-@router.get("/user/{user_id}/history")
-def get_chat_history_by_type(user_id: str, limit: int = 20):
+@router.get("/user/history")
+def get_chat_history_by_type(user_db: user_dependency, user_id: str, limit: int = 20):
     db = SessionLocal()
     history = (
         db.query(ChatMessage)
-        .filter_by(user_id=user_id)
+        .filter_by(user_id=user_db.user_id)
         .order_by(ChatMessage.timestamp.desc())
         .limit(limit)
         .all()
     )
     db.close()
     return {
-        "user_id": user_id,
+        "user_id": user_db.user_id,
         "history": [
             {
                 "message": chat.message,
@@ -146,11 +149,10 @@ def get_chat_history_by_type(user_id: str, limit: int = 20):
     }
 
 
-@router.get("/user/{user_id}/chat/{chat_id}")
-async def get_or_create_chat_results(user_id: str, chat_id: str):
+@router.get("/user/chat/{chat_id}")
+async def get_or_create_chat_results(user_db: user_dependency, user_id: str, chat_id: str):
     db = SessionLocal()
-    print(user_id, chat_id)
-    chat_data = get_user_chat_data(db, user_id, chat_id)
+    chat_data = get_user_chat_data(db, user_db.user_id, chat_id)
 
     if "results" in chat_data:
         return {"results": chat_data["results"]}
@@ -177,7 +179,7 @@ async def get_or_create_chat_results(user_id: str, chat_id: str):
 
     new_result = ChatResults(
         id=str(uuid.uuid4()),
-        user_id=user_id,
+        user_id=user_db.user_id,
         chat_id=chat_id,
         results=ai_response,
         timestamp=datetime.utcnow(),
@@ -188,14 +190,14 @@ async def get_or_create_chat_results(user_id: str, chat_id: str):
     return {"results": ai_response.replace("\n", "").replace("\r", "")}
 
 
-@router.get("/user/{user_id}/history/{type}")
+@router.get("/user/history/{type}")
 def get_chat_history_by_type(
-    user_id: str, type: str, limit: int = 20
+    user_db: user_dependency ,user_id: str, type: str, limit: int = 20
 ):
     db = SessionLocal()
     history = (
         db.query(ChatMessage)
-        .filter_by(user_id=user_id, type=type)
+        .filter_by(user_id=user_db.user_id, type=type)
         .order_by(ChatMessage.timestamp.desc())
         .limit(limit)
         .all()
@@ -215,58 +217,52 @@ def get_chat_history_by_type(
     }
 
 
-@router.delete("/user/{user_id}/history")
-async def clear_chat_history(user_id: str):
-    try:
-        db = SessionLocal()
-        user_data = get_user_session_data(db, user_id)
+# @router.delete("/user/{user_id}/history")
+# async def clear_chat_history(user_id: str):
+#     try:
+#         db = SessionLocal()
+#         user_data = get_user_session_data(db, user_id)
 
-        if not user_data:
-            raise HTTPException(status_code=404, detail="User not found")
+#         if not user_data:
+#             raise HTTPException(status_code=404, detail="User not found")
 
-        # Reset history in DB
-        update_user_session_metrics(db, user_id, chat_history=[])
-        db.close()
-        return {"message": "Chat history cleared", "user_id": user_id}
+#         # Reset history in DB
+#         update_user_session_metrics(db, user_id, chat_history=[])
+#         db.close()
+#         return {"message": "Chat history cleared", "user_id": user_id}
 
-    except Exception as e:
-        print(f"[clear_chat_history] Error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to clear chat history")
+#     except Exception as e:
+#         print(f"[clear_chat_history] Error: {e}")
+#         raise HTTPException(status_code=500, detail="Failed to clear chat history")
 
 
-@router.get("/users")
-async def get_all_users():
-    try:
-        db = SessionLocal()
-        users = []
+# @router.get("/users")
+# async def get_all_users(user_db: user_dependency):
+#     try:
+#         db = SessionLocal()
+#         users = []
+#         from services.db_service import get_all_user_profiles
 
-        # Simulate listing users from DB if you have a profile table
-        # This part assumes `get_all_user_profiles` exists (can help you write it if needed)
-        from services.db_service import get_all_user_profiles
+#         all_profiles = get_all_user_profiles(db)
 
-        all_profiles = get_all_user_profiles(db)
+#         for profile in all_profiles:
+#             users.append(
+#                 {
+#                     "user_id": profile.user_id,
+#                     "skin_type": profile.skin_type,
+#                     "concern": profile.concern,
+#                     "created_at": profile.created_at,
+#                     "last_active": profile.last_active,
+#                     "is_connected": profile.user_id in manager.active_connections,
+#                 }
+#             )
+#         db.close()
+#         return {
+#             "total_users": len(users),
+#             "active_connections": len(manager.active_connections),
+#             "users": users,
+#         }
 
-        for profile in all_profiles:
-            user_data = get_user_session_data(db, profile.user_id)
-            chat_history = user_data.get("chat_history", []) if user_data else []
-            users.append(
-                {
-                    "user_id": profile.user_id,
-                    "skin_type": profile.skin_type,
-                    "concern": profile.concern,
-                    "created_at": profile.created_at,
-                    "last_active": profile.last_active,
-                    "message_count": len(chat_history),
-                    "is_connected": profile.user_id in manager.active_connections,
-                }
-            )
-        db.close()
-        return {
-            "total_users": len(users),
-            "active_connections": len(manager.active_connections),
-            "users": users,
-        }
-
-    except Exception as e:
-        print(f"[get_all_users] Error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch users")
+#     except Exception as e:
+#         print(f"[get_all_users] Error: {e}")
+#         raise HTTPException(status_code=500, detail="Failed to fetch users")

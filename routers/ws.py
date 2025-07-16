@@ -1,17 +1,22 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from typing import Annotated
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from datetime import datetime, timedelta
+from routers.auth import get_current_user
 from services.ai import manager, get_ai_response
 from services.db_service import get_or_create_user_profile
 from db import SessionLocal
+from sqlalchemy.orm import Session
 import asyncio
 import json
 import traceback
 
 router = APIRouter()
 
+user_dependency = Annotated[Session, Depends(get_current_user)]
 
-@router.websocket("/ws/{feature_type}/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: str):
+@router.websocket("/ws/{feature_type}")
+async def websocket_endpoint(user_db: user_dependency, websocket: WebSocket, user_id: str, feature_type: str):
+    user_id = user_db.user_id
     # Initialize ping_task early to avoid UnboundLocalError
     ping_task = None
     

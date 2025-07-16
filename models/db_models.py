@@ -15,6 +15,7 @@ class UserProfile(Base):
     age = Column(String, nullable=True)
     gender = Column(String, nullable=True)
     lifestyle = Column(String, nullable=True)
+    hashed_password = Column(String)
     concern = Column(String, nullable=True)
     preferred_routine = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -37,10 +37,14 @@ class UserProfileResponse(UserProfileRequest):
     concern: Optional[str] = None
     preferred_routine: Optional[str] = None
 
+class AccessTokenResponse(BaseModel):
+    access: str
+    token: str
 
 class LoginRequest(BaseModel):
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
+    password: str
 
 class LoginResponse(BaseModel):
     user_id: str
