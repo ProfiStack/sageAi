@@ -6,8 +6,6 @@ from sqlalchemy.orm import Session
 from models.db_models import ChatResults, ChatMessage  # Your SQLAlchemy models
 from db import SessionLocal
 from services.db_service import (
-    get_user_session_data,
-    update_user_session_metrics,
     get_user_chat_data,
 )
 from concurrent.futures import ThreadPoolExecutor
@@ -128,14 +126,14 @@ def get_chat_history_by_type(user_db: user_dependency, user_id: str, limit: int 
     db = SessionLocal()
     history = (
         db.query(ChatMessage)
-        .filter_by(user_id=user_db.user_id)
+        .filter_by(user_id=user_db.get('user_id'))
         .order_by(ChatMessage.timestamp.desc())
         .limit(limit)
         .all()
     )
     db.close()
     return {
-        "user_id": user_db.user_id,
+        "user_id": user_db.get('user_id'),
         "history": [
             {
                 "message": chat.message,
@@ -150,9 +148,9 @@ def get_chat_history_by_type(user_db: user_dependency, user_id: str, limit: int 
 
 
 @router.get("/user/chat/{chat_id}")
-async def get_or_create_chat_results(user_db: user_dependency, user_id: str, chat_id: str):
+async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
     db = SessionLocal()
-    chat_data = get_user_chat_data(db, user_db.user_id, chat_id)
+    chat_data = get_user_chat_data(db, user_db.get('user_id'), chat_id)
 
     if "results" in chat_data:
         return {"results": chat_data["results"]}
@@ -179,7 +177,7 @@ async def get_or_create_chat_results(user_db: user_dependency, user_id: str, cha
 
     new_result = ChatResults(
         id=str(uuid.uuid4()),
-        user_id=user_db.user_id,
+        user_id=user_db.get('user_id'),
         chat_id=chat_id,
         results=ai_response,
         timestamp=datetime.utcnow(),
@@ -197,7 +195,7 @@ def get_chat_history_by_type(
     db = SessionLocal()
     history = (
         db.query(ChatMessage)
-        .filter_by(user_id=user_db.user_id, type=type)
+        .filter_by(user_id=user_db.get('user_id'), type=type)
         .order_by(ChatMessage.timestamp.desc())
         .limit(limit)
         .all()

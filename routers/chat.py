@@ -23,7 +23,7 @@ user_dependency = Annotated[Session, Depends(get_current_user)]
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(chat_message: ChatRequest, user_db: user_dependency, db: Session = Depends(get_db)):
-    user_id = user_db.user_id
+    user_id = user_db.get('user_id')
     try:
         get_or_create_user_profile(db, user_id)
         ai_response = await get_ai_response(chat_message.message, user_id)

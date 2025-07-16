@@ -29,14 +29,14 @@ async def get_current_user(token: Annotated[str, Depends(OAUTH2_BEARER)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALOGORITHM])  # ← Fix typo
         email_phone: str = payload.get('sub', None)
-        user_id: str = payload.get('id', None)
+        user_id: str = payload.get('user_id', None)
         name: str = payload.get('name', None)
         if email_phone is None or user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='User not found'
             )
-        return {'name': name, 'id': user_id, 'email_phone': email_phone}
+        return {'name': name, 'user_id': user_id, 'email_phone': email_phone}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate user')
 
@@ -48,7 +48,7 @@ async def get_hashed_password(profile, password):
     return True;
 
 def create_access_token(email_phone:Column[str], user_id: Column[int], name: Column[str], expires_delta: timedelta) -> AccessTokenResponse:
-    encode = {'sub': email_phone, 'id': user_id, 'name': name}
+    encode = {'sub': email_phone, 'user_id': user_id, 'name': name}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({'exp': expires})
     token = jwt.encode(encode, SECRET_KEY, algorithm=ALOGORITHM)

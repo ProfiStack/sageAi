@@ -21,7 +21,7 @@ user_dependency = Annotated[Session, Depends(get_current_user)]
 
 @router.get("/user/profile", response_model=UserProfileResponse)
 def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
-    profile = get_or_create_user_profile(db, user_db.user_id)
+    profile = get_or_create_user_profile(db, user_db.get('user_id'))
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
     return UserProfileResponse(
