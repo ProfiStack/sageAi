@@ -120,33 +120,6 @@ Now generate the most beautifully structured HTML summary for the current conver
 router = APIRouter()
 executor = ThreadPoolExecutor()
 
-
-@router.get("/user/history")
-def get_chat_history_by_type(user_db: user_dependency, user_id: str, limit: int = 20):
-    db = SessionLocal()
-    history = (
-        db.query(ChatMessage)
-        .filter_by(user_id=user_db.get('user_id'))
-        .order_by(ChatMessage.timestamp.desc())
-        .limit(limit)
-        .all()
-    )
-    db.close()
-    return {
-        "user_id": user_db.get('user_id'),
-        "history": [
-            {
-                "message": chat.message,
-                "id": chat.id,
-                "response": chat.response,
-                "timestamp": chat.timestamp,
-                "type": chat.type,
-            }
-            for chat in history
-        ],
-    }
-
-
 @router.get("/user/chat/{chat_id}")
 async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
     db = SessionLocal()
@@ -190,7 +163,7 @@ async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
 
 @router.get("/user/history/{type}")
 def get_chat_history_by_type(
-    user_db: user_dependency ,user_id: str, type: str, limit: int = 20
+    user_db: user_dependency , type: str, limit: int = 20
 ):
     db = SessionLocal()
     history = (
@@ -202,7 +175,7 @@ def get_chat_history_by_type(
     )
     db.close()
     return {
-        "user_id": user_id,
+        "user_id": user_db.get('user_id'),
         "type": type,
         "history": [
             {
@@ -213,6 +186,34 @@ def get_chat_history_by_type(
             for chat in history
         ],
     }
+
+
+@router.get("/user/history")
+def get_chat_history_by_type(user_db: user_dependency, user_id: str, limit: int = 20):
+    db = SessionLocal()
+    history = (
+        db.query(ChatMessage)
+        .filter_by(user_id=user_db.get('user_id'))
+        .order_by(ChatMessage.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    db.close()
+    return {
+        "user_id": user_db.get('user_id'),
+        "history": [
+            {
+                "message": chat.message,
+                "id": chat.id,
+                "response": chat.response,
+                "timestamp": chat.timestamp,
+                "type": chat.type,
+            }
+            for chat in history
+        ],
+    }
+
+
 
 
 # @router.delete("/user/{user_id}/history")
