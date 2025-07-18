@@ -14,9 +14,8 @@ router = APIRouter()
 
 user_dependency = Annotated[Session, Depends(get_current_user)]
 
-@router.websocket("/ws/{feature_type}")
-async def websocket_endpoint(user_db: user_dependency, websocket: WebSocket, user_id: str, feature_type: str):
-    user_id = user_db.get('user_id')
+@router.websocket("/ws/{feature_type}/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str, feature_type: str):
     # Initialize ping_task early to avoid UnboundLocalError
     ping_task = None
     

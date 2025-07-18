@@ -40,12 +40,13 @@ def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-@router.post("/user/{user_id}/profile")
-def update_profile(user_id: str, profile_data: UserProfileRequest, db: Session = Depends(get_db)):
-    updated_profile = update_user_profile(db, user_id, profile_data.dict(exclude_unset=True))
+
+@router.post("/user/profile")
+def update_profile(profile_data: UserProfileRequest, user_db: user_dependency, db: Session = Depends(get_db)):
+    updated_profile = update_user_profile(db, user_db.get('user_id'), profile_data.dict(exclude_unset=True))
     return {
         "message": "Profile updated successfully",
-        "user_id": user_id,
+        "user_id": user_db.get('user_id'),
         "profile": {
             "email": updated_profile.email,
             "phone_number": updated_profile.phone_number,
