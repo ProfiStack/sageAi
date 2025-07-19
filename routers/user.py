@@ -189,7 +189,7 @@ def get_chat_history_by_type(
 
 
 @router.get("/user/history")
-def get_chat_history_by_type(user_db: user_dependency, user_id: str, limit: int = 20):
+def get_chat_history_by_type(user_db: user_dependency, limit: int = 20):
     db = SessionLocal()
     history = (
         db.query(ChatMessage)
