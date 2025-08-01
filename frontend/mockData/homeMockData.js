@@ -1,117 +1,143 @@
 import {
-  AlertTriangle,
-  Apple,
   Calendar,
   Heart,
-  MapPin,
-  MessageCircle,
   Palette,
   Scissors,
   TrendingUp,
+  ScanFace,
+  Search,
+  ShoppingBag,
+  Sparkles,
+  Droplets,
+  FlaskConical,
+  Utensils,
+  Eye,
 } from "lucide-react";
 
-export const mockPageData = {
-  main: [
-    {
-      id: "chat",
-      title: "Chat",
-      description: "Chat with Consultant",
-      icon: <MessageCircle />,
-      route: "/chat",
-      type: "skincare"
-    },
-  ],
+export const categoryItemsData = [
+  {
+    title: "Image Analysis",
+    icon: ScanFace,
+    items: [
+      {
+        title: "Skin Analysis",
+        icon: Eye,
+        route: "/skin-analysis",
+        description:
+          "AI-powered skin assessment and personalized recommendations",
+      },
+      {
+        title: "Mole Analysis",
+        icon: Search,
+        route: "/mole-analysis",
+        description: "Advanced mole detection and health monitoring",
+      },
+      {
+        title: "Product Analysis",
+        icon: ShoppingBag,
+        route: "/product-analysis",
+        description: "Scan and analyze beauty products for compatibility",
+      },
+      {
+        title: "Shade Matching",
+        icon: Palette,
+        route: "/shade-matching",
+        description: "Find your perfect foundation and concealer shades",
+      },
+    ],
+  },
+  {
+    title: "Makeup",
+    icon: Palette,
+    items: [
+      {
+        title: "Makeup",
+        icon: Palette,
+        route: "/makeup",
+        description: "Virtual makeup try-on and tutorials",
+      },
+      {
+        title: "Makeup Looks Recommendation",
+        icon: Sparkles,
+        route: "/makeup-looks",
+        description: "Personalized makeup looks based on your features",
+      },
+      {
+        title: "Makeup Tool Match",
+        icon: ShoppingBag,
+        route: "/makeup-tools",
+        description: "Find the right brushes and tools for your needs",
+      },
+      {
+        title: "Makeup Product Match",
+        icon: Search,
+        route: "/makeup-products",
+        description: "Discover products that work best for your skin",
+      },
+      {
+        title: "Technique Validation",
+        icon: Eye,
+        route: "/technique-validation",
+        description: "Get feedback on your makeup application skills",
+      },
+    ],
+  },
+  {
+    title: "Skincare",
+    icon: Droplets,
+    items: [
+      {
+        title: "Skincare",
+        icon: Droplets,
+        route: "/chat",
+        description: "Get personalized skincare advice and routines",
+      },
+      {
+        title: "Trend Analysis",
+        icon: TrendingUp,
+        route: "/trend-analysis",
+        description: "Stay updated with latest skincare trends and insights",
+      },
+      {
+        title: "Ingredients Analyzer",
+        icon: FlaskConical,
+        route: "/check-ingredients",
+        description:
+          "Check product ingredients for allergies and compatibility",
+      },
+      {
+        title: "Treatment Planning",
+        icon: Calendar,
+        route: "/treatment-planning",
+        description: "Create structured skincare treatment schedules",
+      },
+    ],
+  },
+];
 
-  insights: [
-    {
-      id: "trend-analysis",
-      title: "Trend Analysis",
-      description: "Real-time trend analysis with expert insights.",
-      icon: <TrendingUp />,
-      route: "/trend-analysis",
-      type: "trend-analysis"
-    },
-    {
-      id: "check-ingredients",
-      title: "Check Ingredients",
-      description: "Check product ingredients for compatibility.",
-      icon: <AlertTriangle />,
-      route: "/check-ingredients",
-      type: "ingredient_checker"
-    },
-  ],
-
-  professional: [
-    {
-      id: "treatment-planning",
-      title: "Treatment Planning",
-      description: "Professional treatment options and explanations.",
-      icon: <Calendar />,
-      route: "/treatment-planning",
-      type: "treatment-planning"
-    },
-    {
-      id: "find-providers",
-      title: "Find Providers",
-      description: "Find qualified providers in your area.",
-      icon: <MapPin />,
-      route: "/find-providers",
-    },
-  ],
-
-  otherCategories: [
-    {
-      id: "nutrition",
-      title: "Nutrition",
-      description: "Personalized nutrition guidance.",
-      icon: <Apple />,
-      route: "/nutrition",
-    },
-    {
-      id: "haircare",
-      title: "Haircare",
-      description: "Haircare recommendations and tips.",
-      icon: <Scissors />,
-      route: "/hair-care",
-    },
-    {
-      id: "wellness",
-      title: "Wellness",
-      description: "Personalized wellness plans and progress tracking.",
-      icon: <Heart />,
-      route: "/wellness",
-    },
-    {
-      id: "styling-makeup",
-      title: "Styling and Makeup",
-      description: "Expert styling advice and virtual try-on tools.",
-      icon: <Palette />,
-      route: "/styling",
-    },
-  ],
-};
-
-export const resultPageData = {
-  main: [
-    {
-      id: "chat",
-      title: "Skincare",
-      description: "Personalized skincare routine",
-      icon: <MessageCircle />,
-      route: "/chat",
-      type: "skincare"
-    },
-  ],
-
-  professional: [
-    {
-      id: "treatment-planning",
-      title: "Treatments",
-      description: "Recommended treatments",
-      icon: <Calendar />,
-      route: "/treatment-planning",
-      type: "treatment_plan"
-    },
-  ],
-
-};
+export const comingSoonItemsData = [
+  {
+    title: "Styling",
+    icon: Sparkles,
+    route: "/styling",
+    description: "Personal style recommendations and wardrobe planning",
+  },
+  {
+    title: "Wellness",
+    icon: Heart,
+    route: "/wellness",
+    description: "Holistic wellness tracking and lifestyle guidance",
+  },
+  {
+    title: "Nutrition",
+    icon: Utensils,
+    route: "/nutrition",
+    description: "Nutrition advice for healthy skin and beauty",
+  },
+  {
+    title: "Haircare",
+    icon: Scissors,
+    route: "/haircare",
+    description: "Hair analysis and personalized care routines",
+  },
+];

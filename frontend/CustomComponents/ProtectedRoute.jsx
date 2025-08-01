@@ -8,7 +8,7 @@ import useFormToast from "./FormToast/FormToast";
 
 export default function ProtectedRoute({ children, requireAuth = true }) {
   const router = useRouter();
-  const { userId, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated } = useAuthStore();
   const { destructiveToast } = useFormToast();
   const [isChecking, setIsChecking] = useState(true);
 
@@ -16,7 +16,7 @@ export default function ProtectedRoute({ children, requireAuth = true }) {
     if (typeof window !== "undefined") {
       const storedUserId = localStorage.getItem("sagee_user_id");
 
-      if (requireAuth && !userId && !storedUserId && !isAuthenticated) {
+      if (requireAuth && !token && !storedUserId && !isAuthenticated) {
         destructiveToast("Login required");
         setTimeout(() => {
           router.push("/");
@@ -25,7 +25,7 @@ export default function ProtectedRoute({ children, requireAuth = true }) {
         setIsChecking(false);
       }
     }
-  }, [userId, isAuthenticated, requireAuth]);
+  }, [token, isAuthenticated, requireAuth]);
 
   return children;
 }

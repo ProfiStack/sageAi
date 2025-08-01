@@ -21,7 +21,7 @@ import LogoutPopup from "../Popups/LogoutPopup";
 
 export default function ProfilePageContent() {
   const router = useRouter();
-  const { isAuthenticated, userId } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +30,7 @@ export default function ProfilePageContent() {
     setIsLoading(true);
     const loadProfile = async () => {
       try {
-        const profileData = await Api.client.getProfile(userId);
+        const profileData = await Api.client.getProfile(token);
         if (profileData?.name) {
           setUserName(profileData.name);
         }
@@ -43,7 +43,7 @@ export default function ProfilePageContent() {
     };
 
     loadProfile();
-  }, [userId, isAuthenticated]);
+  }, [token, isAuthenticated]);
 
   const handleLogout = () => {
     setIsOpen(true);

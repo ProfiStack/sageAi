@@ -18,7 +18,7 @@ import ProtectedRoute from "@/CustomComponents/ProtectedRoute";
 export default function PersonalDetailsPage() {
   const { primaryToast, destructiveToast } = useFormToast();
 
-  const { userId, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated } = useAuthStore();
   const [formData, setFormData] = useState({
     name: "",
     age: "",
@@ -32,12 +32,12 @@ export default function PersonalDetailsPage() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      if (!userId) {
+      if (!token) {
         setIsLoadingProfile(false);
         return;
       }
       try {
-        const profileData = await Api.client.getProfile(userId);
+        const profileData = await Api.client.getProfile(token);
         if (profileData) {
           const loadedData = {
             name: profileData.name || "",
@@ -57,7 +57,7 @@ export default function PersonalDetailsPage() {
     };
 
     loadProfile();
-  }, [userId]);
+  }, [token]);
 
   const isFormUnchanged =
     initialFormData !== null &&
@@ -71,14 +71,14 @@ export default function PersonalDetailsPage() {
   };
 
   const handleSaveChanges = async () => {
-    if (!userId) {
+    if (!token) {
       destructiveToast("Please log in to save your profile");
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await Api.client.updateProfile(formData, userId);
+      const response = await Api.client.updateProfile(formData, token);
       setInitialFormData(formData);
       primaryToast({ description: "Profile updated successfully!" });
     } catch (error) {

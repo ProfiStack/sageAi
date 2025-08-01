@@ -793,7 +793,7 @@ export async function autoLogout() {
   await removeLoginTimestamp();
 
   if (typeof window !== "undefined") {
-    localStorage.removeItem("sagee_user_id"); // legacy cleanup
+    localStorage.removeItem("token"); // legacy cleanup
     localStorage.removeItem("auth-store"); // clear persisted Zustand store
   }
 

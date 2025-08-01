@@ -25,6 +25,7 @@ const useAuthStore = create(
         // Clear localStorage
         if (typeof window !== "undefined") {
           localStorage.removeItem("sagee_user_id");
+          localStorage.removeItem("token");
           localStorage.removeItem("auth-store");
         }
 

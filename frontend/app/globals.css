@@ -12,6 +12,49 @@ body {
   margin-right: 10px; /* Optional: control spacing */
 }
 
+@keyframes pulse-left-right {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(10px); /* For right arrow */
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-up-down {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(10px); /* For down arrow */
+    opacity: 1;
+  }
+}
+
+.animatePulseLeftRight {
+  animation: pulse-left-right 1s infinite alternate;
+}
+
+.animatePulseUpDown {
+  animation: pulse-up-down 1s infinite alternate;
+}
+
+/* Adjust for left arrow: it's rotated 180deg */
+.arrowLeftRotate {
+  /* New class for specific rotation and translation */
+  transform: rotate(180deg) translateX(-10px);
+}
+
+/* Adjust for up arrow: it's rotated 90deg */
+.arrowUpRotate {
+  /* New class for specific rotation and translation */
+  transform: rotate(90deg) translateY(-10px);
+}
 /* :root {
   --background: #ffffff;
   --foreground: #171717;

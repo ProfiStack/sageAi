@@ -10,7 +10,7 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
   const [isOpenSkinType, setIsOpenSkinType] = useState(false);
 
   const [quizData, setQuizData] = useState(beautyQuizData);
-  const userId = localStorage.getItem("sagee_user_id");
+  const token = localStorage.getItem("sagee_user_id");
   const hasCompletedRef = useRef(false);
 
   const updateSelection = (questionId, optionId) => {
@@ -68,7 +68,7 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
             concern,
           };
 
-          await Api.client.updateProfile(updateData, userId);
+          await Api.client.updateProfile(updateData, token);
         } catch (error) {
           console.error("Error updating profile with quiz results:", error);
         }
@@ -89,7 +89,7 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
 
       updateProfileWithQuizResults();
     }
-  }, [quizData, userId, setIsOpen, onComplete]);
+  }, [quizData, token, setIsOpen, onComplete]);
 
   return (
     <div>

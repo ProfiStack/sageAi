@@ -21,11 +21,11 @@ export default function ResultPage() {
     skin_type: "",
     concern: "",
   });
-  const { userId } = useAuthStore();
+  const { token } = useAuthStore();
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const profileData = await Api.client.getProfile(userId);
+        const profileData = await Api.client.getProfile(token);
         if (profileData) {
           setFormData((prev) => ({
             ...prev,
@@ -39,13 +39,13 @@ export default function ResultPage() {
     };
 
     loadProfile();
-  }, [userId]);
+  }, [token]);
 
   useEffect(() => {
     const results = async () => {
       try {
         setIsLoadingHistory(true);
-        const resultData = await Api.client.getResults(userId, chatId);
+        const resultData = await Api.client.getResults(token, chatId);
         setHtmlContent(resultData.results);
         setIsLoadingHistory(false);
       } catch (error) {
@@ -54,7 +54,7 @@ export default function ResultPage() {
     };
 
     results();
-  }, [userId, chatId]);
+  }, [token, chatId]);
 
   return (
     <ProtectedRoute requireAuth={true}>

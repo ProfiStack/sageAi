@@ -15,7 +15,7 @@ import { Api } from "@/shared/api/api";
 import { useWebSocketContext } from "@/app/providers/chatProvider";
 
 function ConsultationChatComponent({ route, title, initialMessage }) {
-  const { userId, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated } = useAuthStore();
   const [message, setMessage] = useState("");
   const {
     messages,
@@ -88,10 +88,10 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
   // Load chat history
   const loadChatHistory = async () => {
-    if (!userId && !route) return;
+    if (!token && !route) return;
     setIsLoadingHistory(true);
     try {
-      const historyData = await Api.client.getChatHistory(userId, {
+      const historyData = await Api.client.getChatHistory(token, {
         feature_type: route,
       });
 
@@ -146,7 +146,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     setIsLoading(true);
     const loadProfile = async () => {
       try {
-        const profileData = await Api.client.getProfile(userId);
+        const profileData = await Api.client.getProfile(token);
         if (profileData?.name) {
           setUserName(profileData.name);
         }
@@ -159,10 +159,10 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     };
 
     loadProfile();
-  }, [userId, isAuthenticated]);
+  }, [token, isAuthenticated]);
 
   const handleInitialMessage = () => {
-    if (!userId && initialMessage && messages.length === 0) {
+    if (!token && initialMessage && messages.length === 0) {
       const initialMsg = {
         id: `initial-${Date.now()}`,
         sender: "Consultant",
@@ -177,17 +177,17 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
   // Load chat history when component mounts or route changes
   useEffect(() => {
-    if (isMounted && userId && route) {
+    if (isMounted && token && route) {
       setMessages([]);
       loadChatHistory();
     }
-  }, [userId, route, isMounted]);
+  }, [token, route, isMounted]);
 
   useEffect(() => {
     if (isMounted) {
       handleInitialMessage();
     }
-  }, [isMounted, initialMessage, userId]);
+  }, [isMounted, initialMessage, token]);
 
   // Function to detect and format URLs in text
   const formatMessageContent = (content) => {
@@ -293,7 +293,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       return;
     }
 
-    if (!isUserLoggedIn(userId)) {
+    if (!isUserLoggedIn(token)) {
       const newCount = incrementGuestMessageCount();
       setUserMessageCount(newCount);
     }

@@ -4,22 +4,31 @@ import {
   UserRound,
   MessageCircleMore,
   TvMinimalPlay,
+  ScanFace,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import ScanPopup from "../Popups/ScanPopup";
 
 export default function Footer() {
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathName = usePathname();
 
   const footerData = [
     { icon: House, route: "/home", title: "Home" },
     { icon: MessageCircleMore, route: "/chat", title: "Chat" },
+    { icon: ScanFace, route: "/image-analysis", title: "Scan" },
     { icon: TvMinimalPlay, route: "/result", title: "Results" },
     { icon: UserRound, route: "/profile", title: "Profile" },
   ];
 
   const handleOnClick = (route) => {
-    router.push(route);
+    if (route === "/image-analysis") {
+      setIsOpen(true);
+    } else {
+      router.push(route);
+    }
   };
 
   return (
@@ -56,6 +65,7 @@ export default function Footer() {
           );
         })}
       </div>
+      <ScanPopup isOpen={isOpen} setIsOpen={setIsOpen} />
     </div>
   );
 }

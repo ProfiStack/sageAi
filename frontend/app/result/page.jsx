@@ -17,7 +17,7 @@ const SectionHeader = ({ title }) => (
 );
 const ChatButtons = () => {
   const { destructiveToast } = useFormToast();
-  const { userId } = useAuthStore();
+  const { token } = useAuthStore();
   const router = useRouter();
   const [data, setData] = useState({
     main: [],
@@ -28,10 +28,10 @@ const ChatButtons = () => {
 
   useEffect(() => {
     const fetchChats = async () => {
-      if (!userId) return;
+      if (!token) return;
 
       try {
-        const response = await Api.client.getAllChatHistory(userId);
+        const response = await Api.client.getAllChatHistory(token);
         const history = response?.history || [];
         const updated = mergeChatIdIntoMockData(resultPageData, history);
         setData(updated);
@@ -42,10 +42,9 @@ const ChatButtons = () => {
     };
 
     fetchChats();
-  }, [userId]);
+  }, [token]);
 
   const handleCategoryClick = (item) => {
-    console.log(item);
     if (item.chatId && item.id) {
       router.push(`/result/${item.id}?chatId=${item.chatId}`);
     } else {

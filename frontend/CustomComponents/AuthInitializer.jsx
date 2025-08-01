@@ -4,30 +4,30 @@ import { useEffect } from "react";
 import useAuthStore from "@/store/authStore";
 
 export default function AuthInitializer() {
-  const { setUserId, userId, setIsAuthenticated } = useAuthStore();
+  const { setToken, token, setIsAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    console.log("AuthInitializer effect running:", { userId });
+    console.log("AuthInitializer effect running:", { token });
 
     if (typeof window !== "undefined") {
-      const storedUserId = localStorage.getItem("sagee_user_id");
+      const storedUserId = localStorage.getItem("token");
 
-      // If we don't have a userId in store and no stored ID, create a new guest user
-      if (!userId && !storedUserId) {
+      // If we don't have a token in store and no stored ID, create a new guest user
+      if (!token && !storedUserId) {
         setIsAuthenticated(false);
       }
-      // If we have a stored ID but no userId in store, use the stored one
-      else if (storedUserId && !userId) {
-        setUserId(storedUserId);
-        console.log("AuthInitializer: Using stored userId:", storedUserId);
+      // If we have a stored ID but no token in store, use the stored one
+      else if (storedUserId && !token) {
+        setToken(storedUserId);
+        console.log("AuthInitializer: Using stored token:", storedUserId);
       }
-      // If we have userId in store but no stored ID, save it to localStorage
-      else if (userId && !storedUserId) {
-        localStorage.setItem("sagee_user_id", userId);
-        console.log("AuthInitializer: Saved userId to localStorage:", userId);
+      // If we have token in store but no stored ID, save it to localStorage
+      else if (token && !storedUserId) {
+        localStorage.setItem("token", token);
+        console.log("AuthInitializer: Saved token to localStorage:", token);
       }
     }
-  }, [userId, setUserId]);
+  }, [token, setToken]);
 
   return null;
 }

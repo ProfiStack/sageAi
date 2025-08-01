@@ -58,12 +58,15 @@ export const Api = {
         console.log(error);
       }
     },
-    updateProfile: async (data, userId) => {
+    updateProfile: async (data, token) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/profile`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/profile`,
           {
             method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
             body: validatePayload(data),
             next: {
               revalidate: 3600, // 1 hour
@@ -76,12 +79,15 @@ export const Api = {
       }
     },
 
-    getProfile: async (userId) => {
+    getProfile: async (token) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/profile`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/profile`,
           {
             method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
             next: {
               revalidate: 3600, // 1 hour
             },
@@ -92,16 +98,19 @@ export const Api = {
         console.log(error);
       }
     },
-    getChatHistory: async (userId, feature_type) => {
+    getChatHistory: async (token, feature_type) => {
       try {
         if (!feature_type) {
           return;
         }
         const response = await baseFetch(
           ({ globalBaseUrl }) =>
-            `${globalBaseUrl}/api/user/${userId}/history/${feature_type.feature_type}`,
+            `${globalBaseUrl}/api/user/history/${feature_type.feature_type}`,
           {
             method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
             next: {
               revalidate: 3600, // 1 hour
             },
@@ -112,12 +121,15 @@ export const Api = {
         console.log(error);
       }
     },
-    getAllChatHistory: async (userId) => {
+    getAllChatHistory: async (token) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/${userId}/history`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/history`,
           {
             method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
             next: {
               revalidate: 3600, // 1 hour
             },
@@ -128,13 +140,15 @@ export const Api = {
         console.log(error);
       }
     },
-    getResults: async (userId, chatId) => {
+    getResults: async (token, chatId) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) =>
-            `${globalBaseUrl}/api/user/${userId}/chat/${chatId}`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/chat/${chatId}`,
           {
             method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
             next: {
               revalidate: 3600, // 1 hour
             },
