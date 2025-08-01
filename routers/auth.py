@@ -1,4 +1,5 @@
 from typing import Annotated
+from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError; 
@@ -9,9 +10,10 @@ from models.db_models import UserProfile
 from models.schemas import AccessTokenResponse, LoginRequest, LoginResponse
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
+import os;
 
-SECRET_KEY = '4kPKsTmf3WZWAwQUNMrVdYzIoWCB7SoMF6D-cAD75qK_r3s0TkVXz3PYw6idjBiR'
-ALOGORITHM = 'HS256'
+load_dotenv(override=True)
+
 OAUTH2_BEARER = OAuth2PasswordBearer(tokenUrl='auth/login')
 router = APIRouter()
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -27,7 +29,7 @@ def get_db():
 
 async def get_current_user(token: Annotated[str, Depends(OAUTH2_BEARER)]):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALOGORITHM])  # ← Fix typo
+        payload = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=[os.getenv('ALOGORITHM')])  # ← Fix typo
         email_phone: str = payload.get('sub', None)
         user_id: str = payload.get('user_id', None)
         name: str = payload.get('name', None)
@@ -51,7 +53,7 @@ def create_access_token(email_phone:Column[str], user_id: Column[int], name: Col
     encode = {'sub': email_phone, 'user_id': user_id, 'name': name}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({'exp': expires})
-    token = jwt.encode(encode, SECRET_KEY, algorithm=ALOGORITHM)
+    token = jwt.encode(encode, s.getenv('SECRET_KEY'), algorithm=os.getenv('ALOGORITHM'))
     return AccessTokenResponse(access='Bearer', token=token)
 
 
