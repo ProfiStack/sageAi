@@ -159,5 +159,19 @@ export const Api = {
         console.log(error);
       }
     },
+    analyzeSkinPhoto: async (image) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/analyze/skin-photo`,
+          {
+            method: "POST",
+            body: image,
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 };

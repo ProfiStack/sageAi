@@ -9,15 +9,15 @@ import { useEffect } from "react";
 export default function LoginPage() {
   const router = useRouter();
   const hasHydrated = useHasHydrated();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
 
   useEffect(() => {
-    if (hasHydrated && isAuthenticated) {
+    if (hasHydrated && isAuthenticated && token) {
       router.replace("/home"); // ✅ Redirects to home if already logged in
     }
   }, [isAuthenticated, router, hasHydrated]);
 
-  if (!hasHydrated) return null;
+  // if (!hasHydrated) return null;
 
   return (
     <div className="flex flex-col justify-between h-screen">

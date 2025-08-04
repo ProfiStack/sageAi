@@ -53,7 +53,7 @@ def create_access_token(email_phone:Column[str], user_id: Column[int], name: Col
     encode = {'sub': email_phone, 'user_id': user_id, 'name': name}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({'exp': expires})
-    token = jwt.encode(encode, s.getenv('SECRET_KEY'), algorithm=os.getenv('ALOGORITHM'))
+    token = jwt.encode(encode, os.getenv('SECRET_KEY'), algorithm=os.getenv('ALOGORITHM'))
     return AccessTokenResponse(access='Bearer', token=token)
 
 

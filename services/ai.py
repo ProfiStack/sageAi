@@ -1,8 +1,9 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 import os
 import json
 from datetime import datetime
+from fastapi.responses import JSONResponse, PlainTextResponse
 from openai import OpenAI
 from dotenv import load_dotenv
 from db import SessionLocal
@@ -13,6 +14,13 @@ from prompts.ingredients import get_ingredient_checker_prompt
 from prompts.skin_care import get_skincare_prompt
 from prompts.tend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
+from prompts.photo import get_photo_prompt
+from services.s3 import delete_s3_image, upload_base64_image_to_s3
+import cv2
+import numpy as np
+from PIL import Image
+from io import BytesIO
+
 executor = ThreadPoolExecutor()
 
 
@@ -59,6 +67,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+
 # Main function to get the appropriate prompt based on feature
 def get_feature_prompt(feature_type: str, user_metrics: dict):
     try:
@@ -73,7 +82,6 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
     except Exception as e:
         print(f"[get_feature_prompt] Error: {e}")
         return get_skincare_prompt({})
-
 
 
 async def get_ai_response(feature_type: str, message: str, user_id: str):
@@ -115,3 +123,212 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
     except Exception as outer_err:
         print(f"[get_ai_response] Fatal error: {outer_err}")
         return "Oops! Something went wrong. Please try again later."
+
+
+# Alternative version with more detailed analysis
+async def analyze_skin_features(image_bytes: bytes):
+    try:
+        # Load and preprocess image
+        img = Image.open(BytesIO(image_bytes)).convert("RGB")
+        img_np = np.array(img)
+
+        # Multiple resolution analysis
+        img_256 = cv2.resize(img_np, (256, 256))
+        img_128 = cv2.resize(img_np, (128, 128))
+
+        # Color space conversions
+        img_hsv = cv2.cvtColor(img_256, cv2.COLOR_RGB2HSV)
+        img_lab = cv2.cvtColor(img_256, cv2.COLOR_RGB2LAB)
+        img_gray = cv2.cvtColor(img_256, cv2.COLOR_RGB2GRAY)
+
+        # Advanced metrics
+        brightness = np.mean(img_hsv[:, :, 2])
+        saturation = np.mean(img_hsv[:, :, 1])
+        hue = np.mean(img_hsv[:, :, 0])
+
+        # Color distribution analysis
+        color_std = np.std(img_256, axis=(0, 1))
+        overall_color_variation = np.mean(color_std)
+
+        # Texture analysis using multiple methods
+        laplacian_var = cv2.Laplacian(img_gray, cv2.CV_64F).var()
+
+        # Sobel edge detection for texture
+        sobel_x = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=3)
+        sobel_magnitude = np.sqrt(sobel_x**2 + sobel_y**2)
+        edge_density = np.mean(sobel_magnitude)
+
+        # --- Enhanced Skin Type Detection ---
+        skin_types = []
+
+        # More sophisticated oily skin detection
+        if brightness > 150 and overall_color_variation < 35 and saturation > 30:
+            skin_types.append("oily")
+
+        # Enhanced dry skin detection
+        if brightness < 90 and overall_color_variation < 28 and saturation < 35:
+            skin_types.append("dry")
+
+        # Combination skin with T-zone analysis
+        center_region = img_256[64:192, 64:192]  # Center T-zone area
+        outer_regions = [
+            img_256[0:64, :],  # top
+            img_256[192:256, :],  # bottom
+            img_256[:, 0:64],  # left
+            img_256[:, 192:256],  # right
+        ]
+
+        center_brightness = np.mean(
+            cv2.cvtColor(center_region, cv2.COLOR_RGB2HSV)[:, :, 2]
+        )
+        outer_brightness = np.mean(
+            [
+                np.mean(cv2.cvtColor(region, cv2.COLOR_RGB2HSV)[:, :, 2])
+                for region in outer_regions
+            ]
+        )
+
+        if abs(center_brightness - outer_brightness) > 15:
+            skin_types.append("combination")
+
+        # Sensitive skin indicators
+        if laplacian_var < 80 and overall_color_variation > 25:
+            skin_types.append("sensitive")
+
+        # Normal skin
+        if (
+            80 <= brightness <= 150
+            and 25 <= overall_color_variation <= 40
+            and 30 <= saturation <= 60
+            and not skin_types
+        ):
+            skin_types.append("normal")
+
+        if not skin_types:
+            skin_types.append("normal")
+
+        # --- Enhanced Concerns Detection ---
+        concerns = []
+
+        # Acne/breakouts
+        if laplacian_var > 180 and edge_density > 15:
+            concerns.append("breakouts")
+
+        # Hyperpigmentation
+        if overall_color_variation > 50:
+            concerns.append("hyperpigmentation")
+
+        # Redness analysis
+        red_channel = img_256[:, :, 0].astype(np.float32)
+        green_channel = img_256[:, :, 1].astype(np.float32)
+        blue_channel = img_256[:, :, 2].astype(np.float32)
+
+        redness_index = np.mean(red_channel - (green_channel + blue_channel) / 2)
+        if redness_index > 15:
+            concerns.append("redness")
+
+        # Fine lines/aging
+        if laplacian_var > 120 and brightness < 100:
+            concerns.append("fine lines")
+
+        # Dullness
+        if saturation < 35 and brightness < 110:
+            concerns.append("dullness")
+
+        # Large pores
+        if edge_density > 20:
+            concerns.append("enlarged pores")
+
+        # --- Skin tone analysis ---
+        l_channel = img_lab[:, :, 0]
+        a_channel = img_lab[:, :, 1]
+        b_channel = img_lab[:, :, 2]
+
+        avg_l = np.mean(l_channel)
+        avg_a = np.mean(a_channel)
+        avg_b = np.mean(b_channel)
+
+        # Determine depth
+        if avg_l < 40:
+            depth = "deep"
+        elif avg_l < 55:
+            depth = "medium-deep"
+        elif avg_l < 70:
+            depth = "medium"
+        elif avg_l < 85:
+            depth = "light"
+        else:
+            depth = "very light"
+
+        # Determine undertone
+        if avg_b > 130:
+            undertone = "warm"
+        elif avg_b < 120:
+            undertone = "cool"
+        else:
+            undertone = "neutral"
+
+        tone = f"{undertone}, {depth} complexion"
+
+        # --- Enhanced texture analysis ---
+        texture_score = (laplacian_var + edge_density) / 2
+
+        if texture_score < 30:
+            texture = "very smooth"
+        elif texture_score < 60:
+            texture = "smooth"
+        elif texture_score < 100:
+            texture = "slightly bumpy"
+        elif texture_score < 150:
+            texture = "bumpy"
+        else:
+            texture = "very rough"
+
+        # --- Under-eye analysis ---
+        height, width = img_gray.shape
+
+        # Define under-eye regions more precisely
+        left_eye_region = img_gray[
+            int(height * 0.55) : int(height * 0.75),
+            int(width * 0.25) : int(width * 0.45),
+        ]
+        right_eye_region = img_gray[
+            int(height * 0.55) : int(height * 0.75),
+            int(width * 0.55) : int(width * 0.75),
+        ]
+
+        if left_eye_region.size > 0 and right_eye_region.size > 0:
+            under_eye_avg = (np.mean(left_eye_region) + np.mean(right_eye_region)) / 2
+            face_avg = np.mean(img_gray)
+
+            darkness_ratio = under_eye_avg / face_avg
+
+            if darkness_ratio < 0.80:
+                under_eye = "prominent dark circles"
+            elif darkness_ratio < 0.88:
+                under_eye = "visible dark circles"
+            elif darkness_ratio < 0.94:
+                under_eye = "mild dark circles"
+            else:
+                under_eye = "no visible dark circles"
+        else:
+            under_eye = "unable to detect"
+
+        # Clean up concerns
+        if not concerns:
+            concerns = ["none detected"]
+
+        result = {
+            "skin_types": skin_types,
+            "concerns": concerns,
+            "tone": tone,
+            "texture": texture,
+            "under_eye": under_eye,
+        }
+        print(result)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to analyze image: {str(e)}"
+        )

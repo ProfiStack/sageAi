@@ -4,7 +4,10 @@ import PictureAnalysisPopup from "@/CustomComponents/cameraPopups/PictureAnalysi
 import Footer from "@/CustomComponents/Footer/Footer";
 import ImagePreviewPopup from "@/CustomComponents/Popups/ImagePreviewPopup";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
+import { Api } from "@/shared/api/api";
+import { useSkinResultStore } from "@/store/skinResult";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 export default function ImageAnalysis() {
@@ -13,13 +16,32 @@ export default function ImageAnalysis() {
   const [previewImage, setPreviewImage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [capturedImageFromPopup, setCapturedImageFromPopup] = useState(null);
-
-  const handleImageCapture = (imageData) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const handleImageCapture = async (imageData) => {
     setCapturedImageFromPopup(imageData);
-    console.log("Received from skinanalysis popup:", imageData);
+    const byteString = atob(imageData.split(',')[1]);
+    const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const formData = new FormData();
+    formData.append('image', blob, 'skin.jpg');
 
-    // 🔁 Now you can send this to an API
-    // sendToSkinAnalysisAPI(imageData) or similar
+    try {
+      setIsLoading(true);
+      const response = await Api.client.analyzeSkinPhoto(formData);
+      const { setHtml } = useSkinResultStore.getState();
+      setHtml(response.results);
+      router.push('/analysis-result');
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error sending image to backend:', error);
+      setIsLoading(false);
+    }
   };
 
   const handleUploadClick = () => {
@@ -93,6 +115,7 @@ export default function ImageAnalysis() {
 
       <Footer />
       <PictureAnalysisPopup
+        loading={isLoading}
         open={isOpen}
         setOpen={SetIsOpen}
         onCapture={handleImageCapture}

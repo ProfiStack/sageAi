@@ -18,7 +18,6 @@ async def health_check():
             "stats": {
                 "active_connections": len(manager.active_connections),
                 "total_users": len(user_profiles),
-                "active_users": manager.get_active_users()
             }
         }
     finally:

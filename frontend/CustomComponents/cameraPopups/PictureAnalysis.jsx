@@ -13,14 +13,16 @@ import {
   X, // Import the X icon for closing
 } from "lucide-react";
 import { useRouter } from "next/navigation"; // Import useRouter
+import useFormToast from "../FormToast/FormToast";
+import { Loader2 } from "lucide-react";
 
-export default function PictureAnalysisPopup({ open, setOpen, onCapture }) {
+export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const croppedRef = useRef(null); // Keep the ref for internal use
   const faceLandmarkerRef = useRef(null);
   const router = useRouter(); // Initialize useRouter
-
+  const { primaryToast, destructiveToast } = useFormToast();
   const [isReady, setIsReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false); // Controls the main detection loop (active analysis)
   const [countdown, setCountdown] = useState(0); // 0 means no countdown, 1-3 active
@@ -87,11 +89,11 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture }) {
 
     const noseToEyeDist = Math.sqrt(
       Math.pow(noseTip.x - eyeLineMidX, 2) +
-        Math.pow(noseTip.y - eyeLineMidY, 2)
+      Math.pow(noseTip.y - eyeLineMidY, 2)
     );
     const noseToMouthDist = Math.sqrt(
       Math.pow(noseTip.x - mouthLineMidX, 2) +
-        Math.pow(noseTip.y - mouthLineMidY, 2)
+      Math.pow(noseTip.y - mouthLineMidY, 2)
     );
     let pitchDeg = 0;
     if (noseToEyeDist + noseToMouthDist > 0) {
@@ -145,7 +147,7 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture }) {
       const faceCenterY = box.originY + box.height / 2;
       const distance = Math.sqrt(
         Math.pow(faceCenterX - canvasCenterX, 2) +
-          Math.pow(faceCenterY - canvasCenterY, 2)
+        Math.pow(faceCenterY - canvasCenterY, 2)
       );
       const tolerance = Math.min(videoWidth, videoHeight) * 0.1;
       const isCentered = distance < tolerance;
@@ -569,6 +571,7 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture }) {
           setIsImageCaptured(false);
         };
       } catch (error) {
+        destructiveToast(error.message);
         console.error("Error loading model or camera:", error);
         // Optionally, close the popup or show an error message to the user
         setOpen(false);
@@ -917,191 +920,196 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture }) {
     setIsPitchOff(false);
     lastFaceCenterRef.current = { x: null, y: null };
   };
-
-  // Main render for the popup component
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 "
-          onClick={handleClose} // Close when clicking outside modal content
-        >
+    loading ? (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-20 flex flex-col gap-2">
+        <p className="text-white text-center">Loading your skin analysis... Please sit tight!</p>
+        <div className="flex items-center justify-center">
+          <Loader2 className="animate-spin text-green-500" size={24} />
+        </div>
+      </div>
+    ) : (
+      <AnimatePresence>
+        {open && (
           <motion.div
-            initial={{ scale: 0.9, y: 50 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 50 }}
-            transition={{ type: "spring", stiffness: 200, damping: 25 }}
-            className="relative bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 shadow-lg rounded-xl overflow-hidden flex flex-col items-center justify-center px-6 space-y-4 max-w-lg w-full"
-            style={{ width: "350px", minHeight: "550px" }} // Adjusted dimensions for the popup
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 "
+            onClick={handleClose} // Close when clicking outside modal content
           >
-            {/* Close Button */}
-            <button
-              onClick={handleClose}
-              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 z-10"
-              aria-label="Close"
+            <motion.div
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
+              className="relative bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 shadow-lg rounded-xl overflow-hidden flex flex-col items-center justify-center px-6 space-y-4 max-w-lg w-full"
+              style={{ width: "350px", minHeight: "550px" }} // Adjusted dimensions for the popup
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
             >
-              <X size={24} />
-            </button>
+              {/* Close Button */}
+              <button
+                onClick={handleClose}
+                className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 z-10"
+                aria-label="Close"
+              >
+                <X size={24} />
+              </button>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Skin Analysis
-            </h2>
-            <p className="text-sm text-gray-500 text-center mb-6">
-              Ensure your face is well-lit and centered within the oval.
-            </p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                Skin Analysis
+              </h2>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                Ensure your face is well-lit and centered within the oval.
+              </p>
 
-            {/* Video/Canvas Container */}
-            <div
-              className="relative bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center"
-              style={{ width: "350px", height: "430px" }}
-            >
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className={`absolute w-full h-full object-cover transition-opacity duration-300 ${
-                  isCapturing ? "opacity-100" : "opacity-0"
-                }`}
-              ></video>
-              <canvas
-                ref={canvasRef}
-                className={`absolute w-full h-full transition-opacity duration-300 ${
-                  isCapturing ? "opacity-100" : "opacity-0"
-                }`}
-              ></canvas>
-              {/* This canvas is now only for capturing the image data, not for display */}
-              <canvas ref={croppedRef} className="hidden"></canvas>
+              {/* Video/Canvas Container */}
+              <div
+                className="relative bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center"
+                style={{ width: "350px", height: "430px" }}
+              >
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`absolute w-full h-full object-cover transition-opacity duration-300 ${isCapturing ? "opacity-100" : "opacity-0"
+                    }`}
+                ></video>
+                <canvas
+                  ref={canvasRef}
+                  className={`absolute w-full h-full transition-opacity duration-300 ${isCapturing ? "opacity-100" : "opacity-0"
+                    }`}
+                ></canvas>
+                {/* This canvas is now only for capturing the image data, not for display */}
+                <canvas ref={croppedRef} className="hidden"></canvas>
 
-              {!isReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 text-white text-lg">
-                  Loading camera and model...
-                </div>
-              )}
+                {!isReady && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 text-white text-lg">
+                    Loading camera and model...
+                  </div>
+                )}
 
-              {/* Directional Guides */}
-              {isCapturing && (
-                <>
-                  {/* Down Arrow */}
-                  {faceUp && (
-                    <motion.div
-                      key="arrow-down"
-                      initial={{ y: "-20%", opacity: 0 }} // Start above center, invisible
-                      animate={{
-                        y: ["-20%", "0%", "-20%"],
-                        opacity: [0, 1, 0],
-                      }} // Move down and up, fade in/out
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                        ease: "easeInOut",
-                      }}
-                      className="absolute flex items-center justify-center pointer-events-none"
-                      style={{
-                        top: "27%",
-                        left: "45%",
-                        transform: "translateX(-50%)",
-                      }}
-                    >
-                      <ChevronsDown
-                        size={35}
-                        className="text-[#F5F5F5] drop-shadow-xl"
-                      />
-                    </motion.div>
-                  )}
+                {/* Directional Guides */}
+                {isCapturing && (
+                  <>
+                    {/* Down Arrow */}
+                    {faceUp && (
+                      <motion.div
+                        key="arrow-down"
+                        initial={{ y: "-20%", opacity: 0 }} // Start above center, invisible
+                        animate={{
+                          y: ["-20%", "0%", "-20%"],
+                          opacity: [0, 1, 0],
+                        }} // Move down and up, fade in/out
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut",
+                        }}
+                        className="absolute flex items-center justify-center pointer-events-none"
+                        style={{
+                          top: "27%",
+                          left: "45%",
+                          transform: "translateX(-50%)",
+                        }}
+                      >
+                        <ChevronsDown
+                          size={35}
+                          className="text-[#F5F5F5] drop-shadow-xl"
+                        />
+                      </motion.div>
+                    )}
 
-                  {/* Up Arrow */}
-                  {faceDown && (
-                    <motion.div
-                      key="arrow-up"
-                      initial={{ y: "20%", opacity: 0 }} // Start below center, invisible
-                      animate={{ y: ["20%", "0%", "20%"], opacity: [0, 1, 0] }} // Move up and down, fade in/out
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                        ease: "easeInOut",
-                      }}
-                      className="absolute flex items-center justify-center pointer-events-none"
-                      style={{
-                        bottom: "27%",
-                        left: "45%",
-                        transform: "translateX(-50%)",
-                      }}
-                    >
-                      <ChevronsUp
-                        size={35}
-                        className="text-[#F5F5F5] drop-shadow-xl"
-                      />
-                    </motion.div>
-                  )}
+                    {/* Up Arrow */}
+                    {faceDown && (
+                      <motion.div
+                        key="arrow-up"
+                        initial={{ y: "20%", opacity: 0 }} // Start below center, invisible
+                        animate={{ y: ["20%", "0%", "20%"], opacity: [0, 1, 0] }} // Move up and down, fade in/out
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut",
+                        }}
+                        className="absolute flex items-center justify-center pointer-events-none"
+                        style={{
+                          bottom: "27%",
+                          left: "45%",
+                          transform: "translateX(-50%)",
+                        }}
+                      >
+                        <ChevronsUp
+                          size={35}
+                          className="text-[#F5F5F5] drop-shadow-xl"
+                        />
+                      </motion.div>
+                    )}
 
-                  {/* right Arrow */}
-                  {faceLeft && (
-                    <motion.div
-                      key="arrow-left"
-                      initial={{ x: "-20%", opacity: 0 }} // Start to the left, invisible
-                      animate={{
-                        x: ["-20%", "0%", "-20%"],
-                        opacity: [0, 1, 0],
-                      }} // Move right and left, fade in/out
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                        ease: "easeInOut",
-                      }}
-                      className="absolute flex items-center justify-center pointer-events-none"
-                      style={{
-                        left: "35%",
-                        top: "50.5%",
-                        transform: "translateY(-50%)",
-                      }}
-                    >
-                      <ChevronsRight
-                        size={35}
-                        className="text-[#F5F5F5] drop-shadow-xl"
-                      />
-                    </motion.div>
-                  )}
+                    {/* right Arrow */}
+                    {faceLeft && (
+                      <motion.div
+                        key="arrow-left"
+                        initial={{ x: "-20%", opacity: 0 }} // Start to the left, invisible
+                        animate={{
+                          x: ["-20%", "0%", "-20%"],
+                          opacity: [0, 1, 0],
+                        }} // Move right and left, fade in/out
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut",
+                        }}
+                        className="absolute flex items-center justify-center pointer-events-none"
+                        style={{
+                          left: "35%",
+                          top: "50.5%",
+                          transform: "translateY(-50%)",
+                        }}
+                      >
+                        <ChevronsRight
+                          size={35}
+                          className="text-[#F5F5F5] drop-shadow-xl"
+                        />
+                      </motion.div>
+                    )}
 
-                  {/* left Arrow */}
-                  {faceRight && (
-                    <motion.div
-                      key="arrow-right"
-                      initial={{ x: "20%", opacity: 0 }} // Start to the right, invisible
-                      animate={{ x: ["20%", "0%", "20%"], opacity: [0, 1, 0] }} // Move left and right, fade in/out
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                        ease: "easeInOut",
-                      }}
-                      className="absolute flex items-center justify-center pointer-events-none"
-                      style={{
-                        right: "35%",
-                        top: "50.5%",
-                        transform: "translateY(-50%)",
-                      }}
-                    >
-                      <ChevronsLeft
-                        size={35}
-                        className="text-[#F5F5F5] drop-shadow-xl"
-                      />
-                    </motion.div>
-                  )}
-                </>
-              )}
-            </div>
-            {/* The rest of the UI (messages and buttons) that are removed */}
+                    {/* left Arrow */}
+                    {faceRight && (
+                      <motion.div
+                        key="arrow-right"
+                        initial={{ x: "20%", opacity: 0 }} // Start to the right, invisible
+                        animate={{ x: ["20%", "0%", "20%"], opacity: [0, 1, 0] }} // Move left and right, fade in/out
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut",
+                        }}
+                        className="absolute flex items-center justify-center pointer-events-none"
+                        style={{
+                          right: "35%",
+                          top: "50.5%",
+                          transform: "translateY(-50%)",
+                        }}
+                      >
+                        <ChevronsLeft
+                          size={35}
+                          className="text-[#F5F5F5] drop-shadow-xl"
+                        />
+                      </motion.div>
+                    )}
+                  </>
+                )}
+              </div>
+              {/* The rest of the UI (messages and buttons) that are removed */}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    )
   );
 }
