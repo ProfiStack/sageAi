@@ -16,20 +16,51 @@ from prompts.tend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
 from prompts.photo import get_photo_prompt
 from services.s3 import delete_s3_image, upload_base64_image_to_s3
-import cv2
+
+# SAFE OPENCV IMPORT - Replace line 19
+def safe_import_cv2():
+    """Safely import OpenCV with proper error handling"""
+    try:
+        import cv2
+        print(f"✅ OpenCV loaded successfully: {cv2.__version__}")
+        return cv2
+    except ImportError as e:
+        print(f"❌ OpenCV import failed: {e}")
+        if "libGL" in str(e):
+            print("🔧 Trying to use opencv-python-headless...")
+            try:
+                # Force uninstall regular opencv and install headless
+                import subprocess
+                import sys
+                
+                subprocess.run([sys.executable, "-m", "pip", "uninstall", "opencv-python", "-y"], 
+                             capture_output=True)
+                subprocess.run([sys.executable, "-m", "pip", "install", "opencv-python-headless==4.12.0.88"], 
+                             capture_output=True)
+                
+                import cv2
+                print("✅ Successfully switched to opencv-python-headless")
+                return cv2
+            except Exception as install_error:
+                print(f"❌ Failed to install headless version: {install_error}")
+        
+        # Fallback: Return None and handle gracefully
+        print("⚠️ OpenCV not available - image analysis will be disabled")
+        return None
+
+# Initialize OpenCV safely
+cv2 = safe_import_cv2()
+
 import numpy as np
 from PIL import Image
 from io import BytesIO
 
 executor = ThreadPoolExecutor()
 
-
 load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-
 import json
-
 
 class ConnectionManager:
     def __init__(self):
@@ -64,9 +95,7 @@ class ConnectionManager:
                     self.disconnect(user_id, feature_type)
         return False
 
-
 manager = ConnectionManager()
-
 
 # Main function to get the appropriate prompt based on feature
 def get_feature_prompt(feature_type: str, user_metrics: dict):
@@ -82,7 +111,6 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
     except Exception as e:
         print(f"[get_feature_prompt] Error: {e}")
         return get_skincare_prompt({})
-
 
 async def get_ai_response(feature_type: str, message: str, user_id: str):
     try:
@@ -124,9 +152,14 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
         print(f"[get_ai_response] Fatal error: {outer_err}")
         return "Oops! Something went wrong. Please try again later."
 
-
-# Alternative version with more detailed analysis
 async def analyze_skin_features(image_bytes: bytes):
+    # Check if OpenCV is available
+    if cv2 is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Image analysis temporarily unavailable. OpenCV not loaded."
+        )
+    
     try:
         # Load and preprocess image
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
