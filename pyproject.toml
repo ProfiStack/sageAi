@@ -50,7 +50,8 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "boto3>=1.40.0",
     "tensorflow>=2.19.0",
-    "opencv-python-headless>=4.12.0.88",  # CHANGED: headless version
+    "numpy>=1.26.4",  # add this FIRST
+    "opencv-python-headless>=4.12.0.88",  # avoid full OpenCV
     "pillow>=11.2.1",
 ]
 
