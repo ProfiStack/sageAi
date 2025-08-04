@@ -50,7 +50,7 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "boto3>=1.40.0",
     "tensorflow>=2.19.0",
-    "opencv-python>=4.12.0.88",
+    "opencv-python-headless>=4.12.0.88",  # CHANGED: headless version
     "pillow>=11.2.1",
 ]
 
@@ -58,3 +58,7 @@ dependencies = [
 dev = [
     "ipykernel>=6.29.5",
 ]
+
+# Railway configuration for any additional system packages if needed
+[phases.setup]
+nixPkgs = ["libGL", "libglib"]  # Keep these just in case
