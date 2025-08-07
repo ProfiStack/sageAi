@@ -16,6 +16,8 @@ export default function ImageAnalysis() {
 
   const handleImageCapture = (imageData) => {
     setCapturedImageFromPopup(imageData);
+    SetIsOpen(false);
+
     console.log("Received from shadematching popup:", imageData);
 
     // 🔁 Now you can send this to an API

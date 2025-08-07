@@ -20,8 +20,8 @@ export default function ImageAnalysis() {
   const router = useRouter();
   const handleImageCapture = async (imageData) => {
     setCapturedImageFromPopup(imageData);
-    const byteString = atob(imageData.split(',')[1]);
-    const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+    const byteString = atob(imageData.split(",")[1]);
+    const mimeString = imageData.split(",")[0].split(":")[1].split(";")[0];
     const ab = new ArrayBuffer(byteString.length);
     const ia = new Uint8Array(ab);
     for (let i = 0; i < byteString.length; i++) {
@@ -29,17 +29,18 @@ export default function ImageAnalysis() {
     }
     const blob = new Blob([ab], { type: mimeString });
     const formData = new FormData();
-    formData.append('image', blob, 'skin.jpg');
+    formData.append("image", blob, "skin.jpg");
 
     try {
       setIsLoading(true);
       const response = await Api.client.analyzeSkinPhoto(formData);
       const { setHtml } = useSkinResultStore.getState();
       setHtml(response.results);
-      router.push('/analysis-result');
+      SetIsOpen(false);
+      router.push("/analysis-result");
       setIsLoading(false);
     } catch (error) {
-      console.error('Error sending image to backend:', error);
+      console.error("Error sending image to backend:", error);
       setIsLoading(false);
     }
   };

@@ -16,13 +16,19 @@ import { useRouter } from "next/navigation"; // Import useRouter
 import useFormToast from "../FormToast/FormToast";
 import { Loader2 } from "lucide-react";
 
-export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading }) {
+export default function PictureAnalysisPopup({
+  open,
+  setOpen,
+  onCapture,
+  loading,
+}) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const croppedRef = useRef(null); // Keep the ref for internal use
   const faceLandmarkerRef = useRef(null);
   const router = useRouter(); // Initialize useRouter
-  const { primaryToast, destructiveToast } = useFormToast();
+  const { destructiveToast } = useFormToast();
+
   const [isReady, setIsReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false); // Controls the main detection loop (active analysis)
   const [countdown, setCountdown] = useState(0); // 0 means no countdown, 1-3 active
@@ -89,11 +95,11 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
 
     const noseToEyeDist = Math.sqrt(
       Math.pow(noseTip.x - eyeLineMidX, 2) +
-      Math.pow(noseTip.y - eyeLineMidY, 2)
+        Math.pow(noseTip.y - eyeLineMidY, 2)
     );
     const noseToMouthDist = Math.sqrt(
       Math.pow(noseTip.x - mouthLineMidX, 2) +
-      Math.pow(noseTip.y - mouthLineMidY, 2)
+        Math.pow(noseTip.y - mouthLineMidY, 2)
     );
     let pitchDeg = 0;
     if (noseToEyeDist + noseToMouthDist > 0) {
@@ -147,7 +153,7 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
       const faceCenterY = box.originY + box.height / 2;
       const distance = Math.sqrt(
         Math.pow(faceCenterX - canvasCenterX, 2) +
-        Math.pow(faceCenterY - canvasCenterY, 2)
+          Math.pow(faceCenterY - canvasCenterY, 2)
       );
       const tolerance = Math.min(videoWidth, videoHeight) * 0.1;
       const isCentered = distance < tolerance;
@@ -274,7 +280,7 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       // After drawing the initial flipped video, apply blur and draw the oval mask
-      ctx.filter = "blur(8px)";
+
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       ctx.filter = "none"; // Reset filter
 
@@ -416,32 +422,6 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
       setFaceUp(newFaceUp);
       setFaceDown(newFaceDown);
 
-      // --- Draw Dotted Lines for Pose Correction (INSIDE THE CLIP, STATIC AT CENTER) ---
-      // These lines will now be confined to the oval and be static relative to the oval.
-      if (!allChecksPassForFrame && !isImageCaptured && faceBoundingBox) {
-        // Only show if checks fail, not captured, and a face is detected
-        ctx.strokeStyle = "#F5F5F5"; // Or any color you prefer for guidance
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]); // Dotted line: 5 pixels on, 5 pixels off
-
-        // Draw horizontal line if head is pitched up/down (Pitch Off)
-        if (isPitchOff) {
-          ctx.beginPath();
-          ctx.moveTo(canvasCenterX - radiusX, targetHorizontalLineY); // Draw within the oval's horizontal bounds
-          ctx.lineTo(canvasCenterX + radiusX, targetHorizontalLineY);
-          ctx.stroke();
-        }
-
-        // Draw vertical line if head is yawed left/right (Yaw Off)
-        if (isYawOff) {
-          ctx.beginPath();
-          ctx.moveTo(canvasCenterX, canvasCenterY - radiusY); // Draw within the oval's vertical bounds
-          ctx.lineTo(canvasCenterX, canvasCenterY + radiusY);
-          ctx.stroke();
-        }
-      }
-      ctx.setLineDash([]); // Reset line dash to solid for other drawings
-
       // --- RESTORE THE OVAL CLIP ---
       ctx.restore(); // Restore to remove the clip applied earlier for the unblurred oval and dotted lines
 
@@ -459,9 +439,6 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
         0,
         2 * Math.PI
       );
-      ctx.strokeStyle = allChecksPassForFrame ? "green" : "#F5F5F5";
-      ctx.lineWidth = 2;
-      ctx.stroke();
 
       // 7. Draw countdown text
       if (countdown > 0) {
@@ -628,7 +605,6 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
 
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            ctx.filter = "blur(8px)";
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             ctx.filter = "none";
 
@@ -638,11 +614,6 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
             const canvasCenterY = canvas.height / 2;
             const radiusX = Math.min(canvas.width, canvas.height) * 0.2;
             const radiusY = Math.min(canvas.width, canvas.height) * 0.25;
-
-            // --- DOTTED LINE CALCULATION (MUST MATCH processDetections) ---
-            const NEUTRAL_PITCH_GUIDE_OFFSET_Y = radiusY * 0.2; // ** <<< ADJUST THIS VALUE CAREFULLY >>> **
-            const targetHorizontalLineY =
-              canvasCenterY + NEUTRAL_PITCH_GUIDE_OFFSET_Y;
 
             ctx.beginPath();
             ctx.ellipse(
@@ -658,52 +629,11 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
 
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Redraw Dotted Lines based on stored state to prevent flicker
-            if (
-              !allCurrentChecksPass &&
-              !isImageCaptured &&
-              lastFaceCenterRef.current.x !== null // Ensure a face was previously detected
-            ) {
-              ctx.strokeStyle = "#F5F5F5";
-              ctx.lineWidth = 2;
-              ctx.setLineDash([5, 5]);
-
-              if (isPitchOff) {
-                ctx.beginPath();
-                ctx.moveTo(canvasCenterX - radiusX, targetHorizontalLineY); // Draw within the oval's horizontal bounds
-                ctx.lineTo(canvasCenterX + radiusX, targetHorizontalLineY);
-                ctx.stroke();
-              }
-
-              if (isYawOff) {
-                ctx.beginPath();
-                ctx.moveTo(canvasCenterX, canvasCenterY - radiusY); // Draw within the oval's vertical bounds
-                ctx.lineTo(canvasCenterX, canvasCenterY + radiusY);
-                ctx.stroke();
-              }
-            }
-            ctx.setLineDash([]); // Reset line dash
-
             // --- RESTORE THE OVAL CLIP ---
             ctx.restore();
 
             // --- Restore the initial horizontal flip ---
             ctx.restore();
-
-            // Redraw the oval stroke outside the clip
-            ctx.beginPath();
-            ctx.ellipse(
-              canvasCenterX,
-              canvasCenterY,
-              radiusX,
-              radiusY,
-              0,
-              0,
-              2 * Math.PI
-            );
-            ctx.strokeStyle = allCurrentChecksPass ? "green" : "#F5F5F5";
-            ctx.lineWidth = 2;
-            ctx.stroke();
 
             if (countdown > 0) {
               ctx.font = "bold 28px sans-serif";
@@ -920,99 +850,136 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
     setIsPitchOff(false);
     lastFaceCenterRef.current = { x: null, y: null };
   };
-  return (
-    loading ? (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-20 flex flex-col gap-2">
-        <p className="text-white text-center">Loading your skin analysis... Please sit tight!</p>
-        <div className="flex items-center justify-center">
-          <Loader2 className="animate-spin text-green-500" size={24} />
-        </div>
+  return loading ? (
+    <div className="fixed inset-0 z-50  items-center justify-center bg-black bg-opacity-20 flex flex-col gap-2">
+      <p className="text-white text-center">
+        Loading your skin analysis... Please sit tight!
+      </p>
+      <div className="flex items-center justify-center">
+        <Loader2 className="animate-spin text-green-500" size={24} />
       </div>
-    ) : (
-      <AnimatePresence>
-        {open && (
+    </div>
+  ) : (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 "
+          onClick={handleClose} // Close when clicking outside modal content
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 "
-            onClick={handleClose} // Close when clicking outside modal content
+            initial={{ scale: 0.9, y: 50 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 50 }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            className="relative bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 shadow-lg rounded-xl overflow-hidden flex flex-col items-center justify-center px-6 space-y-4 max-w-lg w-full"
+            style={{ width: "350px", minHeight: "550px" }} // Adjusted dimensions for the popup
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
           >
-            <motion.div
-              initial={{ scale: 0.9, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 50 }}
-              transition={{ type: "spring", stiffness: 200, damping: 25 }}
-              className="relative bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 shadow-lg rounded-xl overflow-hidden flex flex-col items-center justify-center px-6 space-y-4 max-w-lg w-full"
-              style={{ width: "350px", minHeight: "550px" }} // Adjusted dimensions for the popup
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
+            {/* Close Button */}
+            <button
+              onClick={handleClose}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 z-10"
+              aria-label="Close"
             >
-              {/* Close Button */}
-              <button
-                onClick={handleClose}
-                className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 z-10"
-                aria-label="Close"
-              >
-                <X size={24} />
-              </button>
+              <X size={24} />
+            </button>
 
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Skin Analysis
-              </h2>
-              <p className="text-sm text-gray-500 text-center mb-6">
-                Ensure your face is well-lit and centered within the oval.
-              </p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Skin Analysis
+            </h2>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              Ensure your face is well-lit and centered within the oval.
+            </p>
 
-              {/* Video/Canvas Container */}
-              <div
-                className="relative bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center"
-                style={{ width: "350px", height: "430px" }}
-              >
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className={`absolute w-full h-full object-cover transition-opacity duration-300 ${isCapturing ? "opacity-100" : "opacity-0"
-                    }`}
-                ></video>
-                <canvas
-                  ref={canvasRef}
-                  className={`absolute w-full h-full transition-opacity duration-300 ${isCapturing ? "opacity-100" : "opacity-0"
-                    }`}
-                ></canvas>
-                {/* This canvas is now only for capturing the image data, not for display */}
-                <canvas ref={croppedRef} className="hidden"></canvas>
+            {/* Video/Canvas Container */}
+            <div
+              className="relative bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center"
+              style={{ width: "350px", height: "430px" }}
+            >
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`absolute w-full h-full object-cover transition-opacity duration-300 ${
+                  isCapturing ? "opacity-100" : "opacity-0"
+                }`}
+              ></video>
+              <canvas
+                ref={canvasRef}
+                className={`absolute w-full h-full transition-opacity duration-300 ${
+                  isCapturing ? "opacity-100" : "opacity-0"
+                }`}
+              ></canvas>
+              {/* This canvas is now only for capturing the image data, not for display */}
+              <canvas ref={croppedRef} className="hidden"></canvas>
 
-                {!isReady && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 text-white text-lg">
-                    Loading camera and model...
-                  </div>
-                )}
+              {!isReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 text-white text-lg">
+                  Loading camera and model...
+                </div>
+              )}
 
-                {/* Directional Guides */}
-                {isCapturing && (
-                  <>
+              {/* Blur Mask Overlay */}
+              {isCapturing && (
+                <div
+                  className="relative z-50 rounded-full border-2 border-white pointer-events-none"
+                  style={{
+                    width: "200px",
+                    height: "250px",
+                    borderRadius: "50%",
+                  }}
+                >
+                  {/* Dotted Lines */}
+                  {isPitchOff && (
+                    <div
+                      className="absolute w-full flex justify-start border-t-2 border-dotted border-white opacity-80"
+                      style={{
+                        top: "50%",
+                        left: "0%",
+                        right: "10%",
+                        transform: "translateY(-50%)",
+                      }}
+                    />
+                  )}
+
+                  {isYawOff && (
+                    <div
+                      className="absolute h-full border-l-2 border-dotted border-white opacity-80"
+                      style={{
+                        left: "50%",
+                        top: "0%",
+                        bottom: "10%",
+                        transform: "translateX(-50%)",
+                      }}
+                    />
+                  )}
+
+                  {/* Directional Guides Container - Now properly positioned */}
+                  <div className="absolute inset-0 flex items-center justify-center">
                     {/* Down Arrow */}
                     {faceUp && (
                       <motion.div
                         key="arrow-down"
-                        initial={{ y: "-20%", opacity: 0 }} // Start above center, invisible
+                        initial={{ y: "-20%", opacity: 0 }}
                         animate={{
                           y: ["-20%", "0%", "-20%"],
                           opacity: [0, 1, 0],
-                        }} // Move down and up, fade in/out
+                        }}
                         transition={{
                           duration: 1.5,
                           repeat: Infinity,
                           repeatType: "reverse",
                           ease: "easeInOut",
                         }}
-                        className="absolute flex items-center justify-center pointer-events-none"
+                        className="absolute pointer-events-none z-50"
                         style={{
-                          top: "27%",
-                          left: "45%",
-                          transform: "translateX(-50%)",
+                          top: "0%", // Position from top of circle
+                          left: "41%",
+                          transform: "translateX(-50%)", // Center horizontally
                         }}
                       >
                         <ChevronsDown
@@ -1026,19 +993,22 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
                     {faceDown && (
                       <motion.div
                         key="arrow-up"
-                        initial={{ y: "20%", opacity: 0 }} // Start below center, invisible
-                        animate={{ y: ["20%", "0%", "20%"], opacity: [0, 1, 0] }} // Move up and down, fade in/out
+                        initial={{ y: "20%", opacity: 0 }}
+                        animate={{
+                          y: ["20%", "0%", "20%"],
+                          opacity: [0, 1, 0],
+                        }}
                         transition={{
                           duration: 1.5,
                           repeat: Infinity,
                           repeatType: "reverse",
                           ease: "easeInOut",
                         }}
-                        className="absolute flex items-center justify-center pointer-events-none"
+                        className="absolute pointer-events-none z-50"
                         style={{
-                          bottom: "27%",
-                          left: "45%",
-                          transform: "translateX(-50%)",
+                          bottom: "0%", // Position from top of circle
+                          left: "41%",
+                          transform: "translateX(-50%)", // Center horizontally
                         }}
                       >
                         <ChevronsUp
@@ -1048,26 +1018,26 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
                       </motion.div>
                     )}
 
-                    {/* right Arrow */}
+                    {/* Right Arrow */}
                     {faceLeft && (
                       <motion.div
-                        key="arrow-left"
-                        initial={{ x: "-20%", opacity: 0 }} // Start to the left, invisible
+                        key="arrow-right"
+                        initial={{ x: "-20%", opacity: 0 }}
                         animate={{
                           x: ["-20%", "0%", "-20%"],
                           opacity: [0, 1, 0],
-                        }} // Move right and left, fade in/out
+                        }}
                         transition={{
                           duration: 1.5,
                           repeat: Infinity,
                           repeatType: "reverse",
                           ease: "easeInOut",
                         }}
-                        className="absolute flex items-center justify-center pointer-events-none"
+                        className="absolute pointer-events-none z-50"
                         style={{
-                          left: "35%",
-                          top: "50.5%",
-                          transform: "translateY(-50%)",
+                          top: "43%",
+                          left: "0%", // Position from left of circle
+                          transform: "translateY(-50%)", // Center vertically
                         }}
                       >
                         <ChevronsRight
@@ -1077,23 +1047,26 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
                       </motion.div>
                     )}
 
-                    {/* left Arrow */}
+                    {/* Left Arrow */}
                     {faceRight && (
                       <motion.div
-                        key="arrow-right"
-                        initial={{ x: "20%", opacity: 0 }} // Start to the right, invisible
-                        animate={{ x: ["20%", "0%", "20%"], opacity: [0, 1, 0] }} // Move left and right, fade in/out
+                        key="arrow-left"
+                        initial={{ x: "20%", opacity: 0 }}
+                        animate={{
+                          x: ["20%", "0%", "20%"],
+                          opacity: [0, 1, 0],
+                        }}
                         transition={{
                           duration: 1.5,
                           repeat: Infinity,
                           repeatType: "reverse",
                           ease: "easeInOut",
                         }}
-                        className="absolute flex items-center justify-center pointer-events-none"
+                        className="absolute pointer-events-none z-50"
                         style={{
-                          right: "35%",
-                          top: "50.5%",
-                          transform: "translateY(-50%)",
+                          top: "43%",
+                          right: "0%", // Position from left of circle
+                          transform: "translateY(-50%)", // Center vertically
                         }}
                       >
                         <ChevronsLeft
@@ -1102,14 +1075,15 @@ export default function PictureAnalysisPopup({ open, setOpen, onCapture, loading
                         />
                       </motion.div>
                     )}
-                  </>
-                )}
-              </div>
-              {/* The rest of the UI (messages and buttons) that are removed */}
-            </motion.div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* The rest of the UI (messages and buttons) that are removed */}
           </motion.div>
-        )}
-      </AnimatePresence>
-    )
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
