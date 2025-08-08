@@ -12,6 +12,8 @@ import {
   FlaskConical,
   Utensils,
   Eye,
+  MessageCircle,
+  TriangleAlert,
 } from "lucide-react";
 
 export const categoryItemsData = [
@@ -141,3 +143,47 @@ export const comingSoonItemsData = [
     description: "Hair analysis and personalized care routines",
   },
 ];
+
+export const resultPageData = {
+  main: [
+    {
+      id: "chat",
+      title: "Skincare",
+      description: "Personalized skincare routine",
+      icon: <MessageCircle />,
+      route: "/chat",
+      type: "skincare",
+    },
+  ],
+
+  professional: [
+    {
+      id: "treatment-planning",
+      title: "Treatment Planning",
+      description: "Recommended treatments",
+      icon: <Calendar />,
+      route: "/treatment-planning",
+      type: "treatment_planning",
+    },
+  ],
+  insights: [
+    {
+      id: "trend-analysis",
+      title: "Trend Analysis",
+      description: "Verify trends before damaging your skin",
+      icon: <TrendingUp />,
+      route: "/trend-analysis",
+      type: "trend_analysis",
+    },
+  ],
+  otherCategories: [
+    {
+      id: "check-ingredients",
+      title: "Check Ingredients",
+      description: "check ingredients applying on skin",
+      icon: <TriangleAlert />,
+      route: "/check-ingredients",
+      type: "ingredient_checker",
+    },
+  ],
+};

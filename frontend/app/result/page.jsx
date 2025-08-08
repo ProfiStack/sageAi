@@ -54,8 +54,8 @@ const ChatButtons = () => {
 
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between">
-        <div className="max-w-md mx-auto bg-[#fdfdfd] min-h-screen">
+      <div className=" bg-gray-50 max-w-md flex flex-col justify-between">
+        <div className="max-w-md  bg-[#fdfdfd] min-h-screen">
           <div className="relative w-[78px] h-[78px] mx-auto">
             <Image
               src="/images/sagelogo2.png"

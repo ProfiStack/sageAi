@@ -5,12 +5,13 @@ import { Info, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Api } from "@/shared/api/api";
 import SkinTypePopup from "./SkinTypePopup";
+import useAuthStore from "@/store/authStore";
 
 const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
   const [isOpenSkinType, setIsOpenSkinType] = useState(false);
 
   const [quizData, setQuizData] = useState(beautyQuizData);
-  const token = localStorage.getItem("sagee_user_id");
+  const { token } = useAuthStore();
   const hasCompletedRef = useRef(false);
 
   const updateSelection = (questionId, optionId) => {

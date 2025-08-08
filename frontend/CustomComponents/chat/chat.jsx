@@ -43,6 +43,10 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       skincare: "skincare",
       "check-ingredients": "ingredient_checker",
       "treatment-planning": "treatment_planning",
+      makeup: "makeup",
+      "makeup-tools": "makeup_tools",
+      "makeup-looks": "makeup_looks",
+      "makeup-products": "makeup_products",
     };
     return routeTypeMap[route] || route;
   };
