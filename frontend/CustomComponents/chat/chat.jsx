@@ -73,7 +73,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         } else if (
           response.role === "system" &&
           response.content &&
-          !response.content.startsWith("You are ")
+          !response.content.startsWith("You are ") && !response.content.includes("Sagee")
         ) {
           convertedMessages.push({
             id: `history-${historyIndex}-${responseIndex}-system`,

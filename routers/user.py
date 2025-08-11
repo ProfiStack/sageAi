@@ -5,7 +5,7 @@ from prompts.image_analysis import clean_html_code, get_image_analysis_prompt
 from routers.auth import get_current_user
 from services.ai import analyze_skin_features
 from sqlalchemy.orm import Session
-from models.db_models import ChatResults, ChatMessage  # Your SQLAlchemy models
+from models.db_models import  ChatMessage, ChatResults, HairMessage, StylingMessage,  HairMessage, IngredientMessage, NutritionMessage, WellnessMessage, TrendMessage, TreatmentMessage
 from db import SessionLocal
 from services.db_service import (
     get_user_chat_data,
@@ -34,7 +34,16 @@ user_dependency = Annotated[Session, Depends(get_current_user)]
 system_prompt = result_prompt
 router = APIRouter()
 executor = ThreadPoolExecutor()
-
+MODEL_MAP = {
+    "skincare": ChatMessage,
+    "hair_care": HairMessage,
+    "ingredient_checker": IngredientMessage,
+    "nutrition": NutritionMessage,
+    "wellness": WellnessMessage,
+    "trend_analysis": TrendMessage,
+    "treatment_planning": TreatmentMessage,
+    "styling": StylingMessage,  # If styling uses same table as skincare
+}
 
 @router.get("/user/chat/{chat_id}")
 async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
@@ -78,11 +87,12 @@ async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
 
 @router.get("/user/history/{type}")
 def get_chat_history_by_type(user_db: user_dependency, type: str, limit: int = 20):
+    ModelClass = MODEL_MAP.get(type, ChatMessage)
     db = SessionLocal()
     history = (
-        db.query(ChatMessage)
+        db.query(ModelClass)
         .filter_by(user_id=user_db.get("user_id"), type=type)
-        .order_by(ChatMessage.timestamp.desc())
+        .order_by(ModelClass.timestamp.desc())
         .limit(limit)
         .all()
     )

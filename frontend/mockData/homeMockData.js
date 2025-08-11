@@ -140,7 +140,7 @@ export const categoryItemsData = [
       {
         title: "Haircare",
         icon: Scissors,
-        route: "/haircare",
+        route: "/hair-care",
         description: "Hair analysis and personalized care routines",
       },
     ],

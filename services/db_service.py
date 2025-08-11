@@ -137,7 +137,6 @@ def save_chat_message(
     ModelClass = MODEL_MAP.get(type, ChatMessage)
     profile = get_or_create_user_profile(db, user_id)
     profile.last_active = datetime.utcnow()
-    print(type, '************')
     # Check if a chat already exists for the user
     existing_chat = db.query(ModelClass).filter_by(user_id=user_id, type=type).first()
 

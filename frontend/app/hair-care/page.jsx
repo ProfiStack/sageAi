@@ -1,18 +1,21 @@
-import ComingSoon from "@/CustomComponents/comingSoon/comingSoon";
-import Footer from "@/CustomComponents/Footer/Footer";
 import ProtectedRoute from "@/CustomComponents/ProtectedRoute";
-import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
+import dynamic from "next/dynamic";
+import { WebSocketProvider } from "../providers/chatProvider";
+const ConsultationChat = dynamic(() => import("@/CustomComponents/chat/chat"), {
+  ssr: false,
+});
+
 
 export default function HairCare() {
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="flex flex-col justify-between h-screen bg-[#FAFAFA] ">
-        <div>
-          <SettingsHeader title="Hair Care" />
-          <ComingSoon image="/images/haircare.png" />
-        </div>
-        <Footer />
-      </div>
+      <WebSocketProvider route="hair_care">
+        <ConsultationChat
+          route="hair_care"
+          title="HairCare Assistant"
+          initialMessage="Hello! I'm your Consultant. I'm here to help with your Hair care questions. What would you like to discuss today?"
+        />
+      </WebSocketProvider>
     </ProtectedRoute>
   );
 }
