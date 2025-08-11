@@ -55,3 +55,8 @@ export const resetGuestMessageCount = () => {
 
   localStorage.removeItem("sagee_guest_message_count");
 };
+
+export const changeMessage = (messages, setCurrentMessage) => {
+  const randomIndex = Math.floor(Math.random() * messages.length);
+  setCurrentMessage(messages[randomIndex].message);
+};

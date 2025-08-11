@@ -5,7 +5,7 @@ def get_skincare_prompt(user_metrics):
     concern = user_metrics.get("concern") or "Not specified"
     preferred_routine = user_metrics.get("preferred_routine") or "Minimal"
 
-    return f"""You are Sagee. A friendly, concise skincare chatbot who helps users with daily skincare routines, product recommendations, and general skin wellness advice.
+    return f"""You are Sagee. A friendly, concise skincare chatbot who helps users with daily skincare routines, product recommendations, and general skin wellness advice from 2025-2026's.
 
 You are one of many chat bots that have been deployed into our APP.
 

@@ -1,8 +1,18 @@
 from sqlalchemy.orm import Session
-from models.db_models import UserProfile, ChatMessage, ChatResults
+from models.db_models import UserProfile, ChatMessage, ChatResults, HairMessage, StylingMessage,  HairMessage, IngredientMessage, NutritionMessage, WellnessMessage, TrendMessage, TreatmentMessage
 from datetime import datetime
 import json
 
+MODEL_MAP = {
+    "skincare": ChatMessage,
+    "hair_care": HairMessage,
+    "ingredient_checker": IngredientMessage,
+    "nutrition": NutritionMessage,
+    "wellness": WellnessMessage,
+    "trend_analysis": TrendMessage,
+    "treatment_planning": TreatmentMessage,
+    "styling": StylingMessage,  # If styling uses same table as skincare
+}
 
 def get_or_create_user_profile(db: Session, user_id: str):
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
@@ -35,10 +45,12 @@ def parse_json_field(field):
 def get_user_session_data(db, user_id: str, feature_type: str):
     profile = get_or_create_user_profile(db, user_id)
     # Fetch last 10 chat messages ordered by timestamp descending
+    ModelClass = MODEL_MAP.get(feature_type, ChatMessage)
+
     history = (
-        db.query(ChatMessage)
-        .filter(ChatMessage.user_id == user_id, ChatMessage.type == feature_type)
-        .order_by(ChatMessage.timestamp.desc())
+        db.query(ModelClass)
+        .filter(ModelClass.user_id == user_id, ModelClass.type == feature_type)
+        .order_by(ModelClass.timestamp.desc())
         .limit(10)
         .all()
     )
@@ -122,11 +134,12 @@ def save_chat_message(
     db: Session, user_id: str, type: str, message: str, response: str
 ):
     # Ensure user profile exists and update last_active
+    ModelClass = MODEL_MAP.get(type, ChatMessage)
     profile = get_or_create_user_profile(db, user_id)
     profile.last_active = datetime.utcnow()
-
+    print(type, '************')
     # Check if a chat already exists for the user
-    existing_chat = db.query(ChatMessage).filter_by(user_id=user_id, type=type).first()
+    existing_chat = db.query(ModelClass).filter_by(user_id=user_id, type=type).first()
 
     if existing_chat:
         existing_chat.message = message
@@ -134,7 +147,7 @@ def save_chat_message(
         existing_chat.response = response
         existing_chat.timestamp = datetime.utcnow()
     else:
-        new_chat = ChatMessage(
+        new_chat = ModelClass(
             user_id=user_id,
             type=type,
             message=message,

@@ -4,7 +4,7 @@ def get_treatment_plan_prompt(user_metrics):
     concern = user_metrics.get("concern") or "Not specified"
     preferred_routine = user_metrics.get("preferred_routine") or "Minimal"
 
-    return f"""You are Sagee. A smart, supportive skincare consultant who recommends concise treatment plans based on the user's skin concerns.
+    return f"""You are Sagee. A smart, supportive skincare consultant who recommends concise treatment plans based on the user's skin concerns 2025-2026's.
 
 You are one of many chat bots that been deployed into our APP.
 

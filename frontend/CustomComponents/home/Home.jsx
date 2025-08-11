@@ -16,6 +16,8 @@ import {
 
 export default function HomePage() {
   const { token } = useAuthStore();
+  const [messages, setMessages] = useState([]);
+  const [currentMessage, setCurrentMessage] = useState();
   const [showBeautyQuiz, setShowBeautyQuiz] = useState(false);
   const router = useRouter();
 
@@ -30,6 +32,12 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    const getStaticList = async () => {
+      const response = await Api.client.getMessages();
+      setMessages(response.message);
+      setCurrentMessage(response.message[0].message)
+    }
+
     const checkUserProfile = async () => {
       if (token) {
         try {
@@ -63,10 +71,20 @@ export default function HomePage() {
         }
       }
     };
-
+    getStaticList();
     checkUserProfile();
-  }, [token]);
 
+  }, [token]);
+  useEffect(() => {
+    if (messages.length) {
+      const changeMessage = () => {
+        const randomIndex = Math.floor(Math.random() * messages.length);
+        setCurrentMessage(messages[randomIndex].message);
+      };
+      const intervalId = setInterval(changeMessage, 5000); // change every 10 seconds
+      return () => clearInterval(intervalId);
+    }
+  }, [messages])
   return (
     <div className="h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between">
       <div className="max-w-md mx-auto bg-white">
@@ -82,9 +100,9 @@ export default function HomePage() {
         <div className="max-w-md mx-auto px-6 py-6">
           <div className="mb-8">
             {/* Stats Card */}
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100 shadow-sm">
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl px-2 py-4 border border-emerald-100 shadow-sm">
               <div className="flex items-start space-x-4">
-                <div className="bg-emerald-100 rounded-full p-3">
+                <div className="bg-emerald-100 rounded-full p-1">
                   <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-bold">!</span>
                   </div>
@@ -94,8 +112,8 @@ export default function HomePage() {
                     DID YOU KNOW?
                   </p>
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    <span className="font-semibold text-emerald-700">82%</span>{" "}
-                    of our users found a better foundation match under 3 minutes
+                    <span className="font-semibold text-emerald-700">{currentMessage?.split('%')[0]}%</span>{" "}
+                    {currentMessage?.split('%')[1]}
                   </p>
                 </div>
               </div>
@@ -146,7 +164,7 @@ export default function HomePage() {
             ))}
 
             {/* Coming Soon Section */}
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <h2 className="text-xl font-bold text-gray-800">Coming Soon</h2>
 
               <div className="grid grid-cols-2 gap-3">
@@ -177,7 +195,7 @@ export default function HomePage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

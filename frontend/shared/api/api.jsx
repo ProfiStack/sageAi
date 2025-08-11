@@ -98,6 +98,22 @@ export const Api = {
         console.log(error);
       }
     },
+    getMessages: async () => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/static_messages`,
+          {
+            method: "GET",
+            next: {
+              revalidate: 3600, // 1 hour
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
     getChatHistory: async (token, feature_type) => {
       try {
         if (!feature_type) {

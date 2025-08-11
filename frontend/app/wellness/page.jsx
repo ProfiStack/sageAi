@@ -1,18 +1,22 @@
 import ComingSoon from "@/CustomComponents/comingSoon/comingSoon";
 import Footer from "@/CustomComponents/Footer/Footer";
 import ProtectedRoute from "@/CustomComponents/ProtectedRoute";
-import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
+import dynamic from "next/dynamic";
+import { WebSocketProvider } from "../providers/chatProvider";
+const ConsultationChat = dynamic(() => import("@/CustomComponents/chat/chat"), {
+  ssr: false,
+});
 
 export default function Wellness() {
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="flex flex-col justify-between h-screen bg-[#FAFAFA]">
-        <div>
-          <SettingsHeader title="Wellness" />
-          <ComingSoon image="/images/wellness.png" />
-        </div>
-        <Footer />
-      </div>
+      <WebSocketProvider route="wellness">
+        <ConsultationChat
+          route="wellness"
+          title="Wellness Assistant"
+          initialMessage="Hello! I'm your Consultant. I'm here to help with your wellness questions. What would you like to discuss today?"
+        />
+      </WebSocketProvider>
     </ProtectedRoute>
   );
 }

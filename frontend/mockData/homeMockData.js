@@ -115,33 +115,63 @@ export const categoryItemsData = [
       },
     ],
   },
-];
-
-export const comingSoonItemsData = [
-  {
-    title: "Styling",
-    icon: Sparkles,
-    route: "/styling",
-    description: "Personal style recommendations and wardrobe planning",
-  },
   {
     title: "Wellness",
     icon: Heart,
-    route: "/wellness",
-    description: "Holistic wellness tracking and lifestyle guidance",
+    items: [
+      {
+        title: "Styling",
+        icon: Sparkles,
+        route: "/styling",
+        description: "Personal style recommendations and wardrobe planning",
+      },
+      {
+        title: "Wellness",
+        icon: Heart,
+        route: "/wellness",
+        description: "Holistic wellness tracking and lifestyle guidance",
+      },
+      {
+        title: "Nutrition",
+        icon: Utensils,
+        route: "/nutrition",
+        description: "Nutrition advice for healthy skin and beauty",
+      },
+      {
+        title: "Haircare",
+        icon: Scissors,
+        route: "/haircare",
+        description: "Hair analysis and personalized care routines",
+      },
+    ],
   },
-  {
-    title: "Nutrition",
-    icon: Utensils,
-    route: "/nutrition",
-    description: "Nutrition advice for healthy skin and beauty",
-  },
-  {
-    title: "Haircare",
-    icon: Scissors,
-    route: "/haircare",
-    description: "Hair analysis and personalized care routines",
-  },
+];
+
+export const comingSoonItemsData = [
+  // {
+  //   title: "Styling",
+  //   icon: Sparkles,
+  //   route: "/styling",
+  //   description: "Personal style recommendations and wardrobe planning",
+  // },
+  // {
+  //   title: "Wellness",
+  //   icon: Heart,
+  //   route: "/wellness",
+  //   description: "Holistic wellness tracking and lifestyle guidance",
+  // },
+  // {
+  //   title: "Nutrition",
+  //   icon: Utensils,
+  //   route: "/nutrition",
+  //   description: "Nutrition advice for healthy skin and beauty",
+  // },
+  // {
+  //   title: "Haircare",
+  //   icon: Scissors,
+  //   route: "/haircare",
+  //   description: "Hair analysis and personalized care routines",
+  // },
 ];
 
 export const resultPageData = {

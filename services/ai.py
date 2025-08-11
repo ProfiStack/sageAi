@@ -1,27 +1,29 @@
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import HTTPException, WebSocket
 
 import os
 import json
-from datetime import datetime
-from fastapi.responses import JSONResponse, PlainTextResponse
 from openai import OpenAI
 from dotenv import load_dotenv
 from db import SessionLocal
 import asyncio
+from prompts.hair_care import get_hair_care_checker_prompt
+from prompts.nutrition import get_nutrition_checker_prompt
+from prompts.styling import get_styling_checker_prompt
+from prompts.wellness import get_wellness_checker_prompt
 from services.db_service import save_chat_message, get_user_session_data
 from concurrent.futures import ThreadPoolExecutor
 from prompts.ingredients import get_ingredient_checker_prompt
 from prompts.skin_care import get_skincare_prompt
 from prompts.tend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
-from prompts.photo import get_photo_prompt
-from services.s3 import delete_s3_image, upload_base64_image_to_s3
+
 
 # SAFE OPENCV IMPORT - Replace line 19
 def safe_import_cv2():
     """Safely import OpenCV with proper error handling"""
     try:
         import cv2
+
         print(f"✅ OpenCV loaded successfully: {cv2.__version__}")
         return cv2
     except ImportError as e:
@@ -32,21 +34,33 @@ def safe_import_cv2():
                 # Force uninstall regular opencv and install headless
                 import subprocess
                 import sys
-                
-                subprocess.run([sys.executable, "-m", "pip", "uninstall", "opencv-python", "-y"], 
-                             capture_output=True)
-                subprocess.run([sys.executable, "-m", "pip", "install", "opencv-python-headless==4.12.0.88"], 
-                             capture_output=True)
-                
+
+                subprocess.run(
+                    [sys.executable, "-m", "pip", "uninstall", "opencv-python", "-y"],
+                    capture_output=True,
+                )
+                subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        "opencv-python-headless==4.12.0.88",
+                    ],
+                    capture_output=True,
+                )
+
                 import cv2
+
                 print("✅ Successfully switched to opencv-python-headless")
                 return cv2
             except Exception as install_error:
                 print(f"❌ Failed to install headless version: {install_error}")
-        
+
         # Fallback: Return None and handle gracefully
         print("⚠️ OpenCV not available - image analysis will be disabled")
         return None
+
 
 # Initialize OpenCV safely
 cv2 = safe_import_cv2()
@@ -61,6 +75,7 @@ load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 import json
+
 
 class ConnectionManager:
     def __init__(self):
@@ -95,7 +110,9 @@ class ConnectionManager:
                     self.disconnect(user_id, feature_type)
         return False
 
+
 manager = ConnectionManager()
+
 
 # Main function to get the appropriate prompt based on feature
 def get_feature_prompt(feature_type: str, user_metrics: dict):
@@ -106,11 +123,20 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
             return get_ingredient_checker_prompt(user_metrics)
         elif feature_type == "treatment_planning":
             return get_treatment_plan_prompt(user_metrics)
+        elif feature_type == "nutrition":
+            return get_nutrition_checker_prompt()
+        elif feature_type == "wellness":
+            return get_wellness_checker_prompt()
+        elif feature_type == "hair_care":
+            return get_hair_care_checker_prompt()
+        elif feature_type == "styling":
+            return get_styling_checker_prompt()
         else:
             return get_skincare_prompt(user_metrics)
     except Exception as e:
         print(f"[get_feature_prompt] Error: {e}")
         return get_skincare_prompt({})
+
 
 async def get_ai_response(feature_type: str, message: str, user_id: str):
     try:
@@ -133,7 +159,7 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
             response = await asyncio.get_event_loop().run_in_executor(
                 executor,
                 lambda: chat_gpt.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="gpt-4o",
                     messages=messages,
                     temperature=0.7,
                 ),
@@ -152,14 +178,15 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
         print(f"[get_ai_response] Fatal error: {outer_err}")
         return "Oops! Something went wrong. Please try again later."
 
+
 async def analyze_skin_features(image_bytes: bytes):
     # Check if OpenCV is available
     if cv2 is None:
         raise HTTPException(
-            status_code=503, 
-            detail="Image analysis temporarily unavailable. OpenCV not loaded."
+            status_code=503,
+            detail="Image analysis temporarily unavailable. OpenCV not loaded.",
         )
-    
+
     try:
         # Load and preprocess image
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
@@ -258,7 +285,7 @@ async def analyze_skin_features(image_bytes: bytes):
         blue_channel = img_256[:, :, 2].astype(np.float32)
 
         redness_index = np.mean(red_channel - (green_channel + blue_channel) / 2)
-        if redness_index > 15:
+        if redness_index > 30:
             concerns.append("redness")
 
         # Fine lines/aging
