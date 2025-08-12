@@ -55,7 +55,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                     setIsOpen(false);
                     console.log("Navigating to:", item.route);
                     console.log("Route type:", typeof item.route);
-                    router.push(item.route);
+                    // router.push(item.route);
                   }}
                   className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
                 >
@@ -66,6 +66,10 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                       fill
                       className="object-cover rounded-2xl"
                     />
+                    {/* Coming Soon Badge */}
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                      Coming Soon
+                    </div>
                   </div>
                   <p className="font-semibold text-gray-900 text-sm mt-1">
                     {item.title}

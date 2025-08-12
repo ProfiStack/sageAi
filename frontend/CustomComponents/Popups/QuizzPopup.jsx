@@ -1,16 +1,21 @@
 "use client";
 
-import { beautyQuizData } from "@/mockData/quizzMockData";
 import { Info, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Api } from "@/shared/api/api";
 import SkinTypePopup from "./SkinTypePopup";
 import useAuthStore from "@/store/authStore";
 
-const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
+const BeautyQuizPopup = ({
+  isOpen,
+  setIsOpen,
+  onComplete,
+  quizzData,
+  skinTypePopup = false,
+}) => {
   const [isOpenSkinType, setIsOpenSkinType] = useState(false);
 
-  const [quizData, setQuizData] = useState(beautyQuizData);
+  const [quizData, setQuizData] = useState(quizzData);
   const { token } = useAuthStore();
   const hasCompletedRef = useRef(false);
 
@@ -39,13 +44,17 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
 
   // Extract skin type and concerns from quiz responses
   const extractQuizResults = () => {
-    const skinTypeQuestion = quizData.find((q) => q.id === "skin-type");
-    const skinConcernsQuestion = quizData.find((q) => q.id === "skin-concerns");
-
-    const skin_type = skinTypeQuestion?.selectedOptions[0] || "";
-    const concern = skinConcernsQuestion?.selectedOptions.join(", ") || "";
-
-    return { skin_type, concern };
+    const results = {};
+    quizData.forEach((question) => {
+      if (question.selectedOptions.length > 0) {
+        // If multiple options allowed, join them with commas
+        results[question.id] =
+          question.selectedOptions.length > 1
+            ? question.selectedOptions.join(", ")
+            : question.selectedOptions[0];
+      }
+    });
+    return results;
   };
 
   // Reset completion flag when popup opens
@@ -60,23 +69,18 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
     if (getCompletionCount() === quizData.length && !hasCompletedRef.current) {
       // Update profile with quiz results
       const updateProfileWithQuizResults = async () => {
-        const { skin_type, concern } = extractQuizResults();
+        const results = extractQuizResults();
 
         // Logged in user - update profile via API
         try {
-          const updateData = {
-            skin_type,
-            concern,
-          };
-
-          await Api.client.updateProfile(updateData, token);
+          await Api.client.updateProfile(results, token);
         } catch (error) {
           console.error("Error updating profile with quiz results:", error);
         }
 
         // Call onComplete callback with results
         if (onComplete) {
-          onComplete({ skin_type, concern });
+          onComplete(results);
         }
 
         // Mark as completed to prevent multiple executions
@@ -104,12 +108,14 @@ const BeautyQuizPopup = ({ isOpen, setIsOpen, onComplete }) => {
                 <h2 className="text-2xl font-bold text-gray-900">
                   Skin Analysis
                 </h2>
-                <div className="flex items-center gap-2 text-gray-500 ">
-                  <p>Not sure about skin type?</p>
-                  <button onClick={() => setIsOpenSkinType(true)}>
-                    <Info size={20} fill="#d1fae5" color="#059669" />
-                  </button>
-                </div>
+                {skinTypePopup && (
+                  <div className="flex items-center gap-2 text-gray-500 ">
+                    <p>Not sure about skin type?</p>
+                    <button onClick={() => setIsOpenSkinType(true)}>
+                      <Info size={20} fill="#d1fae5" color="#059669" />
+                    </button>
+                  </div>
+                )}
                 <p className="text-sm text-gray-500 mt-1">
                   Complete {getCompletionCount()}/{quizData.length} sections
                 </p>

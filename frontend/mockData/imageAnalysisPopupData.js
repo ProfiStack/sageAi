@@ -15,9 +15,4 @@ export const ImageAnalysisData = [
     route: "/shade-matching",
     title: "Shade Matching",
   },
-  {
-    image: "/images/mole.png",
-    route: "/mole-analysis",
-    title: "Mole Analysis",
-  },
 ];

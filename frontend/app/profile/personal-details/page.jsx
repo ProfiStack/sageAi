@@ -25,6 +25,15 @@ export default function PersonalDetailsPage() {
     gender: "",
     skin_type: "",
     concern: "",
+    makeup_goal: "",
+    nutrition_goal: "",
+    dietary_restrictions: "",
+    wellness_focus: "",
+    dedicate_time: "",
+    hair_type: "",
+    hair_concern: "",
+    style_preference: "",
+    styling_goal: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -45,6 +54,15 @@ export default function PersonalDetailsPage() {
             gender: profileData.gender || "",
             skin_type: profileData.skin_type || "",
             concern: profileData.concern || "",
+            makeup_goal: profileData.makeup_goal || "",
+            nutrition_goal: profileData.nutrition_goal || "",
+            dietary_restrictions: profileData.dietary_restrictions || "",
+            wellness_focus: profileData.wellness_focus || "",
+            dedicate_time: profileData.dedicate_time || "",
+            hair_type: profileData.hair_type || "",
+            hair_concern: profileData.hair_concern || "",
+            style_preference: profileData.style_preference || "",
+            styling_goal: profileData.styling_goal || "",
           };
           setFormData(loadedData);
           setInitialFormData(loadedData); // store the original data
@@ -165,37 +183,328 @@ export default function PersonalDetailsPage() {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Lifestyle & Health Information Field */}
           <div>
             <label className="block text-lg font-semibold text-gray-900 mb-3">
               Skin Type
             </label>
-            <input
-              type="text"
+            <Select
               value={formData.skin_type}
-              onChange={(e) => handleInputChange("skin_type", e.target.value)}
-              className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
-              placeholder="Enter your skin type"
-            />
+              onValueChange={(value) => handleInputChange("skin_type", value)}
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select Skin Type" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="oily">Oily</SelectItem>
+                  <SelectItem value="dry">dry</SelectItem>
+                  <SelectItem value="combination">Combination</SelectItem>
+                  <SelectItem value="combination-dry">
+                    Combination dry
+                  </SelectItem>
+                  <SelectItem value="combination-oily">
+                    Combination oily
+                  </SelectItem>
+                  <SelectItem value="sensitive">Sensitive</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-
           <div>
             <label className="block text-lg font-semibold text-gray-900 mb-3">
-              Skin Concerns
+              Skin Concern
             </label>
-            <input
-              type="text"
+            <Select
               value={formData.concern}
-              onChange={(e) => handleInputChange("concern", e.target.value)}
-              className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
-              placeholder="Enter your skin concerns"
-            />
+              onValueChange={(value) => handleInputChange("concern", value)}
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select Skin Concern" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="breakouts">Breakouts</SelectItem>
+                  <SelectItem value="discoloration">Discoloration</SelectItem>
+                  <SelectItem value="redness">Redness</SelectItem>
+                  <SelectItem value="aging">Aging</SelectItem>
+                  <SelectItem value="dullness">Dullness</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Makeup Goal
+            </label>
+            <Select
+              value={formData.makeup_goal}
+              onValueChange={(value) => handleInputChange("makeup_goal", value)}
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select makeup goal" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="Natural everyday look">
+                    Natural everyday look
+                  </SelectItem>
+                  <SelectItem value="Full glam/evening looks">
+                    Full glam/evening looks
+                  </SelectItem>
+                  <SelectItem value="Professional/work appropriate">
+                    Professional/work appropriate
+                  </SelectItem>
+                  <SelectItem value="Learn basic techniques">
+                    Learn basic techniques
+                  </SelectItem>
+                  <SelectItem value="Color matching and application">
+                    Color matching and application
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Nutrition Goal
+            </label>
+            <Select
+              value={formData.nutrition_goal}
+              onValueChange={(value) =>
+                handleInputChange("nutrition_goal", value)
+              }
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select nutrition goal" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="Weight loss">Weight loss</SelectItem>
+                  <SelectItem value="Weight gain/muscle building">
+                    Weight gain/muscle building
+                  </SelectItem>
+                  <SelectItem value="Better skin/hair/nail health">
+                    Better skin/hair/nail health
+                  </SelectItem>
+                  <SelectItem value="More energy">More energy</SelectItem>
+                  <SelectItem value="General wellness">
+                    General wellness
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Dietary Restrictions
+            </label>
+            <Select
+              value={formData.dietary_restrictions}
+              onValueChange={(value) =>
+                handleInputChange("dietary_restrictions", value)
+              }
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select Gender" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="Vegetarian/Vegan">
+                    Vegetarian/Vegan
+                  </SelectItem>
+                  <SelectItem value="Gluten-free">Gluten-free</SelectItem>
+                  <SelectItem value="Keto/Low-carb">Keto/Low-carb</SelectItem>
+                  <SelectItem value="Other allergies/intolerances">
+                    Other allergies/intolerances
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Wellness Focus
+            </label>
+            <Select
+              value={formData.wellness_focus}
+              onValueChange={(value) =>
+                handleInputChange("wellness_focus", value)
+              }
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select wellness focus" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="Stress management">
+                    Stress management
+                  </SelectItem>
+                  <SelectItem value="Better sleep">Better sleep</SelectItem>
+                  <SelectItem value="Mental health support">
+                    Mental health support
+                  </SelectItem>
+                  <SelectItem value="Fitness/exercise">
+                    Fitness/exercise
+                  </SelectItem>
+                  <SelectItem value="Building confidence">
+                    Building confidence
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Dedicate Time
+            </label>
+            <Select
+              value={formData.dedicate_time}
+              onValueChange={(value) =>
+                handleInputChange("dedicate_time", value)
+              }
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select dedicate time" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="5-10 minutes">5-10 minutes</SelectItem>
+                  <SelectItem value="15-20 minutes">15-20 minutes</SelectItem>
+                  <SelectItem value="30+ minutes">30+ minutes</SelectItem>
+                  <SelectItem value="It varies">It varies</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Hair Type
+            </label>
+            <Select
+              value={formData.hair_type}
+              onValueChange={(value) => handleInputChange("hair_type", value)}
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select Hair Type" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="straight">Straight</SelectItem>
+                  <SelectItem value="wavy">Wavy</SelectItem>
+                  <SelectItem value="curly">Curly</SelectItem>
+                  <SelectItem value="Coily/Kinky">Coily/Kinky</SelectItem>
+                  <SelectItem value="not sure">Not Sure</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Hair Concern
+            </label>
+            <Select
+              value={formData.hair_concern}
+              onValueChange={(value) =>
+                handleInputChange("hair_concern", value)
+              }
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select hair concern" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="Dryness and damage">
+                    Dryness and damage
+                  </SelectItem>
+                  <SelectItem value="Oily scalp">Oily scalp</SelectItem>
+                  <SelectItem value="Hair loss/thinning">
+                    Hair loss/thinning
+                  </SelectItem>
+                  <SelectItem value="Frizz and unmanageability">
+                    Frizz and unmanageability
+                  </SelectItem>
+                  <SelectItem value="Lack of volume">Lack of volume</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Style Preference
+            </label>
+            <Select
+              value={formData.style_preference}
+              onValueChange={(value) =>
+                handleInputChange("style_preference", value)
+              }
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select style preference" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="Classic and timeless">
+                    Classic and timeless
+                  </SelectItem>
+                  <SelectItem value="Trendy and fashion-forward">
+                    Trendy and fashion-forward
+                  </SelectItem>
+                  <SelectItem value="Casual and comfortable">
+                    {" "}
+                    Casual and comfortable
+                  </SelectItem>
+                  <SelectItem value="Professional and polished">
+                    {" "}
+                    Professional and polished
+                  </SelectItem>
+                  <SelectItem value="Still figuring it out">
+                    {" "}
+                    Still figuring it out
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              Styling Goal
+            </label>
+            <Select
+              value={formData.styling_goal}
+              onValueChange={(value) =>
+                handleInputChange("styling_goal", value)
+              }
+            >
+              <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <SelectValue placeholder="Select styling goal" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-[10px]">
+                <SelectGroup>
+                  <SelectItem value="Learn to dress for my body type">
+                    Learn to dress for my body type
+                  </SelectItem>
+                  <SelectItem value="Build a versatile wardrobe">
+                    Build a versatile wardrobe
+                  </SelectItem>
+                  <SelectItem value="Stay trendy on budget">
+                    Stay trendy on budget
+                  </SelectItem>
+                  <SelectItem value="Look put-together with minimal effort">
+                    Look put-together with minimal effort
+                  </SelectItem>
+                  <SelectItem value="Express my personality through style">
+                    Express my personality through style
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Save Button */}
-        <div className="p-6 pt-0">
+        <div className="sticky inset-0 p-6 pt-0">
           <button
             onClick={handleSaveChanges}
             disabled={isLoading || !isAuthenticated || isFormUnchanged}
