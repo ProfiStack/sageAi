@@ -10,6 +10,7 @@ from db import SessionLocal
 
 router = APIRouter()
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -17,11 +18,13 @@ def get_db():
     finally:
         db.close()
 
+
 user_dependency = Annotated[Session, Depends(get_current_user)]
+
 
 @router.get("/user/profile", response_model=UserProfileResponse)
 def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
-    profile = get_or_create_user_profile(db, user_db.get('user_id'))
+    profile = get_or_create_user_profile(db, user_db.get("user_id"))
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
     return UserProfileResponse(
@@ -34,19 +37,35 @@ def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
         concern=profile.concern or "Unknown",
         preferred_routine=profile.preferred_routine or "Unknown",
         created_at=profile.created_at.isoformat(),
-        last_active=profile.last_active.isoformat()
+        last_active=profile.last_active.isoformat(),
+        makeup_goal= profile.makeup_goal or "Unknown",
+        nutrition_goal= profile.nutrition_goal or "Unknown",
+        dietary_restriction= profile.dietary_restriction or "Unknown",
+        wellness_focus= profile.wellness_focus or "Unknown",
+        dedicate_time= profile.dedicate_time or "Unknown",
+        hair_type= profile.hair_type or "Unknown",
+        hair_concern= profile.hair_concern or "Unknown",
+        style_preference= profile.style_preference or "Unknown",
+        styling_goal= profile.styling_goal or "Unknown"
     )
+
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 
 @router.post("/user/profile")
-def update_profile(profile_data: UserProfileRequest, user_db: user_dependency, db: Session = Depends(get_db)):
-    updated_profile = update_user_profile(db, user_db.get('user_id'), profile_data.dict(exclude_unset=True))
+async def update_profile(
+    profile_data: UserProfileRequest,
+    user_db: user_dependency,
+    db: Session = Depends(get_db),
+):
+    updated_profile = await update_user_profile(
+        db, user_db.get("user_id"), profile_data.model_dump(exclude_unset=True)
+    )
     return {
         "message": "Profile updated successfully",
-        "user_id": user_db.get('user_id'),
+        "user_id": user_db.get("user_id"),
         "profile": {
             "email": updated_profile.email,
             "phone_number": updated_profile.phone_number,
@@ -56,8 +75,16 @@ def update_profile(profile_data: UserProfileRequest, user_db: user_dependency, d
             "age": updated_profile.age,
             "lifestyle": updated_profile.lifestyle,
             "concern": updated_profile.concern,
+            "makeup_goal": updated_profile.makeup_goal,
             "preferred_routine": updated_profile.preferred_routine,
+            "nutrition_goal": updated_profile.nutrition_goal,
+            "dietary_restriction": updated_profile.dietary_restriction,
+            "wellness_focus": updated_profile.wellness_focus,
+            "dedicate_time": updated_profile.dedicate_time,
+            "hair_type": updated_profile.hair_type,
+            "hair_concern": updated_profile.hair_concern,
+            "style_preference": updated_profile.style_preference,
+            "styling_goal": updated_profile.styling_goal,
             "last_active": updated_profile.last_active.isoformat(),
-        }
+        },
     }
-

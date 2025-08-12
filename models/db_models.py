@@ -1,8 +1,9 @@
+# models.py
+from pickle import FALSE
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, JSON, DateTime, TEXT, UniqueConstraint
 from db import Base
-
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
@@ -12,15 +13,26 @@ class UserProfile(Base):
     phone_number = Column(String, unique=True, nullable=True)
     gender = Column(String, nullable=True)
     skin_type = Column(String, nullable=True)
+    concern = Column(String, nullable=True)
+    lifestyle = Column(String, nullable=True)
+    makeup_goal = Column(String, nullable=True)
+    nutrition_goal = Column(String, nullable=True)
+    dietary_restriction = Column(String, nullable=True)
+    wellness_focus = Column(String, nullable=True)
+    dedicate_time = Column(String, nullable=True)
+    hair_type = Column(String, nullable=True)
+    hair_concern = Column(String, nullable=True)
+    style_preference = Column(String, nullable=True)
+    styling_goal = Column(String, nullable=True)
     name = Column(String, nullable=True)
     age = Column(String, nullable=True)
     gender = Column(String, nullable=True)
-    lifestyle = Column(String, nullable=True)
     hashed_password = Column(String)
-    concern = Column(String, nullable=True)
     preferred_routine = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_active = Column(DateTime, default=datetime.utcnow)
+    subscription_status = Column(String, default="free")  # free, active, canceled
+    subscription_end = Column(DateTime, nullable=True)
 
 
 class ChatMessage(Base):
@@ -115,3 +127,20 @@ class StaticMessages(Base):
     __tablename__ = "static_messages"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     message = Column(JSON)
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, index=True, nullable=False)
+    amount = Column(String, nullable=True)  # stored in cents as string
+    currency = Column(String, default="usd")
+    status = Column(String, default="pending")  # pending, succeeded, failed
+    stripe_payment_intent_id = Column(String, unique=True, nullable=FALSE)
+    stripe_subscription_id = Column(String, unique=True, nullable=FALSE)
+    stripe_customer_id = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)

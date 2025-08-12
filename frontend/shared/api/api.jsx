@@ -175,6 +175,23 @@ export const Api = {
         console.log(error);
       }
     },
+    subscribePayment: async ({price_id, token}) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/payments/subscribe`,
+          {
+            method: "POST",
+            body: validatePayload({price_id}),
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
     analyzeSkinPhoto: async (image) => {
       try {
         const response = await baseFetch(

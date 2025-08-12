@@ -10,7 +10,7 @@ export default function LoginPage() {
   const router = useRouter();
   const hasHydrated = useHasHydrated();
   const { isAuthenticated, token } = useAuthStore();
-
+  console.log(isAuthenticated);
   useEffect(() => {
     if (hasHydrated && isAuthenticated && token) {
       router.replace("/home"); // ✅ Redirects to home if already logged in
@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col justify-between h-screen">
-      {!isAuthenticated && <Login />}
+      {<Login />}
     </div>
   );
 }

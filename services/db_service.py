@@ -112,7 +112,7 @@ def update_user_session_metrics(db, user_id: str, **kwargs):
     db.commit()
 
 
-def update_user_profile(db: Session, user_id: str, updates: dict):
+async def update_user_profile(db: Session, user_id: str, updates: dict):
     profile = get_or_create_user_profile(db, user_id)
     for k, v in updates.items():
         if hasattr(profile, k):

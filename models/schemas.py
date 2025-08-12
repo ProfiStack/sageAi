@@ -16,6 +16,10 @@ class ChatResultResponse(BaseModel):
     response: str
     timestamp: str
 
+class SubscriptionRequest(BaseModel):
+    price_id: str
+
+
 class UserProfileRequest(BaseModel):
     name: Optional[str] = None
     age: Optional[str] = None
@@ -23,8 +27,16 @@ class UserProfileRequest(BaseModel):
     skin_type: Optional[str] = None
     lifestyle: Optional[str] = None
     concern: Optional[str] = None
-    preferred_routine: Optional[str] = None
-
+    makeup_goal: Optional[str] = None
+    nutrition_goal: Optional[str] = None
+    dietary_restriction: Optional[str] = None
+    wellness_focus: Optional[str] = None
+    dedicate_time: Optional[str] = None
+    hair_type: Optional[str] = None
+    hair_concern: Optional[str] = None
+    style_preference: Optional[str] = None
+    styling_goal: Optional[str] = None
+    
 class UserProfileResponse(UserProfileRequest):
     name: Optional[str] = None
     age: Optional[str] = None
@@ -36,6 +48,15 @@ class UserProfileResponse(UserProfileRequest):
     lifestyle: Optional[str] = None
     concern: Optional[str] = None
     preferred_routine: Optional[str] = None
+    makeup_goal: Optional[str] = None
+    nutrition_goal: Optional[str] = None
+    dietary_restriction: Optional[str] = None
+    wellness_focus: Optional[str] = None
+    dedicate_time: Optional[str] = None
+    hair_type: Optional[str] = None
+    hair_concern: Optional[str] = None
+    style_preference: Optional[str] = None
+    styling_goal: Optional[str] = None
 
 class AccessTokenResponse(BaseModel):
     access: str
@@ -59,3 +80,12 @@ class UserProfileUpdateRequest(BaseModel):
     concern: Optional[str] = None
     lifestyle: Optional[str] = None
     preferred_routine: Optional[str] = None
+    makeup_goal: Optional[str] = None
+    nutrition_goal: Optional[str] = None
+    dietary_restriction: Optional[str] = None
+    wellness_focus: Optional[str] = None
+    dedicate_time: Optional[str] = None
+    hair_type: Optional[str] = None
+    hair_concern: Optional[str] = None
+    style_preference: Optional[str] = None
+    styling_goal: Optional[str] = None

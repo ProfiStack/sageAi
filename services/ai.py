@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from db import SessionLocal
 import asyncio
 from prompts.hair_care import get_hair_care_checker_prompt
+from prompts.makeup import get_makeup_checker_prompt
 from prompts.nutrition import get_nutrition_checker_prompt
 from prompts.styling import get_styling_checker_prompt
 from prompts.wellness import get_wellness_checker_prompt
@@ -14,7 +15,7 @@ from services.db_service import save_chat_message, get_user_session_data
 from concurrent.futures import ThreadPoolExecutor
 from prompts.ingredients import get_ingredient_checker_prompt
 from prompts.skin_care import get_skincare_prompt
-from prompts.tend_analysis import get_trend_analysis_prompt
+from prompts.trend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
 
 
@@ -123,14 +124,16 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
             return get_ingredient_checker_prompt(user_metrics)
         elif feature_type == "treatment_planning":
             return get_treatment_plan_prompt(user_metrics)
-        elif feature_type == "nutrition":
-            return get_nutrition_checker_prompt()
-        elif feature_type == "wellness":
-            return get_wellness_checker_prompt()
-        elif feature_type == "hair_care":
-            return get_hair_care_checker_prompt()
-        elif feature_type == "styling":
-            return get_styling_checker_prompt()
+        elif feature_type == "meal_muse" or feature_type == "nutri_guide" or feature_type == "supp_smart":
+            return get_nutrition_checker_prompt(user_metrics)
+        elif feature_type == "fit_flow" or feature_type == "manifest_mode" or feature_type == "positivity_pulse" or feature_type == "self_spark" or feature_type == "stress_reset" or feature_type == "wellness_whisper" or feature_type == "zen_zone":
+            return get_wellness_checker_prompt(user_metrics)
+        elif feature_type == "formula_focus" or feature_type == "hair_decode" or feature_type == "style_spark" or feature_type == "tress_therapy":
+            return get_hair_care_checker_prompt(user_metrics)
+        elif feature_type == "event_edit" or feature_type == "fashion_fix" or feature_type == "shop_smart":
+            return get_styling_checker_prompt(user_metrics)
+        elif feature_type == "beauty_breakdown" or feature_type == "beauty_brief" or feature_type == "event_glam" or feature_type == "flawless_factor" or feature_type == "perfect_pair" or feature_type == "true_tone":
+            return get_makeup_checker_prompt(user_metrics)
         else:
             return get_skincare_prompt(user_metrics)
     except Exception as e:
