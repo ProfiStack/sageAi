@@ -123,12 +123,12 @@ export default function HomePage() {
                   <p className="text-sm text-emerald-700 font-medium mb-1">
                     DID YOU KNOW?
                   </p>
-                  <p className="text-gray-700 text-sm leading-relaxed">
+                  {currentMessage && <p className="text-gray-700 text-sm leading-relaxed">
                     <span className="font-semibold text-emerald-700">
                       {currentMessage?.split("%")[0]}%
                     </span>{" "}
                     {currentMessage?.split("%")[1]}
-                  </p>
+                  </p>}
                 </div>
               </div>
             </div>
