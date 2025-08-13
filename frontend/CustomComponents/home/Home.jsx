@@ -12,7 +12,7 @@ import { getRoutesForItem } from "@/config/routeConfig";
 
 export default function HomePage() {
   const [messages, setMessages] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState("none");
+  const [currentMessage, setCurrentMessage] = useState(null);
   const [showOptionPopup, setShowOptionPopup] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const router = useRouter();
