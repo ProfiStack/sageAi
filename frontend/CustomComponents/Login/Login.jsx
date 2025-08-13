@@ -237,19 +237,19 @@ export default function Login() {
             <h2 className="text-xl font-bold text-[#02331E]">Coming Soon</h2>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-3 mb-6">
             {comingSoon.map((item, index) => (
               <div
                 key={index}
-                className="group bg-gradient-to-r from-orange-500/5 to-red-500/5  border border-[#D4B038]/20 rounded-xl p-4 text-center shadow-lg hover:border-[#D4B038]/40 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                className="group bg-gradient-to-r from-orange-500/5 to-red-500/5  border border-[#D4B038]/20 rounded-xl py-4 px-2 text-center shadow-lg hover:border-[#D4B038]/40 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
               >
                 <div className="absolute inset-0  to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                <div className="relative z-10">
+                <div className="relative  ">
                   <div className="w-10 h-10  bg-gradient-to-r from-orange-500/5 to-red-500/5 rounded-full flex items-center justify-center text-[#D4B038] mb-3 mx-auto group-hover:scale-110 transition-transform duration-300">
                     {item.icon}
                   </div>
-                  <h3 className="text-sm font-medium text-[#02331E]">
+                  <h3 className="text-sm font-medium text-[#02331E] w-full">
                     {item.title}
                   </h3>
                 </div>

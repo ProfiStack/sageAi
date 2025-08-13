@@ -96,7 +96,8 @@ export const categoryItemsData = [
         title: "Beauty Breakdown",
         icon: Camera,
         route: "/makeup/beauty-breakdown",
-        description: "Step-by-step analysis of your makeup look",
+        description:
+          "Analyze your products and ingredients to see how well they work for you.",
       },
       {
         title: "Flawless Factor",
