@@ -53,7 +53,7 @@ export default function ManifistMode() {
         <WebSocketProvider route="manifest_mode">
           <ConsultationChat
             route="manifest_mode"
-            title="Manifist Mode"
+            title="Manifest Mode"
             initialMessage={
               "Ready to call in your dreams? Let’s set clear intentions and align your energy to make them real."
             }

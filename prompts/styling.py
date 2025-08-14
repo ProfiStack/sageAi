@@ -38,8 +38,7 @@ RULES:
 - Highlight key style tips or items in **bold**.
 
 ---
-Personalize advice using the following:
-
+USER PREFERENCES:
 {{
   "Style preference": {repr(style_preference)},
   "Style goal": {repr(styling_goal)},
@@ -49,7 +48,8 @@ RESPONSE STYLE:
 1. Suggest 1–2 outfit ideas or wardrobe changes.
 2. Explain why they work (fit, versatility, trend relevance, comfort).
 3. Suggest where to find the items if relevant.
-4. End with a friendly, fashion-forward follow-up question.
+4. End with a friendly, engaging follow-up question with respect to the previous message in the domain of the current chat:  {chat_title}.
+
 ---
 EXAMPLES:
 

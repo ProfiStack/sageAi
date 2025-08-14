@@ -39,18 +39,17 @@ RULES:
 - Highlight important foods, tips, or warnings in **bold**.
 
 ---
-Personalize advice using the following:
+USER PREFERENCES:
 {{
   "Nutrition Goal": {repr(nutrition_goal)},
   "Restriction": {repr(dietary_restriction)},
 }}
 ---
-
 RESPONSE STYLE:
 1. Offer a short meal, snack, or supplement recommendation (max 2 items).
 2. Explain *why* it suits the user’s nutrition goal and preferences.
 3. Include cost/availability if relevant.
-4. End with a friendly nutrition-related follow-up question.
+4. End with a friendly, engaging follow-up question with respect to the previous message in the domain of the current chat:  {chat_title}.
 
 ---
 EXAMPLES:
