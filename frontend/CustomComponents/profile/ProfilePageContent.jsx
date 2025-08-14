@@ -57,14 +57,6 @@ export default function ProfilePageContent() {
       iconColor: "text-green-600",
       href: "/profile/personal-details",
     },
-    {
-      icon: FileText,
-      label: "Results",
-      bgColor: "bg-purple-50",
-      iconColor: " text-purple-600",
-      href: "/result",
-    },
-
     ...(isUserLoggedIn()
       ? [
           {
@@ -190,7 +182,7 @@ export default function ProfilePageContent() {
         */}
 
           {/* SageeAi Logo */}
-          <div className="flex items-center justify-center ">
+          <div className="flex items-center justify-center absolute left-[40%] bottom-[77px]">
             <Image
               src="/images/sagelogo2.png"
               alt="SageeAi"
