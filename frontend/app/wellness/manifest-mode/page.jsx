@@ -50,9 +50,9 @@ export default function ManifistMode() {
         quizzData={wellnessQuizData}
       />
       <ProtectedRoute requireAuth={true}>
-        <WebSocketProvider route="manifist_mode">
+        <WebSocketProvider route="manifest_mode">
           <ConsultationChat
-            route="manifist_mode"
+            route="manifest_mode"
             title="Manifist Mode"
             initialMessage={
               "Ready to call in your dreams? Let’s set clear intentions and align your energy to make them real."
