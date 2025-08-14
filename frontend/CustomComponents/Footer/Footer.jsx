@@ -17,9 +17,9 @@ export default function Footer() {
 
   const footerData = [
     { icon: House, route: "/home", title: "Home" },
-    { icon: MessageCircleMore, route: "/chat", title: "Chat" },
+    { icon: MessageCircleMore, route: "/skincare/chat", title: "Chat" },
     { icon: ScanFace, route: "/image-analysis", title: "Scan" },
-    { icon: TvMinimalPlay, route: "/result", title: "Results" },
+    // { icon: TvMinimalPlay, route: "/result", title: "Results" },
     { icon: UserRound, route: "/profile", title: "Profile" },
   ];
 
@@ -44,14 +44,14 @@ export default function Footer() {
               onClick={() => handleOnClick(data.route)}
               className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? "text-[#121712]"
-                  : "text-[#5C8A63] hover:text-[#121712]"
+                  ? "text-[#5C8A63]"
+                  : "text-[#121712] hover:text-[#121712]"
               }`}
             >
               <div className={` rounded-full transition-all duration-200 `}>
                 <IconComponent
                   size={24}
-                  color={isActive ? "#121712" : "#5C8A63"}
+                  color={isActive ? "#5C8A63" : "#121712"}
                 />
               </div>
               <p

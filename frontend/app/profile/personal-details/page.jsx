@@ -27,7 +27,7 @@ export default function PersonalDetailsPage() {
     concern: "",
     makeup_goal: "",
     nutrition_goal: "",
-    dietary_restrictions: "",
+    dietary_restriction: "",
     wellness_focus: "",
     dedicate_time: "",
     hair_type: "",
@@ -56,7 +56,7 @@ export default function PersonalDetailsPage() {
             concern: profileData.concern || "",
             makeup_goal: profileData.makeup_goal || "",
             nutrition_goal: profileData.nutrition_goal || "",
-            dietary_restrictions: profileData.dietary_restrictions || "",
+            dietary_restriction: profileData.dietary_restriction || "",
             wellness_focus: profileData.wellness_focus || "",
             dedicate_time: profileData.dedicate_time || "",
             hair_type: profileData.hair_type || "",
@@ -300,9 +300,9 @@ export default function PersonalDetailsPage() {
               Dietary Restrictions
             </label>
             <Select
-              value={formData.dietary_restrictions}
+              value={formData.dietary_restriction}
               onValueChange={(value) =>
-                handleInputChange("dietary_restrictions", value)
+                handleInputChange("dietary_restriction", value)
               }
             >
               <SelectTrigger className="w-full p-4 bg-green-50 border-0 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">

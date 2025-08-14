@@ -88,7 +88,7 @@ const nutritionQuizData = [
     selectedOptions: [],
   },
   {
-    id: "dietary_restrictions",
+    id: "dietary_restriction",
     title: "Do you follow any dietary restrictions?",
     type: "single-choice",
     options: [

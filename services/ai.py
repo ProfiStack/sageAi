@@ -18,7 +18,8 @@ from prompts.skin_care import get_skincare_prompt
 from prompts.trend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
 
-
+def format_title(text: str) -> str:
+    return text.replace("_", " ").title()
 # SAFE OPENCV IMPORT - Replace line 19
 def safe_import_cv2():
     """Safely import OpenCV with proper error handling"""
@@ -125,15 +126,20 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
         elif feature_type == "treatment_planning":
             return get_treatment_plan_prompt(user_metrics)
         elif feature_type == "meal_muse" or feature_type == "nutri_guide" or feature_type == "supp_smart":
-            return get_nutrition_checker_prompt(user_metrics)
+            chat_title= format_title(feature_type);
+            return get_nutrition_checker_prompt(user_metrics, chat_title)
         elif feature_type == "fit_flow" or feature_type == "manifest_mode" or feature_type == "positivity_pulse" or feature_type == "self_spark" or feature_type == "stress_reset" or feature_type == "wellness_whisper" or feature_type == "zen_zone":
-            return get_wellness_checker_prompt(user_metrics)
+            chat_title= format_title(feature_type);
+            return get_wellness_checker_prompt(user_metrics, chat_title)
         elif feature_type == "formula_focus" or feature_type == "hair_decode" or feature_type == "style_spark" or feature_type == "tress_therapy":
-            return get_hair_care_checker_prompt(user_metrics)
+            chat_title= format_title(feature_type);
+            return get_hair_care_checker_prompt(user_metrics, chat_title)
         elif feature_type == "event_edit" or feature_type == "fashion_fix" or feature_type == "shop_smart":
-            return get_styling_checker_prompt(user_metrics)
+            chat_title= format_title(feature_type);
+            return get_styling_checker_prompt(user_metrics, chat_title)
         elif feature_type == "beauty_breakdown" or feature_type == "beauty_brief" or feature_type == "event_glam" or feature_type == "flawless_factor" or feature_type == "perfect_pair" or feature_type == "true_tone":
-            return get_makeup_checker_prompt(user_metrics)
+            chat_title= format_title(feature_type);
+            return get_makeup_checker_prompt(user_metrics, chat_title)
         else:
             return get_skincare_prompt(user_metrics)
     except Exception as e:

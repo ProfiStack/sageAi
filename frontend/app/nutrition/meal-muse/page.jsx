@@ -25,8 +25,8 @@ export default function MealMuse() {
             profileData?.nutrition_goal &&
             profileData.nutrition_goal !== "Unknown";
           const hasValidRestrictions =
-            profileData?.dietary_restrictions &&
-            profileData.dietary_restrictions !== "Unknown";
+            profileData?.dietary_restriction &&
+            profileData.dietary_restriction !== "Unknown";
 
           if (!hasValidRestrictions || !hasValidNutritionGoal) {
             setShowBeautyQuiz(true);
