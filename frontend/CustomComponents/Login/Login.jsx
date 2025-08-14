@@ -127,37 +127,9 @@ export default function Login() {
             for your skin no noise, no commissions, just scientific facts.
           </p>
         </div>
-
         {/* Main Content */}
         <div className="relative z-10 px-4 py-8">
-          {/* Features Section */}
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1 h-6 bg-gradient-to-b from-[#D4B038] to-[#f4c842] rounded-full"></div>
-              <h2 className="text-xl font-bold text-[#02331E]">Features</h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {features.map((feature, index) => (
-                <div
-                  key={index}
-                  className="group bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10  border border-gray-100 rounded-xl p-3 shadow-lg hover:border-[#D4B038]/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
-                >
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#D4B038] to-[#f4c842] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-
-                  <div className="w-10 h-10 p-2 mb-2  bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 rounded-full flex items-center justify-center text-[#D4B038]  group-hover:scale-110 transition-transform duration-300">
-                    {feature.icon}
-                  </div>
-
-                  <h3 className=" font-medium text-[#02331E] leading-tight ">
-                    {feature.title}
-                  </h3>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Auth Form */}
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
@@ -228,6 +200,33 @@ export default function Login() {
               </Button>
             </form>
           </Form>
+          </div>
+          {/* Features Section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-6 bg-gradient-to-b from-[#D4B038] to-[#f4c842] rounded-full"></div>
+              <h2 className="text-xl font-bold text-[#02331E]">Features</h2>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="group bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10  border border-gray-100 rounded-xl p-3 shadow-lg hover:border-[#D4B038]/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#D4B038] to-[#f4c842] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+
+                  <div className="w-10 h-10 p-2 mb-2  bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 rounded-full flex items-center justify-center text-[#D4B038]  group-hover:scale-110 transition-transform duration-300">
+                    {feature.icon}
+                  </div>
+
+                  <h3 className=" font-medium text-[#02331E] leading-tight ">
+                    {feature.title}
+                  </h3>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Coming Soon Section */}
