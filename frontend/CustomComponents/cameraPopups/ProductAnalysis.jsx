@@ -51,7 +51,6 @@ export default function ProductCameraPopup({ open, setOpen }) {
 
     const dataUrl = canvas.toDataURL("image/png");
     setCapturedImage(dataUrl);
-    console.log("📸 Full product image:", dataUrl);
   };
 
   const handleClose = () => {
@@ -136,7 +135,6 @@ export default function ProductCameraPopup({ open, setOpen }) {
                 </button>
                 <button
                   onClick={() => {
-                    console.log("Send to backend:", capturedImage);
                     setOpen(false);
                   }}
                   className="w-1/2 text-center rounded-2xl text-white font-semibold py-2 bg-[#02331E]"

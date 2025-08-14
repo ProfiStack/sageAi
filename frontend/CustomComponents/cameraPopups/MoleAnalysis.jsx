@@ -132,7 +132,6 @@ export default function MoleCameraPopup({ open, setOpen }) {
     // Export image
     const dataUrl = croppedCanvas.toDataURL("image/png");
     setCapturedImage(dataUrl);
-    console.log("📸 Circular cropped scan area:", dataUrl);
   };
 
   const handleClose = () => {
@@ -242,7 +241,6 @@ export default function MoleCameraPopup({ open, setOpen }) {
                 </button>
                 <button
                   onClick={() => {
-                    console.log("Send to backend:", capturedImage);
                     setOpen(false);
                   }}
                   className="w-1/2 text-center  rounded-2xl text-white font-semibold py-2 bg-[#02331E]"

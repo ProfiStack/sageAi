@@ -54,6 +54,7 @@ export default function Login() {
   const { logEvent } = useAmplitude();
   const { primaryToast, destructiveToast } = useFormToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const form = useFormHook({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -62,6 +63,8 @@ export default function Login() {
     },
   });
   async function onSubmit(values) {
+    setIsLoading(true);
+
     try {
       logEvent("Onboard Option Clicked", {
         click_value: "Sign Up",
@@ -88,9 +91,16 @@ export default function Login() {
         logEvent("Onboard Sucessful");
         router.push("/home");
         primaryToast({ description: "Login successful" });
+        setIsLoading(false);
+      } else if (data.detail) {
+        setIsLoading(false);
+        destructiveToast(data.detail);
       }
     } catch (error) {
       destructiveToast(error.message);
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -99,6 +109,32 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {isLoading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-white/80 z-50">
+          <div className="flex flex-col items-center">
+            <svg
+              className="animate-spin h-10 w-10 text-[#D4B038]"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+      )}
       <div className=" mx-auto bg-white shadow-2xl min-h-screen relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5"></div>
@@ -130,76 +166,76 @@ export default function Login() {
         {/* Main Content */}
         <div className="relative z-10 px-4 py-8">
           <div className="mb-8">
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col w-full gap-4"
-            >
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label className="block text-sm font-medium text-[#02331E] ">
-                      Email / Phone Number
-                      <FormControl>
-                        <Input
-                          className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400"
-                          placeholder="Email / Phone Number"
-                          {...field}
-                        />
-                      </FormControl>
-                    </Label>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label className="block text-sm font-medium text-[#02331E] ">
-                      Password
-                      <FormControl>
-                        <div>
-                          <div className="relative">
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              onChange={(e) => setPassword(e.target.value)}
-                              className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400 pr-12"
-                              placeholder="Enter your password"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#D4B038] transition-colors duration-200"
-                            >
-                              {showPassword ? (
-                                <EyeOff className="w-5 h-5" />
-                              ) : (
-                                <Eye className="w-5 h-5" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </FormControl>
-                    </Label>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                className="w-full py-4 text-[16p-font-medium bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
-                type="submit"
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex flex-col w-full gap-4"
               >
-                Sign In / Sign Up
-              </Button>
-            </form>
-          </Form>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label className="block text-sm font-medium text-[#02331E] ">
+                        Email / Phone Number
+                        <FormControl>
+                          <Input
+                            className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400"
+                            placeholder="Email / Phone Number"
+                            {...field}
+                          />
+                        </FormControl>
+                      </Label>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label className="block text-sm font-medium text-[#02331E] ">
+                        Password
+                        <FormControl>
+                          <div>
+                            <div className="relative">
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400 pr-12"
+                                placeholder="Enter your password"
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#D4B038] transition-colors duration-200"
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="w-5 h-5" />
+                                ) : (
+                                  <Eye className="w-5 h-5" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </FormControl>
+                      </Label>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  className="w-full py-4 text-[16p-font-medium bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
+                  type="submit"
+                >
+                  Sign In / Sign Up
+                </Button>
+              </form>
+            </Form>
           </div>
           {/* Features Section */}
           <div className="mb-8">

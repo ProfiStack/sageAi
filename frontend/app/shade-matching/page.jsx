@@ -18,8 +18,6 @@ export default function ImageAnalysis() {
     setCapturedImageFromPopup(imageData);
     SetIsOpen(false);
 
-    console.log("Received from shadematching popup:", imageData);
-
     // 🔁 Now you can send this to an API
     // sendToSkinAnalysisAPI(imageData) or similar
   };

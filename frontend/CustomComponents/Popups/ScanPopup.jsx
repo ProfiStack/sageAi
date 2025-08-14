@@ -53,8 +53,6 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                   key={index}
                   onClick={() => {
                     setIsOpen(false);
-                    console.log("Navigating to:", item.route);
-                    console.log("Route type:", typeof item.route);
                     // router.push(item.route);
                   }}
                   className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"

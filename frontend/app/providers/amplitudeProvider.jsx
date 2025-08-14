@@ -22,7 +22,6 @@ export const AmplitudeProvider = ({ children }) => {
         defaultTracking: true,
       });
       setInitialized(true);
-      console.log("Amplitude initialized");
     }
   }, [initialized]);
 

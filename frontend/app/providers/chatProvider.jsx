@@ -103,7 +103,6 @@ export const WebSocketProvider = ({ children, route }) => {
 
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("[WS RECEIVED]:", data); // <--- see what's coming in
         if (data.type === "typing") {
           setIsTyping(true);
         } else if (data.type === "typing_stop") {
@@ -164,7 +163,6 @@ export const WebSocketProvider = ({ children, route }) => {
       return;
     }
     if (ws.current?.readyState === WebSocket.OPEN) {
-      console.log("WebSocket is open, sending message:", msg);
       ws.current.send(JSON.stringify(msg));
     } else {
       console.warn("WebSocket not ready, queuing message");

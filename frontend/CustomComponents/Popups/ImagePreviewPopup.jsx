@@ -6,7 +6,6 @@ export default function ImagePreviewPopup({ open, setOpen, image }) {
   if (!open) return null;
 
   const handleConfirm = () => {
-    console.log("Uploaded Image File URL:", image);
     // You could pass the actual File object here too if needed
     setOpen(false);
   };
