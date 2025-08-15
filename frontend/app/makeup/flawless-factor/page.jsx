@@ -45,6 +45,7 @@ export default function FlawlessFactor() {
         setIsOpen={setShowBeautyQuiz}
         quizzData={makeupQuizData}
         skinTypePopup={true}
+        title={"Makeup Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="flawless_factor">

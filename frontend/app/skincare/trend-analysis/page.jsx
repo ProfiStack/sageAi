@@ -46,6 +46,7 @@ export default function TrendAnalysis() {
         setIsOpen={setShowBeautyQuiz}
         quizzData={beautyQuizData}
         skinTypePopup={true}
+        title={"Skin Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="trend_analysis">

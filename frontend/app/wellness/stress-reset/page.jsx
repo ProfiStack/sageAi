@@ -48,6 +48,7 @@ export default function StressReset() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={wellnessQuizData}
+        title={"Wellness Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="stress_reset">

@@ -48,6 +48,7 @@ export default function ZenZone() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={wellnessQuizData}
+        title={"Wellness Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="zen_zone">

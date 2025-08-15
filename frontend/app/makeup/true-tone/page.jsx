@@ -45,6 +45,7 @@ export default function TrueTone() {
         setIsOpen={setShowBeautyQuiz}
         quizzData={makeupQuizData}
         skinTypePopup={true}
+        title={"Makeup Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="true_tone">

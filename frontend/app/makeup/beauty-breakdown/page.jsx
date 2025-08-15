@@ -47,6 +47,7 @@ export default function BeautyBreakdown() {
         setIsOpen={setShowBeautyQuiz}
         quizzData={makeupQuizData}
         skinTypePopup={true}
+        title={"Makeup Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="beauty_breakdown">
