@@ -49,14 +49,15 @@ def create_payment(
 def subscribe(
     req: SubscriptionRequest, user_db: user_dependency, db: Session = Depends(get_db)
 ):
-    print(req, "******")
     """
     Create a subscription Checkout session.
     price_id: Stripe Price ID for recurring plan.
     """
     try:
-        success_url = os.getenv('DOMAIN_URL')+"/home"
-        cancel_url = os.getenv('DOMAIN_URL')+"/home"
+        success_url = os.getenv('SUCCESS_URL')+"/home"
+        cancel_url = os.getenv('CANCEL_URL')+"/home"
+        print('************',success_url, '**********success')
+        print('************',cancel_url, '**********success')
         result = create_subscription_checkout(
             price_id=req.price_id,
             success_url=success_url,
