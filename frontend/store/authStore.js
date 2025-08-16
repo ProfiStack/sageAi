@@ -12,11 +12,13 @@ const useAuthStore = create(
       token: null,
       userId: null,
       isAuthenticated: false,
+      isSubscribed: null,
       setToken: (token) => set({ token }),
       removeToken: () => set({ token: null }),
       setUserId: (userId) => set({ userId }),
       removeUserId: () => set({ userId: null }),
       setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+      setIsSubscribed: (isSubscribed) => set({ isSubscribed }),
       removeIsAuthenticated: () => set({ isAuthenticated: false }),
       logout: async () => {
         // Clear store state first

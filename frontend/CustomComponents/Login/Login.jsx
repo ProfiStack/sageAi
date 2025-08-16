@@ -88,6 +88,7 @@ export default function Login() {
         store.setUserId(decoded.user_id);
         store.setToken(data.token);
         store.setIsAuthenticated(true);
+        store.setIsSubscribed(data.subscription)
         logEvent("Onboard Sucessful");
         router.push("/home");
         primaryToast({ description: "Login successful" });

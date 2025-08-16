@@ -61,6 +61,7 @@ class UserProfileResponse(UserProfileRequest):
 class AccessTokenResponse(BaseModel):
     access: str
     token: str
+    subscription: bool
 
 class LoginRequest(BaseModel):
     email: Optional[EmailStr] = None

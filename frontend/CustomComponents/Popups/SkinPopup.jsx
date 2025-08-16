@@ -1,15 +1,27 @@
 import { useState } from "react";
 import { X, MessageCircle, Camera } from "lucide-react";
+import { useEffect } from "react";
+import { Api } from "@/shared/api/api";
+import { motion } from "framer-motion";
+import SubscribeButton from "../button/Subscribe";
+import useAuthStore from "@/store/authStore";
 
-const OptionPopup = ({
+const SkinPopup = ({
   isOpen,
   onClose,
   selectedItem,
   onChatClick,
-  onScanClick,
 }) => {
   if (!isOpen || !selectedItem) return null;
-
+  const [price, setPrice] = useState('')
+  const { isSubscribed } = useAuthStore();
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const response = await Api.client.prices();
+      setPrice(response.price)
+    }
+    fetchPrices();
+  }, [])
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-sm w-full mx-4 shadow-xl">
@@ -63,27 +75,38 @@ const OptionPopup = ({
                 </div>
               </div>
             </button>
-            <button
-              onClick={onScanClick}
-              className="w-full bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-4 opacity-75 cursor-not-allowed relative"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                    <Camera className="w-6 h-6 text-gray-400" />
+            <SubscribeButton >
+              <div className="w-full border border-indigo-200 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-xl p-4 relative">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <Camera className="w-6 h-6 text-indigo-400" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-gray-600 mb-1">Scan</h3>
+                      <p className="text-sm text-gray-500">
+                        {"AI-powered image analysis"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-gray-600 mb-1">Scan</h3>
-                    <p className="text-sm text-gray-500">
-                      AI-powered image analysis
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-amber-100 text-amber-600 text-xs px-3 py-1 rounded-full font-medium">
-                  COMING SOON
                 </div>
               </div>
-            </button>
+            </SubscribeButton>
+            {!isSubscribed && <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.9,
+                ease: "easeOut",
+              }}
+              whileHover={{
+                scale: 1.05,
+                transition: { duration: 0.4 },
+              }}
+              className="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-medium mt-4 shadow-sm text-center"
+            >
+              For Scanning Pricing starts from {price} GBP. Subscribe now
+            </motion.div>}
           </div>
         </div>
 
@@ -98,4 +121,4 @@ const OptionPopup = ({
   );
 };
 
-export default OptionPopup;
+export default SkinPopup;

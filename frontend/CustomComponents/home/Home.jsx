@@ -9,14 +9,15 @@ import { useEffect, useState } from "react";
 import { Api } from "@/shared/api/api";
 import { categoryItemsData } from "@/mockData/homeMockData";
 import { getRoutesForItem } from "@/config/routeConfig";
+import SkinPopup from "../Popups/SkinPopup";
 
 export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState(null);
   const [showOptionPopup, setShowOptionPopup] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [category, setCategory] = useState('');
   const router = useRouter();
-
   const categoryItems = categoryItemsData;
 
   const { logEvent } = useAmplitude();
@@ -36,6 +37,7 @@ export default function HomePage() {
 
     // Check if this category should show popup
     if (shouldShowPopup(categoryTitle)) {
+      setCategory(categoryTitle);
       // Set the selected item and show the popup for Skincare/Makeup
       setSelectedItem(item);
       setShowOptionPopup(true);
@@ -185,14 +187,21 @@ export default function HomePage() {
       <Footer />
 
       {/* Popups */}
-
-      <OptionPopup
-        isOpen={showOptionPopup}
-        onClose={handleClosePopup}
-        selectedItem={selectedItem}
-        onChatClick={handleChatClick}
-        onScanClick={handleScanClick}
-      />
+      {category === 'Skincare' ?
+        <SkinPopup
+          isOpen={showOptionPopup}
+          onClose={handleClosePopup}
+          selectedItem={selectedItem}
+          onChatClick={handleChatClick}
+        />
+        :
+        <OptionPopup
+          isOpen={showOptionPopup}
+          onClose={handleClosePopup}
+          selectedItem={selectedItem}
+          onChatClick={handleChatClick}
+          onScanClick={handleScanClick}
+        />}
     </div>
   );
 }

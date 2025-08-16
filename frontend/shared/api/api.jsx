@@ -192,6 +192,19 @@ export const Api = {
         console.log(error);
       }
     },
+    prices: async () => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/payments/prices`,
+          {
+            method: "GET",
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
     analyzeSkinPhoto: async (image) => {
       try {
         const response = await baseFetch(

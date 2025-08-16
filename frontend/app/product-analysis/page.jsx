@@ -60,13 +60,13 @@ export default function ProductAnalysis() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleUploadClick}
-                className="w-full text-white py-2 rounded-3xl font-semibold bg-[#02331E]"
+                className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
                 Upload a clear photo
               </button>
               <button
                 onClick={() => SetIsOpen(true)}
-                className="w-full text-white py-2 rounded-3xl font-semibold bg-[#02331E]"
+                className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
                 Take a photo
               </button>
