@@ -46,7 +46,8 @@ def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
         hair_type= profile.hair_type or "Unknown",
         hair_concern= profile.hair_concern or "Unknown",
         style_preference= profile.style_preference or "Unknown",
-        styling_goal= profile.styling_goal or "Unknown"
+        styling_goal= profile.styling_goal or "Unknown",
+        subscription_status= profile.subscription_status
     )
 
 

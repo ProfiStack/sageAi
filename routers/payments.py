@@ -46,7 +46,7 @@ def create_payment(
 
 
 @router.post("/subscribe")
-def subscribe(
+async def subscribe(
     req: SubscriptionRequest, user_db: user_dependency, db: Session = Depends(get_db)
 ):
     """
@@ -54,11 +54,9 @@ def subscribe(
     price_id: Stripe Price ID for recurring plan.
     """
     try:
-        success_url = os.getenv('SUCCESS_URL')+"/home"
-        cancel_url = os.getenv('CANCEL_URL')+"/home"
-        print('************',success_url, '**********success')
-        print('************',cancel_url, '**********success')
-        result = create_subscription_checkout(
+        success_url = os.getenv('SUCCESS_URL')+"/success"
+        cancel_url = os.getenv('CANCEL_URL')+"/success"
+        result = await create_subscription_checkout(
             price_id=req.price_id,
             success_url=success_url,
             cancel_url=cancel_url,
