@@ -89,6 +89,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     sig_header = request.headers.get("stripe-signature") or request.headers.get(
         "Stripe-Signature"
     )
+    print('***********',payload,'**************')
+    print('***********',sig_header,'**************')
     if not sig_header:
         raise HTTPException(status_code=400, detail="Missing Stripe-Signature header")
     try:
