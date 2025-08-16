@@ -56,7 +56,7 @@ def create_payment_intent(
     return {"client_secret": intent.client_secret, "payment_id": payment.id}
 
 
-def create_subscription_checkout(
+async def create_subscription_checkout(
     price_id: str, success_url: str, cancel_url: str, user_db, db
 ):
     """
