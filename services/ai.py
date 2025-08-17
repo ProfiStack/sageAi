@@ -18,8 +18,11 @@ from prompts.skin_care import get_skincare_prompt
 from prompts.trend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
 
+
 def format_title(text: str) -> str:
     return text.replace("_", " ").title()
+
+
 # SAFE OPENCV IMPORT - Replace line 19
 def safe_import_cv2():
     """Safely import OpenCV with proper error handling"""
@@ -125,20 +128,48 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
             return get_ingredient_checker_prompt(user_metrics)
         elif feature_type == "treatment_planning":
             return get_treatment_plan_prompt(user_metrics)
-        elif feature_type == "meal_muse" or feature_type == "nutri_guide" or feature_type == "supp_smart":
-            chat_title= format_title(feature_type);
+        elif (
+            feature_type == "meal_muse"
+            or feature_type == "nutri_guide"
+            or feature_type == "supp_smart"
+        ):
+            chat_title = format_title(feature_type)
             return get_nutrition_checker_prompt(user_metrics, chat_title)
-        elif feature_type == "fit_flow" or feature_type == "manifest_mode" or feature_type == "positivity_pulse" or feature_type == "self_spark" or feature_type == "stress_reset" or feature_type == "wellness_whisper" or feature_type == "zen_zone":
-            chat_title= format_title(feature_type);
+        elif (
+            feature_type == "fit_flow"
+            or feature_type == "manifest_mode"
+            or feature_type == "positivity_pulse"
+            or feature_type == "self_spark"
+            or feature_type == "stress_reset"
+            or feature_type == "wellness_whisper"
+            or feature_type == "zen_zone"
+        ):
+            chat_title = format_title(feature_type)
             return get_wellness_checker_prompt(user_metrics, chat_title)
-        elif feature_type == "formula_focus" or feature_type == "hair_decode" or feature_type == "style_spark" or feature_type == "tress_therapy":
-            chat_title= format_title(feature_type);
+        elif (
+            feature_type == "formula_focus"
+            or feature_type == "hair_decode"
+            or feature_type == "style_spark"
+            or feature_type == "tress_therapy"
+        ):
+            chat_title = format_title(feature_type)
             return get_hair_care_checker_prompt(user_metrics, chat_title)
-        elif feature_type == "event_edit" or feature_type == "fashion_fix" or feature_type == "shop_smart":
-            chat_title= format_title(feature_type);
+        elif (
+            feature_type == "event_edit"
+            or feature_type == "fashion_fix"
+            or feature_type == "shop_smart"
+        ):
+            chat_title = format_title(feature_type)
             return get_styling_checker_prompt(user_metrics, chat_title)
-        elif feature_type == "beauty_breakdown" or feature_type == "beauty_brief" or feature_type == "event_glam" or feature_type == "flawless_factor" or feature_type == "perfect_pair" or feature_type == "true_tone":
-            chat_title= format_title(feature_type);
+        elif (
+            feature_type == "beauty_breakdown"
+            or feature_type == "beauty_brief"
+            or feature_type == "event_glam"
+            or feature_type == "flawless_factor"
+            or feature_type == "perfect_pair"
+            or feature_type == "true_tone"
+        ):
+            chat_title = format_title(feature_type)
             return get_makeup_checker_prompt(user_metrics, chat_title)
         else:
             return get_skincare_prompt(user_metrics)
@@ -288,13 +319,58 @@ async def analyze_skin_features(image_bytes: bytes):
         if overall_color_variation > 50:
             concerns.append("hyperpigmentation")
 
-        # Redness analysis
+        # --- IMPROVED REDNESS ANALYSIS ---
         red_channel = img_256[:, :, 0].astype(np.float32)
         green_channel = img_256[:, :, 1].astype(np.float32)
         blue_channel = img_256[:, :, 2].astype(np.float32)
 
-        redness_index = np.mean(red_channel - (green_channel + blue_channel) / 2)
-        if redness_index > 30:
+        # Method 1: Normalized redness index
+        total_intensity = red_channel + green_channel + blue_channel
+        # Avoid division by zero
+        total_intensity = np.where(total_intensity == 0, 1, total_intensity)
+        red_ratio = red_channel / total_intensity
+
+        # Method 2: Red dominance over green/blue
+        rg_diff = red_channel - green_channel
+        rb_diff = red_channel - blue_channel
+
+        # Method 3: HSV-based redness detection
+        # Red hues are around 0-30 and 330-360 (0-15 and 165-180 in OpenCV)
+        hue_channel = img_hsv[:, :, 0]
+        red_hue_mask = (hue_channel <= 15) | (hue_channel >= 165)
+        red_saturation = img_hsv[:, :, 1]
+
+        # Calculate multiple redness metrics
+        avg_red_ratio = np.mean(red_ratio)
+        avg_rg_diff = np.mean(rg_diff)
+        avg_rb_diff = np.mean(rb_diff)
+
+        # Red areas with sufficient saturation and proper hue
+        red_areas = red_hue_mask & (red_saturation > 40) & (img_hsv[:, :, 2] > 50)
+        red_area_percentage = np.sum(red_areas) / red_areas.size
+
+        # Dynamic threshold based on skin tone and brightness
+        # Darker skin needs higher threshold, lighter skin needs lower
+        brightness_factor = brightness / 128.0  # Normalize to ~1.0
+        base_threshold = 0.38  # Base red ratio threshold
+        adjusted_threshold = base_threshold + (brightness_factor - 1.0) * 0.05
+
+        # Multiple conditions must be met for redness detection
+        redness_detected = False
+
+        # Condition 1: High red ratio compared to other channels
+        if avg_red_ratio > adjusted_threshold:
+            # Condition 2: Sufficient red dominance
+            if avg_rg_diff > 8 and avg_rb_diff > 5:
+                # Condition 3: Sufficient red-hued areas
+                if red_area_percentage > 0.1:  # At least 10% of face has red hues
+                    redness_detected = True
+
+        # Additional check for very obvious redness
+        if avg_rg_diff > 25 and avg_rb_diff > 20 and red_area_percentage > 0.05:
+            redness_detected = True
+
+        if redness_detected:
             concerns.append("redness")
 
         # Fine lines/aging
