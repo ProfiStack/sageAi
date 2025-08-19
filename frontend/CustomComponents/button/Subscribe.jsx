@@ -12,11 +12,10 @@ export default function SubscribeButton({ children, route }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const { token, isSubscribed } = useAuthStore();
-  console.log(children);
   const handleSubscribe = async () => {
     setLoading(true);
     if (isSubscribed) {
-      router.push(route);
+      router?.push(route);
     } else {
       try {
         // Call your backend to create a subscription checkout session

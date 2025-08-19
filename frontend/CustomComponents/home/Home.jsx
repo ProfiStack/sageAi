@@ -190,20 +190,20 @@ export default function HomePage() {
       <Footer />
 
       {/* Popups */}
-      {category === "Skincare" ? (
-        <SkinPopup
-          isOpen={showOptionPopup}
-          onClose={handleClosePopup}
-          selectedItem={selectedItem}
-          onChatClick={handleChatClick}
-        />
-      ) : (
+      {selectedItem?.scanRoute === "/product-analysis" ? (
         <OptionPopup
           isOpen={showOptionPopup}
           onClose={handleClosePopup}
           selectedItem={selectedItem}
           onChatClick={handleChatClick}
           onScanClick={handleScanClick}
+        />
+      ) : (
+        <SkinPopup
+          isOpen={showOptionPopup}
+          onClose={handleClosePopup}
+          selectedItem={selectedItem}
+          onChatClick={handleChatClick}
         />
       )}
     </div>

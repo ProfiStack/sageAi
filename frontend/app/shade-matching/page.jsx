@@ -36,7 +36,7 @@ export default function ImageAnalysis() {
 
   return (
     <div className="h-screen flex flex-col">
-      <SettingsHeader title={"Skin Analysis"} />
+      <SettingsHeader title={"Shade Matching"} />
 
       <div
         className="flex-1 px-4 flex flex-col"

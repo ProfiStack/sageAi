@@ -3,11 +3,11 @@ import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
 export default function CancelSubscriptionPopup({ isOpen, setIsOpen }) {
-  const { token } = useAuthStore();
+  const { token, setIsSubscribed } = useAuthStore();
   const router = useRouter();
   const handleLogout = async () => {
     await Api.client.getCancelSubscription(token);
-    router.refresh();
+    setIsSubscribed(false); // Update the auth store
     setIsOpen(false);
   };
 

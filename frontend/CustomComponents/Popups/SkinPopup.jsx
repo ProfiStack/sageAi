@@ -6,22 +6,17 @@ import { motion } from "framer-motion";
 import SubscribeButton from "../button/Subscribe";
 import useAuthStore from "@/store/authStore";
 
-const SkinPopup = ({
-  isOpen,
-  onClose,
-  selectedItem,
-  onChatClick,
-}) => {
+const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
   if (!isOpen || !selectedItem) return null;
-  const [price, setPrice] = useState('')
+  const [price, setPrice] = useState("");
   const { isSubscribed } = useAuthStore();
   useEffect(() => {
     const fetchPrices = async () => {
       const response = await Api.client.prices();
-      setPrice(response.price)
-    }
+      setPrice(response.price);
+    };
     fetchPrices();
-  }, [])
+  }, []);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-sm w-full mx-4 shadow-xl">
@@ -75,7 +70,7 @@ const SkinPopup = ({
                 </div>
               </div>
             </button>
-            <SubscribeButton >
+            <SubscribeButton route={selectedItem.scanRoute}>
               <div className="w-full border border-indigo-200 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-xl p-4 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -92,21 +87,23 @@ const SkinPopup = ({
                 </div>
               </div>
             </SubscribeButton>
-            {!isSubscribed && <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.9,
-                ease: "easeOut",
-              }}
-              whileHover={{
-                scale: 1.05,
-                transition: { duration: 0.4 },
-              }}
-              className="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-medium mt-4 shadow-sm text-center"
-            >
-              For Scanning Pricing starts from {price} GBP. Subscribe now
-            </motion.div>}
+            {!isSubscribed && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.9,
+                  ease: "easeOut",
+                }}
+                whileHover={{
+                  scale: 1.05,
+                  transition: { duration: 0.4 },
+                }}
+                className="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-medium mt-4 shadow-sm text-center"
+              >
+                For Scanning Pricing starts from {price} GBP. Subscribe now
+              </motion.div>
+            )}
           </div>
         </div>
 

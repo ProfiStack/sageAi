@@ -31,6 +31,11 @@ export default function AboutUs() {
       description:
         "Discover products that work for your skin tone and preferences",
     },
+    {
+      icon: <div className="p-2 mt-1 bg-[#D4B038] rounded-full"></div>,
+      title: "wellness",
+      description: "Holistic wellness and lifestyle guidance",
+    },
   ];
 
   const trustFactors = [

@@ -43,6 +43,7 @@ const useAuthStore = create(
         isAuthenticated: state.isAuthenticated,
         token: state.token,
         userId: state.userId,
+        isSubscribed: state.isSubscribed,
       }),
     }
   )
