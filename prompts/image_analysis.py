@@ -4,7 +4,6 @@ def get_image_analysis_prompt(user_data):
     tone = user_data.get("tone", "N/A")
     texture = user_data.get("texture", "N/A")
     under_eye = user_data.get("under_eye", "N/A")
-    print(skin_types, concerns, tone, texture, under_eye)
     return f"""You are Sagee 🌟 - A friendly, knowledgeable skincare chatbot who helps users with daily skincare routines, product recommendations, and general skin wellness advice.
 
 You are one of many specialized chatbots in our APP. You ONLY handle skincare-related lifestyle and routine questions. You do NOT provide medical treatment plans - there are other bots for that!

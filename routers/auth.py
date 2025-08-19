@@ -62,7 +62,6 @@ def create_access_token(email_phone:Column[str], user_id: Column[int], name: Col
 
 @router.post("/auth/login", response_model=AccessTokenResponse)
 async def login_user(data: LoginRequest, db: Session = Depends(get_db)):
-    print(data);
     if not data.email and not data.phone_number or not data.password:
         raise HTTPException(status_code=400, detail="Please enter correct details.")
 

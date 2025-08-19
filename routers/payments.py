@@ -13,7 +13,7 @@ from services.payments import (
     create_subscription_checkout,
     handle_stripe_webhook,
 )
-from stripe import stripe;
+from stripe import stripe
 
 router = APIRouter()
 
@@ -54,8 +54,8 @@ async def subscribe(
     price_id: Stripe Price ID for recurring plan.
     """
     try:
-        success_url = os.getenv('SUCCESS_URL')+"/success"
-        cancel_url = os.getenv('CANCEL_URL')+"/success"
+        success_url = os.getenv("SUCCESS_URL") + "/success"
+        cancel_url = os.getenv("CANCEL_URL") + "/success"
         result = await create_subscription_checkout(
             price_id=req.price_id,
             success_url=success_url,
@@ -87,8 +87,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     sig_header = request.headers.get("stripe-signature") or request.headers.get(
         "Stripe-Signature"
     )
-    print('***********',payload,'**************')
-    print('***********',sig_header,'**************')
     if not sig_header:
         raise HTTPException(status_code=400, detail="Missing Stripe-Signature header")
     try:
@@ -98,9 +96,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         print(e)
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.get("/prices")
-async def getPrices(): 
-  prices = stripe.Price.list(product=os.getenv('STRIPE_PRODUCT_ID'), expand=['data.currency_options'])
-  return {
-    "price": float(Decimal(prices['data'][0]['currency_options']['gbp']['unit_amount_decimal']) / 100)
-}
+async def getPrices():
+    prices = stripe.Price.list(
+        product=os.getenv("STRIPE_PRODUCT_ID"), expand=["data.currency_options"]
+    )
+    return {
+        "price": float(
+            Decimal(prices["data"][0]["currency_options"]["gbp"]["unit_amount_decimal"])
+            / 100
+        )
+    }
