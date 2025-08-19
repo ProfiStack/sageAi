@@ -206,8 +206,8 @@ export default function PictureAnalysisPopup({
     }
 
     const avgBrightness = pixelCount > 0 ? totalBrightness / pixelCount : 0;
-    const minBrightness = 70;
-    const maxBrightness = 210;
+    const minBrightness = 90;
+    const maxBrightness = 180;
     const isGoodBrightness =
       avgBrightness >= minBrightness && avgBrightness <= maxBrightness;
 
@@ -439,38 +439,6 @@ export default function PictureAnalysisPopup({
         0,
         2 * Math.PI
       );
-
-      // 7. Draw countdown text
-      if (countdown > 0) {
-        ctx.font = "bold 28px sans-serif";
-        ctx.fillStyle = "white";
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 2;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-        const text = `Hold still for ${countdown}`;
-        const textY = canvasCenterY - radiusY - 20;
-
-        ctx.strokeText(text, canvasCenterX, textY);
-        ctx.fillText(text, canvasCenterX, textY);
-      }
-
-      // Add Brightness Message
-      if (brightnessMessage) {
-        ctx.font = "bold 20px sans-serif";
-        ctx.fillStyle = "white"; // A noticeable color for alerts
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
-        ctx.textAlign = "center";
-        // Position it just above the oval, below the countdown if it exists
-        const brightnessTextY =
-          countdown > 0
-            ? canvasCenterY - radiusY - 50
-            : canvasCenterY - radiusY - 20;
-
-        ctx.strokeText(brightnessMessage, canvasCenterX, brightnessTextY);
-        ctx.fillText(brightnessMessage, canvasCenterX, brightnessTextY);
-      }
     },
     [
       calculateHeadPose,
@@ -481,7 +449,7 @@ export default function PictureAnalysisPopup({
       isImageCaptured,
       isPitchOff,
       isYawOff,
-      brightnessMessage, // Add brightnessMessage to dependencies
+      brightnessMessage,
     ]
   );
 
@@ -634,35 +602,6 @@ export default function PictureAnalysisPopup({
 
             // --- Restore the initial horizontal flip ---
             ctx.restore();
-
-            if (countdown > 0) {
-              ctx.font = "bold 28px sans-serif";
-              ctx.fillStyle = "white";
-              ctx.strokeStyle = "black";
-              ctx.lineWidth = 2;
-              ctx.textAlign = "center";
-              ctx.textBaseline = "bottom";
-              const text = `Hold still for ${countdown}`;
-              const textY = canvasCenterY - radiusY - 20;
-
-              ctx.strokeText(text, canvasCenterX, textY);
-              ctx.fillText(text, canvasCenterX, textY);
-            }
-            // Add Brightness Message for redraws as well
-            if (brightnessMessage) {
-              ctx.font = "bold 20px sans-serif";
-              ctx.fillStyle = "white";
-              ctx.strokeStyle = "black";
-              ctx.lineWidth = 3;
-              ctx.textAlign = "center";
-              const brightnessTextY =
-                countdown > 0
-                  ? canvasCenterY - radiusY - 50
-                  : canvasCenterY - radiusY - 20;
-
-              ctx.strokeText(brightnessMessage, canvasCenterX, brightnessTextY);
-              ctx.fillText(brightnessMessage, canvasCenterX, brightnessTextY);
-            }
           }
         }
       }
@@ -923,7 +862,36 @@ export default function PictureAnalysisPopup({
                 </div>
               )}
 
-              {/* Blur Mask Overlay */}
+              {isCapturing && countdown > 0 && (
+                <p className="absolute font-semibold text-[17px] top-10 text-white [text-shadow:_0_0_3px_#000,_0_0_5px_#000]">
+                  Hold still for {countdown}
+                </p>
+              )}
+
+              {(isCapturing && faceDown) ||
+              faceUp ||
+              faceRight ||
+              faceLeft > 0 ? (
+                <p className="absolute font-semibld text-[17px] top-10 text-white [text-shadow:_0_0_3px_#000,_0_0_5px_#000]">
+                  Follow the arrows to adjust your face
+                </p>
+              ) : (
+                <p className="absolute font-semibold text-[17px] top-10 text-white [text-shadow:_0_0_3px_#000,_0_0_5px_#000]">
+                  {brightnessMessage}
+                </p>
+              )}
+              {isCapturing &&
+                !faceDown &&
+                !faceUp &&
+                !faceRight &&
+                !faceLeft &&
+                !brightnessMessage &&
+                countdown === 0 && (
+                  <p className="absolute font-semibold text-[17px] top-10 text-white [text-shadow:_0_0_3px_#000,_0_0_5px_#000]">
+                    Face is not centered
+                  </p>
+                )}
+
               {isCapturing && (
                 <div
                   className="relative z-50 rounded-full border-2 border-white pointer-events-none"

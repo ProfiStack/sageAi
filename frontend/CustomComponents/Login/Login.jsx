@@ -88,7 +88,7 @@ export default function Login() {
         store.setUserId(decoded.user_id);
         store.setToken(data.token);
         store.setIsAuthenticated(true);
-        store.setIsSubscribed(data.subscription)
+        store.setIsSubscribed(data.subscription);
         logEvent("Onboard Sucessful");
         router.push("/home");
         primaryToast({ description: "Login successful" });
@@ -156,13 +156,15 @@ export default function Login() {
               SageeAi
             </h1>
             <p className="text-[#02331E] text-lg font-medium">
-              Meet Your Personal Lifestyle Agent
+              Meet your personal lifestyle agent <br /> beauty simplified,
+              wellness personalised, confidence amplified.
             </p>
           </div>
           <p className="text-[#02331E]  text-sm max-w-xs mx-auto">
-            AI for skincare, makeup, and everything in between. Get real answers
-            for your skin no noise, no commissions, just scientific facts.
-          </p>
+            SageeAI cuts through the noise to give you science backed answers
+            for skincare, makeup, haircare, style, and nutrition. No hype. No
+            waste. Just clarity
+          </p>{" "}
         </div>
         {/* Main Content */}
         <div className="relative z-10 px-4 py-8">
@@ -204,7 +206,6 @@ export default function Login() {
                             <div className="relative">
                               <Input
                                 type={showPassword ? "text" : "password"}
-                                onChange={(e) => setPassword(e.target.value)}
                                 className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400 pr-12"
                                 placeholder="Enter your password"
                                 {...field}
@@ -237,6 +238,12 @@ export default function Login() {
                 </Button>
               </form>
             </Form>
+            <button
+              onClick={() => router.push("/forgot-password")}
+              className="underline underline-offset-4 flex justify-center w-full text-[#02331E] mt-2 "
+            >
+              Forgot Password?
+            </button>
           </div>
           {/* Features Section */}
           <div className="mb-8">

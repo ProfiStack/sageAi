@@ -16,8 +16,12 @@ import {
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import Image from "next/image";
 import Footer from "@/CustomComponents/Footer/Footer";
+import useAuthStore from "@/store/authStore";
+import CancelSubscriptionPopup from "@/CustomComponents/Popups/CancelSubscription";
+import SubscribeButton from "@/CustomComponents/button/Subscribe";
 
 export default function SubscriptionPage() {
+  const [open, setisOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("essential");
 
   const features = {
@@ -98,7 +102,7 @@ export default function SubscriptionPage() {
       name: "Basic",
       price: "Free",
       image: "/images/basicSub.png",
-      description: "Essential features for skincare enthusiasts",
+      description: "Essential features for balancing lifestyle",
       popular: false,
     },
     {
@@ -111,6 +115,8 @@ export default function SubscriptionPage() {
     },
   ];
 
+  const { isSubscribed } = useAuthStore();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -120,11 +126,9 @@ export default function SubscriptionPage() {
       <div className=" mx-auto px-4 py-6">
         {/* Compare Packages Header */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Compare Packages
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Packages</h2>
           <p className="text-gray-600">
-            Choose the plan that best fits your skincare journey
+            Choose the plan that best fits your Life Style
           </p>
         </div>
 
@@ -197,17 +201,50 @@ export default function SubscriptionPage() {
               </div>
 
               {/* Action Button */}
-              <button
-                className={`w-full py-3 px-4 rounded-xl bg-[#02331E] text-white font-medium transition-all duration-200 ${plan.buttonColor} ${
-                  selectedPlan === plan.id ? "transform scale-105" : ""
-                }`}
-              >
-                {plan.id === "basic" ? "Current Plan" : "Upgrade to Essential"}
-              </button>
+
+              {/* Action Button */}
+              {!isSubscribed && plan.id === "essential" ? (
+                <SubscribeButton>
+                  <div
+                    className={`w-full py-3 px-4 rounded-xl bg-[#02331E] text-white font-medium transition-all duration-200 ${plan.buttonColor} ${
+                      selectedPlan === plan.id ? "transform scale-105" : ""
+                    } text-center`}
+                  >
+                    Upgrade to Essential
+                  </div>
+                </SubscribeButton>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (isSubscribed && plan.id === "basic") {
+                      setisOpen(true);
+                    }
+                  }}
+                  className={`w-full py-3 px-4 rounded-xl bg-[#02331E] text-white font-medium transition-all duration-200 ${plan.buttonColor} ${
+                    selectedPlan === plan.id ? "transform scale-105" : ""
+                  }`}
+                >
+                  {isSubscribed
+                    ? plan.id === "essential"
+                      ? "Current Plan"
+                      : "Downgrade to Basic"
+                    : "Current Plan"}
+                </button>
+              )}
+
+              {isSubscribed && plan.id === "essential" && (
+                <button
+                  onClick={() => setisOpen(true)}
+                  className="w-full mt-3 py-3 px-4 rounded-xl text-red-700 font-medium transition-all duration-200 flex justify-center underline underline-offset-4"
+                >
+                  Cancel Subscription
+                </button>
+              )}
             </div>
           ))}
         </div>
       </div>
+      <CancelSubscriptionPopup isOpen={open} setIsOpen={setisOpen} />
       <Footer />
     </div>
   );

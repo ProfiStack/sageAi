@@ -49,9 +49,10 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
 
             {/* Grid of options */}
             <div className="grid grid-cols-2 gap-3">
-              {ImageAnalysisData.map((item, index) => (
-                item.title === 'Skin Analysis' ?
-                  <SubscribeButton >
+              {ImageAnalysisData.map((item, index) =>
+                item.title === "Skin Analysis" ||
+                item.title === "Shade Matching" ? (
+                  <SubscribeButton route={item.route}>
                     <div
                       key={index}
                       onClick={() => {
@@ -70,7 +71,12 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                           className="object-cover rounded-2xl"
                         />
                         <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                          {item.title === 'Skin Analysis' && !isSubscribed ? 'Subscribe Now' : item.title === 'Skin Analysis' && isSubscribed ? 'Subscribed' : 'Coming Soon'}
+                          {item.title === "Skin Analysis" ||
+                          item.title === "Shade Matching"
+                            ? !isSubscribed
+                              ? "Subscribe Now"
+                              : " Subscribed"
+                            : "Coming Soon"}
                         </div>
                       </div>
                       <p className="font-semibold text-gray-900 text-sm mt-1">
@@ -78,7 +84,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                       </p>
                     </div>
                   </SubscribeButton>
-                  :
+                ) : (
                   <div
                     key={index}
                     onClick={() => {
@@ -97,14 +103,20 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                         className="object-cover rounded-2xl"
                       />
                       <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                        {item.title === 'Skin Analysis' && !isSubscribed ? 'Subscribe Now' : item.title === 'Skin Analysis' && isSubscribed ? 'Subscribed' : 'Coming Soon'}
+                        {item.title === "Skin Analysis" ||
+                        item.title === "Shade Matching"
+                          ? isSubscribed
+                            ? "Subscribed"
+                            : "Subscribe Now"
+                          : "Coming Soon"}
                       </div>
                     </div>
                     <p className="font-semibold text-gray-900 text-sm mt-1">
                       {item.title}
                     </p>
                   </div>
-              ))}
+                )
+              )}
             </div>
           </motion.div>
         </motion.div>
