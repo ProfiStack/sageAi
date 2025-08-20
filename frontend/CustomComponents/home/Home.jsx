@@ -10,13 +10,14 @@ import { Api } from "@/shared/api/api";
 import { categoryItemsData } from "@/mockData/homeMockData";
 import { getRoutesForItem } from "@/config/routeConfig";
 import SkinPopup from "../Popups/SkinPopup";
+import { Lightbulb } from "lucide-react";
 
 export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState(null);
   const [showOptionPopup, setShowOptionPopup] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState("");
   const router = useRouter();
   const categoryItems = categoryItemsData;
 
@@ -117,20 +118,22 @@ export default function HomePage() {
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl px-2 py-4 border border-emerald-100 shadow-sm">
               <div className="flex items-start space-x-4">
                 <div className="bg-emerald-100 rounded-full p-1">
-                  <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">!</span>
+                  <div className="p-2 bg-emerald-500 rounded-full flex items-center justify-center">
+                    <Lightbulb color="white" />
                   </div>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-emerald-700 font-medium mb-1">
                     DID YOU KNOW?
                   </p>
-                  {currentMessage && <p className="text-gray-700 text-sm leading-relaxed">
-                    <span className="font-semibold text-emerald-700">
-                      {currentMessage?.split("%")[0]}%
-                    </span>{" "}
-                    {currentMessage?.split("%")[1]}
-                  </p>}
+                  {currentMessage && (
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      <span className="font-semibold text-emerald-700">
+                        {currentMessage?.split("%")[0]}%
+                      </span>{" "}
+                      {currentMessage?.split("%")[1]}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -187,21 +190,22 @@ export default function HomePage() {
       <Footer />
 
       {/* Popups */}
-      {category === 'Skincare' ?
-        <SkinPopup
-          isOpen={showOptionPopup}
-          onClose={handleClosePopup}
-          selectedItem={selectedItem}
-          onChatClick={handleChatClick}
-        />
-        :
+      {selectedItem?.scanRoute === "/product-analysis" ? (
         <OptionPopup
           isOpen={showOptionPopup}
           onClose={handleClosePopup}
           selectedItem={selectedItem}
           onChatClick={handleChatClick}
           onScanClick={handleScanClick}
-        />}
+        />
+      ) : (
+        <SkinPopup
+          isOpen={showOptionPopup}
+          onClose={handleClosePopup}
+          selectedItem={selectedItem}
+          onChatClick={handleChatClick}
+        />
+      )}
     </div>
   );
 }

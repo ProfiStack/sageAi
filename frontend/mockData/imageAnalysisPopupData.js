@@ -11,7 +11,7 @@ export const ImageAnalysisData = [
   },
   {
     image: "/images/shadeMatching.png",
-    route: "/home",
+    route: "/shade-matching",
     title: "Shade Matching",
   },
   {

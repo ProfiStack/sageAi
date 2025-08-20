@@ -175,13 +175,13 @@ export const Api = {
         console.log(error);
       }
     },
-    subscribePayment: async ({price_id, token}) => {
+    subscribePayment: async ({ price_id, token }) => {
       try {
         const response = await baseFetch(
           ({ globalBaseUrl }) => `${globalBaseUrl}/api/payments/subscribe`,
           {
             method: "POST",
-            body: validatePayload({price_id}),
+            body: validatePayload({ price_id }),
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -212,6 +212,25 @@ export const Api = {
           {
             method: "POST",
             body: image,
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getCancelSubscription: async (token) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/payments/un-subscribe`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            next: {
+              revalidate: 3600, // 1 hour
+            },
           }
         );
         return response;

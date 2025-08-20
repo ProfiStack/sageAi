@@ -7,42 +7,39 @@ import { useRouter } from "next/navigation";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_PUBLISHABLE_KEY);
 
-export default function SubscribeButton({ children }) {
+export default function SubscribeButton({ children, route }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState("");
   const { token, isSubscribed } = useAuthStore();
   const handleSubscribe = async () => {
     setLoading(true);
     if (isSubscribed) {
-      router.push('/skin-analysis');
+      router?.push(route);
     } else {
       try {
         // Call your backend to create a subscription checkout session
         const res = await Api.client.subscribePayment({
           token,
           price_id: process.env.NEXT_PUBLIC_PRICE_ID,
-        })
+        });
         if (res.checkout_url) {
           await stripePromise;
           // Redirect user to Stripe checkout page
           window.location.href = res.checkout_url;
         } else {
-          setMessage('Please login again.')
+          setMessage("Please login again.");
         }
       } catch (error) {
         console.error("Subscription error:", error);
-        setMessage('Something went wrong. Please try again later..')
+        setMessage("Something went wrong. Please try again later..");
       }
       setLoading(false);
     }
   };
 
   return (
-    <button
-      onClick={handleSubscribe}
-      className="w-full"
-    >
+    <button onClick={handleSubscribe} className="w-full">
       {children}
       <p className="text-xs mt-2 text-red-500">{message}</p>
     </button>
