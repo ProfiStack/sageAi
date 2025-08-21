@@ -59,37 +59,110 @@ Personalized advice using below current user's data:
 
 ## TRENDING PRODUCTS DATABASE 2025–2026 🔥
 
-**Recommend as many products as genuinely useful. Do NOT restrict to only 4–6.**
+Recommend as many products as genuinely useful based on current viral trends and social media popularity. Do NOT restrict to only 4–6.
+🔥 Pores & Scarring - Trending Solutions
+Viral Pore-Refining Ingredients
 
-### Pores & Scarring
+2% BHA/Salicylic Acid Serums — Various brands trending on TikTok
 
-* **Paula's Choice SKIN PERFECTING 2% BHA Liquid Exfoliant** — £28 (Boots, Sephora)
-    - *Trending reason: Most universally loved Paula's Choice product for pore refinement*
-* **Paula's Choice Skin Balancing Pore-Reducing Toner** — £24 (Amazon, Paula's Choice)
-* **Azelaic Acid Serum with Oat Kernel & Licorice Extract** — £32 (Sephora)
-* **Medical-Grade Silicone Scar Sheets** — £18–35 (Boots, Amazon)
-* **Fenty Skin Fat Water Pore-Refining Toner Serum** — £26 (Sephora)
+Trending reason: Continues to dominate for pore refinement across all social platforms
 
-### SPF (Mandatory for Hyperpigmentation)
 
-* **La Roche-Posay Anthelios UVMune 400 Invisible Fluid SPF50+** — £19–23
-* **Beauty of Joseon Relief Sun SPF50+** — £15–18
-* **Supergoop! Unseen Sunscreen SPF40** — \~£34
-* **Bondi Sands SPF50+ Face Fluid** — £10–14
+Pore-Reducing Toners with Niacinamide — Multiple viral formulations
+Azelaic Acid 10-20% Serums — TikTok's favorite for texture improvement
+Medical-Grade Silicone Scar Patches — Viral for acne scar treatment
+Tranexamic Acid Night Serums — Rising trend for post-acne marks
 
-### Pigment-Correcting Serums
+2025 Breakout Stars
 
-* **Tranexamic Acid Night Serum (The INKEY List)** — £15
-* **Alpha Arbutin 2% + HA Serum** — £15–18
-* **Niacinamide 10% Serum** — £15–20
-* **Azelaic Acid 10–15% formulations** — £20–32
+Snail Mucin 96% Essences — K-beauty viral sensation continuing strong
+Centella Asiatica Serums — Korean skincare trend for sensitive, scarred skin
+PHA (Polyhydroxy Acid) Toners — Gentler alternative to BHA gaining momentum
+Bakuchiol Serums — Plant-based retinol alternative trending for pore refinement
 
-### OTC Chemical Peel–Style Options
+☀️ SPF - Mandatory Trending Protection
+Viral Sunscreen Categories
 
-* **Mandelic Acid 5–10%** — £22–28
-* **PHA Toner (The INKEY List)** — £15–18
-* **Lactic Acid 10% + HA** — £15–20
-* **Dr. Dennis Gross Alpha Beta Universal Daily Peel (5 treatments)** — \~£35
+K-Beauty SPF50+ Chemical Sunscreens — Multiple viral Korean formulations
+Mineral Zinc Oxide Hybrid SPFs — Trending for sensitive skin
+Tinted SPF Serums — 2025's multi-functional trend
+SPF Lip Balms — Emerging trend for complete protection
+Eye Area Sunscreens — Specialized protection gaining popularity
+
+Trending Textures & Features
+
+Invisible Fluid SPFs — No white cast formulations dominating
+Dewy Finish Sunscreens — Korean glass skin effect
+Pollution + Blue Light Defense SPFs — Gen Z's preventative approach
+Airless Pump Packaging — Trending for ingredient stability
+
+✨ Pigment-Correcting - Viral Actives
+TikTok's Favorite Ingredients
+
+Alpha Arbutin 2% + Hyaluronic Acid — Gentle brightening viral favorite
+Tranexamic Acid 5-10% — Professional-grade ingredient going mainstream
+Kojic Acid Serums — Natural brightening trend from J-beauty
+Licorice Root Extract — Viral for gentle pigmentation correction
+Glutathione Serums — Antioxidant brightening trend
+
+Vitamin C Evolution
+
+Magnesium Ascorbyl Phosphate — Stable vitamin C trending for sensitive skin
+Ascorbyl Glucoside — Gentle brightening alternative gaining popularity
+L-Ascorbic Acid 15-20% — High-potency serums for experienced users
+Vitamin C + Vitamin E + Ferulic Combinations — Antioxidant cocktails trending
+
+🧪 Trending Chemical Exfoliation
+Viral Acid Combinations
+
+Mandelic + Lactic Acid Serums — Gentle daily exfoliation trend
+Glycolic Acid 7-10% Toners — Classic making comeback with better formulations
+Multi-Acid Peeling Solutions — At-home professional treatments
+Enzyme Exfoliants — Papaya, pineapple enzymes for sensitive skin
+
+Trending Treatment Formats
+
+Overnight Peeling Masks — Gradual exfoliation while sleeping
+pH-Balanced Acid Toners — Daily use gentle formulations
+Encapsulated Acid Serums — Time-release technology trending
+Buffered Acid Treatments — Reduced irritation formulations
+
+🌱 2025-2026 Ingredient Trends
+Superfood Skincare Movement
+
+Matcha-Infused Serums — Antioxidant trend from kitchen to skincare
+Avocado Oil Treatments — Natural barrier repair gaining momentum
+Kale Extract Formulations — Vitamin-rich superfood trend
+Strawberry Seed Oil — Gentle exfoliation + hydration combo
+
+Biotech & Advanced Ingredients
+
+Hypochlorous Acid Sprays — Medical-grade ingredient going viral
+Postbiotic Serums — Microbiome skincare evolution
+Peptide Cocktails — Multi-peptide formulations trending
+Ceramide Complex Treatments — Barrier repair science trend
+
+Natural Retinol Alternatives
+
+Bakuchiol 1-2% — Plant-based retinol still trending strong
+Sea Buckthorn Oil — Vitamin A-rich natural alternative
+Rosehip Seed Oil — Natural vitamin A + C combination
+Encapsulated Retinol — Reduced irritation technology
+
+🎯 Application Trends
+Viral Skincare Methods
+
+Skin Cycling Routines — Alternating active ingredients (TikTok trend)
+Minimalist 3-Step Routines — Anti-complexity movement
+AM/PM Ingredient Separation — Strategic timing for maximum efficacy
+Double Cleansing Evolution — Oil + water-based cleansing still trending
+
+Tool Integration
+
+Gua Sha + Serums — Facial massage tools with active ingredients
+LED Light Therapy Masks — At-home professional treatments
+Microcurrent Devices — Trending for firming + product penetration
+Ice Globes/Cryo Tools — Cooling treatments for inflammation
 
 ---
 
