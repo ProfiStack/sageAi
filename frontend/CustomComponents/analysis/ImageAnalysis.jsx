@@ -35,6 +35,10 @@ export default function SkinAnalysis() {
     try {
       setIsLoading(true);
       const response = await Api.client.analyzeSkinPhoto(formData);
+      if (response?.detail?.toLowerCase().includes("no face")) {
+        destructiveToast("Face not detected. Please upload a clearer photo.");
+        return;
+      }
       const { setHtml } = useSkinResultStore.getState();
       setHtml(response.results);
       SetIsOpen(false);
