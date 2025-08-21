@@ -1,4 +1,6 @@
 # routes/payments.py
+from decimal import Decimal
+import os
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
@@ -11,6 +13,7 @@ from services.payments import (
     create_subscription_checkout,
     handle_stripe_webhook,
 )
+from stripe import stripe
 
 router = APIRouter()
 
@@ -43,18 +46,17 @@ def create_payment(
 
 
 @router.post("/subscribe")
-def subscribe(
+async def subscribe(
     req: SubscriptionRequest, user_db: user_dependency, db: Session = Depends(get_db)
 ):
-    print(req, "******")
     """
     Create a subscription Checkout session.
     price_id: Stripe Price ID for recurring plan.
     """
     try:
-        success_url = "http://localhost:3000/home"
-        cancel_url = "http://localhost:3000/home"
-        result = create_subscription_checkout(
+        success_url = os.getenv("SUCCESS_URL") + "/success"
+        cancel_url = os.getenv("CANCEL_URL") + "/success"
+        result = await create_subscription_checkout(
             price_id=req.price_id,
             success_url=success_url,
             cancel_url=cancel_url,
@@ -93,3 +95,21 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/prices")
+async def getPrices():
+    prices = stripe.Price.list(
+        product=os.getenv("STRIPE_PRODUCT_ID"), expand=["data.currency_options"]
+    )
+    # return prices;
+    return {
+        "gbp": float(
+            Decimal(prices["data"][0]["currency_options"]["gbp"]["unit_amount_decimal"])
+            / 100
+        ),
+        "usd": float(
+            Decimal(prices["data"][0]["currency_options"]["usd"]["unit_amount_decimal"])
+            / 100
+        )
+    }

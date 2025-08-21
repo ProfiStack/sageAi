@@ -6,11 +6,8 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import ReactMarkdown from "react-markdown";
 import useAuthStore from "@/store/authStore";
 import SettingsHeader from "../settingsHeader/settingsHeader";
-import { cn, isUserLoggedIn, incrementGuestMessageCount } from "@/lib/utils";
+import { isUserLoggedIn, incrementGuestMessageCount } from "@/lib/utils";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { z } from "zod";
 import { Api } from "@/shared/api/api";
 import { useWebSocketContext } from "@/app/providers/chatProvider";
 
@@ -40,13 +37,31 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
   const getChatTypeFromRoute = (route) => {
     const routeTypeMap = {
       "trend-analysis": "trend_analysis",
-      skincare: "skincare",
+      "meal-muse": "meal_muse",
+      "nutri-guide": "nutri_guide",
+      "supp-smart": "supp_smart",
+      "product-alternative": "product_alternative",
       "check-ingredients": "ingredient_checker",
       "treatment-planning": "treatment_planning",
-      makeup: "makeup",
-      "makeup-tools": "makeup_tools",
-      "makeup-looks": "makeup_looks",
-      "makeup-products": "makeup_products",
+      "beauty-breakdown": "beauty_breakdown",
+      "beauty-brief": "beauty-brief",
+      "event-glam": "event_glam",
+      "flawless-factor": "flawless_factor",
+      "true-tone": "true_tone",
+      "event-edit": "event_edit",
+      "fashion-fix": "fashion_fix",
+      "shop-smart": "shop_smart",
+      "fit-flow": "fit_flow",
+      "manifest-mode": "manifest_mode",
+      "positivity-pulse": "positivity_pulse",
+      "self-spark": "self_spark",
+      "stress-reset": "stress_reset",
+      "wellness-whisper": "wellness_whisper",
+      "zen-zone": "zen_zone",
+      "formula-focus": "formula_focus",
+      "hair-decode": "hair_decode",
+      "style-spark": "style_spark",
+      "tress-therapy": "tress_therapy"
     };
     return routeTypeMap[route] || route;
   };

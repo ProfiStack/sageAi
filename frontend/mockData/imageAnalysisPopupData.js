@@ -2,22 +2,21 @@ export const ImageAnalysisData = [
   {
     image: "/images/skinAnalysis.png",
     route: "/skin-analysis",
-
     title: "Skin Analysis",
   },
   {
     image: "/images/products.png",
-    route: "/product-analysis",
+    route: "/home",
     title: "Product Analysis",
   },
   {
     image: "/images/shadeMatching.png",
-    route: "/shade-matching",
+    route: "/home",
     title: "Shade Matching",
   },
   {
     image: "/images/mole.png",
-    route: "/mole-analysis",
+    route: "/home",
     title: "Mole Analysis",
   },
 ];

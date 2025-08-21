@@ -56,7 +56,7 @@ def create_payment_intent(
     return {"client_secret": intent.client_secret, "payment_id": payment.id}
 
 
-def create_subscription_checkout(
+async def create_subscription_checkout(
     price_id: str, success_url: str, cancel_url: str, user_db, db
 ):
     """
@@ -213,8 +213,6 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
               status = "active"
               email = sub.get("customer_email")
               name = sub.get("customer_name")
-              print(sub.get("customer"))
-              print(sub)
               if not user_id:
                   payment_record = (
                       db.query(Payment).filter_by(stripe_subscription_id=sub_id).first()

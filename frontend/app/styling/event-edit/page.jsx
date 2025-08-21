@@ -47,6 +47,7 @@ export default function EventEdit() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={stylingQuizData}
+        title={"Style Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="event_edit">

@@ -2,92 +2,111 @@
 
 import { useState } from "react";
 import {
-  Check,
-  Search,
-  TrendingUp,
-  Calendar,
   Eye,
-  Tag,
-  Shield,
-  Zap,
-  Users,
-  ScanFaceIcon,
+  Scissors,
+  Shirt,
+  Heart,
+  Apple,
+  Palette,
+  MessageCircle,
+  Beaker,
+  Droplets,
+  ScanFace,
 } from "lucide-react";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import Image from "next/image";
 import Footer from "@/CustomComponents/Footer/Footer";
+import useAuthStore from "@/store/authStore";
+import CancelSubscriptionPopup from "@/CustomComponents/Popups/CancelSubscription";
+import SubscribeButton from "@/CustomComponents/button/Subscribe";
 
 export default function SubscriptionPage() {
+  const [open, setisOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("essential");
 
   const features = {
     basic: [
       {
-        icon: <Users />,
+        icon: <MessageCircle className="w-5 h-5" />,
         title: "Skin Consultancy Chat",
-        description: "Get personalized advice",
+        description: "Get personalized skincare advice and solutions",
       },
       {
-        icon: <TrendingUp />,
-        title: "Trend Analysis",
-        description: "Stay updated with trends",
+        icon: <Palette className="w-5 h-5" />,
+        title: "Makeup Consultancy Chat",
+        description: "Expert makeup tips and product recommendations",
       },
       {
-        icon: <Search />,
-        title: "Check Ingredients",
-        description: "Verify product safety",
+        icon: <Apple className="w-5 h-5" />,
+        title: "Nutrition Consultancy Chat",
+        description: "Nutrition guidance for healthy skin and wellness",
       },
       {
-        icon: <Calendar className="w-5 h-5" />,
-        title: "Treatment Planner",
-        description: "Plan your skincare routine",
+        icon: <Scissors className="w-5 h-5" />,
+        title: "Hair Care Consultancy Chat",
+        description: "Professional hair care advice and treatments",
+      },
+      {
+        icon: <Shirt className="w-5 h-5" />,
+        title: "Styling Consultancy Chat",
+        description: "Personal styling and fashion recommendations",
+      },
+      {
+        icon: <Heart className="w-5 h-5" />,
+        title: "Wellness Consultancy Chat",
+        description: "Holistic wellness and lifestyle guidance",
       },
     ],
     essential: [
       {
-        icon: <ScanFaceIcon className="w-5 h-5" />,
-        title: "Image Analysis",
-        description: "AI-powered skin analysis",
+        icon: <ScanFace className="w-5 h-5" />,
+        title: "Skin Analysis",
+        description: "AI-powered skin analysis of image",
+      },
+      {
+        icon: <Droplets className="w-5 h-5" />,
+        title: "Shade Matching",
+        description: "AI-Powered Matching Shade for your skin",
       },
       {
         icon: <Eye className="w-5 h-5" />,
         title: "Mole Analysis",
-        description: "Monitor skin changes",
+        description: "AI-Powered Mole Analysis coming soon",
       },
       {
-        icon: <Tag className="w-5 h-5" />,
-        title: "Makeup Category",
-        description: "Product categorization",
+        icon: <Beaker className="w-5 h-5" />,
+        title: "Product Analysis",
+        description: "AI-Powered Product Analysis coming soon",
       },
       {
-        icon: <Shield className="w-5 h-5" />,
-        title: "Makeup Compatibility Check",
-        description: "Find compatible products",
+        icon: <MessageCircle className="w-5 h-5" />,
+        title: "Skin Consultancy Chat",
+        description: "Get personalized skincare advice and solutions",
       },
       {
-        icon: <Search className="w-5 h-5" />,
-        title: "Shade Finder",
-        description: "Perfect shade matching",
+        icon: <Palette className="w-5 h-5" />,
+        title: "Makeup Consultancy Chat",
+        description: "Expert makeup tips and product recommendations",
       },
       {
-        icon: <Calendar className="w-5 h-5" />,
-        title: "Makeup + Skincare Layering Guide",
-        description: "Professional application tips",
+        icon: <Apple className="w-5 h-5" />,
+        title: "Nutrition Consultancy Chat",
+        description: "Nutrition guidance for healthy skin and wellness",
       },
       {
-        icon: <Zap />,
-        title: "Track Makeup's Impact on Your Skin",
-        description: "Monitor skin health",
+        icon: <Scissors className="w-5 h-5" />,
+        title: "Hair Care Consultancy Chat",
+        description: "Professional hair care advice and treatments",
       },
       {
-        icon: <Shield />,
-        title: "Trend + Technique Validator",
-        description: "Verify beauty trends",
+        icon: <Shirt className="w-5 h-5" />,
+        title: "Styling Consultancy Chat",
+        description: "Personal styling and fashion recommendations",
       },
       {
-        icon: <Search />,
-        title: "Brush & Tools Guide",
-        description: "Professional tool recommendations",
+        icon: <Heart className="w-5 h-5" />,
+        title: "Wellness Consultancy Chat",
+        description: "Holistic wellness and lifestyle guidance",
       },
     ],
   };
@@ -98,7 +117,7 @@ export default function SubscriptionPage() {
       name: "Basic",
       price: "Free",
       image: "/images/basicSub.png",
-      description: "Essential features for skincare enthusiasts",
+      description: "Essential features for balancing lifestyle",
       popular: false,
     },
     {
@@ -111,6 +130,8 @@ export default function SubscriptionPage() {
     },
   ];
 
+  const { isSubscribed } = useAuthStore();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -120,11 +141,9 @@ export default function SubscriptionPage() {
       <div className=" mx-auto px-4 py-6">
         {/* Compare Packages Header */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Compare Packages
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Packages</h2>
           <p className="text-gray-600">
-            Choose the plan that best fits your skincare journey
+            Choose the plan that best fits your Life Style
           </p>
         </div>
 
@@ -197,17 +216,50 @@ export default function SubscriptionPage() {
               </div>
 
               {/* Action Button */}
-              <button
-                className={`w-full py-3 px-4 rounded-xl bg-[#02331E] text-white font-medium transition-all duration-200 ${plan.buttonColor} ${
-                  selectedPlan === plan.id ? "transform scale-105" : ""
-                }`}
-              >
-                {plan.id === "basic" ? "Current Plan" : "Upgrade to Essential"}
-              </button>
+
+              {/* Action Button */}
+              {!isSubscribed && plan.id === "essential" ? (
+                <SubscribeButton>
+                  <div
+                    className={`w-full py-3 px-4 rounded-xl bg-[#02331E] text-white font-medium transition-all duration-200 ${plan.buttonColor} ${
+                      selectedPlan === plan.id ? "transform scale-105" : ""
+                    } text-center`}
+                  >
+                    Upgrade to Essential
+                  </div>
+                </SubscribeButton>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (isSubscribed && plan.id === "basic") {
+                      setisOpen(true);
+                    }
+                  }}
+                  className={`w-full py-3 px-4 rounded-xl bg-[#02331E] text-white font-medium transition-all duration-200 ${plan.buttonColor} ${
+                    selectedPlan === plan.id ? "transform scale-105" : ""
+                  }`}
+                >
+                  {isSubscribed
+                    ? plan.id === "essential"
+                      ? "Current Plan"
+                      : "Downgrade to Basic"
+                    : "Current Plan"}
+                </button>
+              )}
+
+              {isSubscribed && plan.id === "essential" && (
+                <button
+                  onClick={() => setisOpen(true)}
+                  className="w-full mt-3 py-3 px-4 rounded-xl text-red-700 font-medium transition-all duration-200 flex justify-center underline underline-offset-4"
+                >
+                  Cancel Subscription
+                </button>
+              )}
             </div>
           ))}
         </div>
       </div>
+      <CancelSubscriptionPopup isOpen={open} setIsOpen={setisOpen} />
       <Footer />
     </div>
   );

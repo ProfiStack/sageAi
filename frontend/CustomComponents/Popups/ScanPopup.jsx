@@ -4,16 +4,17 @@ import Image from "next/image";
 import { ImageAnalysisData } from "@/mockData/imageAnalysisPopupData";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
+import useAuthStore from "@/store/authStore";
+import SubscribeButton from "../button/Subscribe";
 
 const ScanPopup = ({ isOpen, setIsOpen }) => {
   const router = useRouter();
-
   useEffect(() => {
     ImageAnalysisData.forEach((item) => {
       router.prefetch(item.route);
     });
   }, []);
-
+  const { isSubscribed } = useAuthStore();
   return (
     <AnimatePresence>
       {isOpen && (
@@ -48,32 +49,71 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
 
             {/* Grid of options */}
             <div className="grid grid-cols-2 gap-3">
-              {ImageAnalysisData.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => {
-                    setIsOpen(false);
-                    // router.push(item.route);
-                  }}
-                  className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
-                >
-                  <div className="w-full h-40 rounded-2xl relative">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover rounded-2xl"
-                    />
-                    {/* Coming Soon Badge */}
-                    <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                      Coming Soon
+              {ImageAnalysisData.map((item, index) =>
+                item.title === "Skin Analysis" ? (
+                  <SubscribeButton route={item.route}>
+                    <div
+                      key={index}
+                      onClick={() => {
+                        setIsOpen(false);
+                        if (isSubscribed) {
+                          router.push(item.route);
+                        }
+                      }}
+                      className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
+                    >
+                      <div className="w-full h-40 rounded-2xl relative">
+                        <Image
+                          src={item.image}
+                          alt={item.title}
+                          fill
+                          className="object-cover rounded-2xl"
+                        />
+                        <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                          {item.title === "Skin Analysis"
+                            ? !isSubscribed
+                              ? "Subscribe Now"
+                              : " Subscribed"
+                            : "Coming Soon"}
+                        </div>
+                      </div>
+                      <p className="font-semibold text-gray-900 text-sm mt-1">
+                        {item.title}
+                      </p>
                     </div>
+                  </SubscribeButton>
+                ) : (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      setIsOpen(false);
+                      if (isSubscribed) {
+                        router.push(item.route);
+                      }
+                    }}
+                    className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
+                  >
+                    <div className="w-full h-40 rounded-2xl relative">
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className="object-cover rounded-2xl"
+                      />
+                      <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                        {item.title === "Skin Analysis"
+                          ? isSubscribed
+                            ? "Subscribed"
+                            : "Subscribe Now"
+                          : "Coming Soon"}
+                      </div>
+                    </div>
+                    <p className="font-semibold text-gray-900 text-sm mt-1">
+                      {item.title}
+                    </p>
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm mt-1">
-                    {item.title}
-                  </p>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </motion.div>
         </motion.div>

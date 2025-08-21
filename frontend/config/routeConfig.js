@@ -1,7 +1,3 @@
-// routeConfig.js
-// This file contains the mapping between original routes and their chat/scan variants
-// Only for categories that require chat/scan options (Skincare & Makeup)
-
 export const routeMapping = {
   // Skincare routes
   "/chat": {

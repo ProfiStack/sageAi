@@ -47,6 +47,7 @@ export default function ShopSmart() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={stylingQuizData}
+        title={"Style Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="shop_smart">

@@ -46,6 +46,7 @@ export default function CheckIngredients() {
         setIsOpen={setShowBeautyQuiz}
         quizzData={beautyQuizData}
         skinTypePopup={true}
+        title={"Skin Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="ingredient_checker">

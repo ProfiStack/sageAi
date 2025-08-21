@@ -12,6 +12,7 @@ const BeautyQuizPopup = ({
   onComplete,
   quizzData,
   skinTypePopup = false,
+  title,
 }) => {
   const [isOpenSkinType, setIsOpenSkinType] = useState(false);
 
@@ -105,9 +106,7 @@ const BeautyQuizPopup = ({
             {/* Header */}
             <div className="flex justify-between p-6 border-b border-gray-100">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Skin Analysis
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
                 {skinTypePopup && (
                   <div className="flex items-center gap-2 text-gray-500 ">
                     <p>Not sure about skin type?</p>

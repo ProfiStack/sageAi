@@ -47,6 +47,7 @@ export default function Chat() {
         setIsOpen={setShowBeautyQuiz}
         quizzData={beautyQuizData}
         skinTypePopup={true}
+        title={"Skin Analysis"}
       />
 
       <ProtectedRoute requireAuth={true}>

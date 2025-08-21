@@ -48,6 +48,7 @@ export default function SuppSmart() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={nutritionQuizData}
+        title={"Nutrition Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="supp_smart">

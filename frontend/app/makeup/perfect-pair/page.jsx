@@ -45,6 +45,7 @@ export default function PerfectPair() {
         setIsOpen={setShowBeautyQuiz}
         quizzData={makeupQuizData}
         skinTypePopup={true}
+        title={"Makeup Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="perfect_pair">

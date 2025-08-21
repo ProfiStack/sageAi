@@ -46,6 +46,7 @@ export default function HairDecode() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={hairCareQuizData}
+        title={"Hair Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="hair_decode">

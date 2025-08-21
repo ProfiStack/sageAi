@@ -49,19 +49,19 @@ async def get_hashed_password(profile, password):
         raise HTTPException(status_code= status.HTTP_401_UNAUTHORIZED, detail='Please enter correct password');
     return True;
 
-def create_access_token(email_phone:Column[str], user_id: Column[int], name: Column[str], expires_delta: timedelta) -> AccessTokenResponse:
+def create_access_token(email_phone:Column[str], user_id: Column[int], name: Column[str], subscription_status: Column[str], expires_delta: timedelta) -> AccessTokenResponse:
     encode = {'sub': email_phone, 'user_id': user_id, 'name': name}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({'exp': expires})
     token = jwt.encode(encode, os.getenv('SECRET_KEY'), algorithm=os.getenv('ALOGORITHM'))
-    return AccessTokenResponse(access='Bearer', token=token)
+    subscription = subscription_status == 'active'
+    return AccessTokenResponse(access='Bearer', token=token, subscription=subscription)
 
 
 
 
 @router.post("/auth/login", response_model=AccessTokenResponse)
 async def login_user(data: LoginRequest, db: Session = Depends(get_db)):
-    print(data);
     if not data.email and not data.phone_number or not data.password:
         raise HTTPException(status_code=400, detail="Please enter correct details.")
 
@@ -76,7 +76,7 @@ async def login_user(data: LoginRequest, db: Session = Depends(get_db)):
         if check_hashed_password:
             profile.last_active = datetime.now(timezone.utc)
             db.commit()
-            return create_access_token(profile.email or profile.phone_number, profile.user_id, profile.name, timedelta(days=1))
+            return create_access_token(profile.email or profile.phone_number, profile.user_id, profile.name, profile.subscription_status, timedelta(days=1))
         else:
             raise HTTPException(status_code=401, detail="Incorrect password.")
 
@@ -101,5 +101,5 @@ async def login_user(data: LoginRequest, db: Session = Depends(get_db)):
     db.add(new_profile)
     db.commit()
     db.refresh(new_profile)
-    return create_access_token(new_profile.email or new_profile.phone_number, new_profile.user_id, new_profile.name, timedelta(days=1))
+    return create_access_token(new_profile.email or new_profile.phone_number, new_profile.user_id, new_profile.name, new_profile.subscription_status, timedelta(days=1))
     

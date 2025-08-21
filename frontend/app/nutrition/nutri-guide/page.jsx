@@ -48,6 +48,7 @@ export default function NutriGuide() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={nutritionQuizData}
+        title={"Nutrition Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="nutri_guide">

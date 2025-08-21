@@ -57,10 +57,12 @@ class UserProfileResponse(UserProfileRequest):
     hair_concern: Optional[str] = None
     style_preference: Optional[str] = None
     styling_goal: Optional[str] = None
+    subscription_status: Optional[str] = None
 
 class AccessTokenResponse(BaseModel):
     access: str
     token: str
+    subscription: bool
 
 class LoginRequest(BaseModel):
     email: Optional[EmailStr] = None

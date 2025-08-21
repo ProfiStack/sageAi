@@ -63,8 +63,6 @@ const OptionPopup = ({
                 </div>
               </div>
             </button>
-
-            {/* Scan Option - Coming Soon */}
             <button
               onClick={onScanClick}
               className="w-full bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-4 opacity-75 cursor-not-allowed relative"

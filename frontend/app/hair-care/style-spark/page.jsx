@@ -46,6 +46,7 @@ export default function StyleSpark() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={hairCareQuizData}
+        title={"Hair Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="style_spark">

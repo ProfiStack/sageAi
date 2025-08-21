@@ -47,6 +47,7 @@ export default function FashionFix() {
         isOpen={showBeautyQuiz}
         setIsOpen={setShowBeautyQuiz}
         quizzData={stylingQuizData}
+        title={"Style Analysis"}
       />
       <ProtectedRoute requireAuth={true}>
         <WebSocketProvider route="fashion_fix">
