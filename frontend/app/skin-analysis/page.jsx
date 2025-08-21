@@ -5,7 +5,7 @@ import ProtectedRoute from "@/CustomComponents/ProtectedRoute";
 export default function SkinCare() {
   return (
     <>
-      <ProtectedRoute requireAuth={true} requireSubscription={true}>
+      <ProtectedRoute requireAuth={true} requireSubscription>
         <SkinAnalysis />
       </ProtectedRoute>
     </>

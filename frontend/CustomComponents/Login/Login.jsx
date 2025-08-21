@@ -148,6 +148,7 @@ export default function Login() {
               <Image
                 src="/images/sagelogo.png"
                 fill
+                alt="sage"
                 className="object-contain"
               />
             </div>
