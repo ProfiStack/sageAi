@@ -7,36 +7,55 @@ import { Loader2 } from "lucide-react";
 import useFormToast from "./FormToast/FormToast";
 import { Api } from "@/shared/api/api";
 
-export default function ProtectedRoute({ children, requireAuth = true, requireSubscription = false }) {
+export default function ProtectedRoute({
+  children,
+  requireAuth = true,
+  requireSubscription = false,
+}) {
   const router = useRouter();
-  const { token } = useAuthStore();
+  const { token, setIsSubscribed } = useAuthStore();
   const { destructiveToast } = useFormToast();
   const [isChecking, setIsChecking] = useState(true);
-  const { setIsSubscribed } = useAuthStore();
 
   useEffect(() => {
     const checkRoutes = async () => {
-      if (typeof window !== "undefined") {
-        const storedUserId = localStorage.getItem("sagee_user_id");
-        if (requireAuth && !token && !storedUserId) {
-          destructiveToast("Login required");
-          router.push("/");
-        } else if(requireAuth && token && storedUserId) {
+      if (typeof window === "undefined") return;
+
+      const storedUserId = localStorage.getItem("sagee_user_id");
+
+      // Case 1: Requires auth but not logged in
+      if (requireAuth && !token && !storedUserId) {
+        destructiveToast("Login required");
+        router.push("/");
+        setIsChecking(false);
+        return;
+      }
+
+      // Case 2: Requires subscription
+      if (requireSubscription && token && storedUserId) {
+        try {
           const profile = await Api.client.getProfile(token);
-          if (requireSubscription && profile.subscription_status === "active") {
+          if (profile.subscription_status === "active") {
             setIsSubscribed(true);
           } else {
             setIsSubscribed(false);
-            router.push('/home')
+            router.push("/home");
+            setIsChecking(false);
+            return;
           }
+        } catch (err) {
+          setIsSubscribed(false);
+          router.push("/home");
           setIsChecking(false);
-        } else {
-          setIsChecking(false)
+          return;
         }
       }
-    };
-    checkRoutes();
-  }, [token, requireAuth]);
 
-  return children;
+      setIsChecking(false);
+    };
+
+    checkRoutes();
+  }, [token, requireAuth, requireSubscription, router, destructiveToast, setIsSubscribed]);
+
+  return <>{children}</>;
 }
