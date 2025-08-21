@@ -98,6 +98,7 @@ export default function HomePage() {
       const intervalId = setInterval(changeMessage, 5000);
       return () => clearInterval(intervalId);
     }
+    
   }, [messages]);
 
   return (
