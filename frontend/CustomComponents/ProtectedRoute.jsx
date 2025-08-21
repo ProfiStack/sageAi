@@ -29,7 +29,6 @@ export default function ProtectedRoute({ children, requireAuth = true }) {
           if (profile.subscription_status === 'active') {
             setIsSubscribed(true)
           } else {
-            console.log('subscribed');
             setIsSubscribed(false);
           }
           setIsChecking(false);
