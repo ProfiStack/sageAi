@@ -22,8 +22,7 @@ export default function ImagePreviewPopup({
       const formData = new FormData();
 
       if (imageUrlOrFile instanceof File) {
-        const blob = new Blob([imageUrlOrFile], { type: imageUrlOrFile.type });
-        formData.append("image", blob, "skin.jpg");
+        formData.append("image", imageUrlOrFile, "skin.jpg");
       } else {
         throw new Error("Expected File object, got: " + typeof imageUrlOrFile);
       }
