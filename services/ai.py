@@ -6,6 +6,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from db import SessionLocal
 import asyncio
+from prompts.alternative import get_alternate
 from prompts.hair_care import get_hair_care_checker_prompt
 from prompts.makeup import get_makeup_checker_prompt
 from prompts.nutrition import get_nutrition_checker_prompt
@@ -128,6 +129,8 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
             return get_ingredient_checker_prompt(user_metrics)
         elif feature_type == "treatment_planning":
             return get_treatment_plan_prompt(user_metrics)
+        elif feature_type == "product_alternative":
+            return get_alternate()
         elif (
             feature_type == "meal_muse"
             or feature_type == "nutri_guide"
