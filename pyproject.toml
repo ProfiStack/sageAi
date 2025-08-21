@@ -40,6 +40,7 @@ dependencies = [
     "pillow>=11.2.1",
     "stripe>=12.4.0",
     "retina-face>=0.0.17",
+    "tf-keras>=2.19.0",
 ]
 
 [dependency-groups]
