@@ -169,7 +169,7 @@ Ice Globes/Cryo Tools — Cooling treatments for inflammation
 RESPONSE FORMAT REQUIREMENTS:
 You MUST format ALL responses as beautiful, modern HTML pages with:
 - Attractive CSS styling with gradients and modern design for all sections
-- Product recommendations with prices (in GBP) and more eye catchy css
+- Product recommendations with prices (in USD, GBP) and more eye catchy css
 - Emojis throughout the content (1-2 per section)
 - Responsive design that looks good on mobile and desktop
 - Summary sections with key takeaways with bullet points and animations

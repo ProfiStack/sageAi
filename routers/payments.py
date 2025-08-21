@@ -102,9 +102,14 @@ async def getPrices():
     prices = stripe.Price.list(
         product=os.getenv("STRIPE_PRODUCT_ID"), expand=["data.currency_options"]
     )
+    # return prices;
     return {
-        "price": float(
+        "gbp": float(
             Decimal(prices["data"][0]["currency_options"]["gbp"]["unit_amount_decimal"])
+            / 100
+        ),
+        "usd": float(
+            Decimal(prices["data"][0]["currency_options"]["usd"]["unit_amount_decimal"])
             / 100
         )
     }

@@ -13,7 +13,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
   useEffect(() => {
     const fetchPrices = async () => {
       const response = await Api.client.prices();
-      setPrice(response.price);
+      setPrice(response);
     };
     fetchPrices();
   }, []);
@@ -101,7 +101,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
                 }}
                 className="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-medium mt-4 shadow-sm text-center"
               >
-                For Scanning Pricing starts from {price} GBP. Subscribe now
+                For Scanning Pricing starts from {price['usd']} USD OR {price['gbp']} GBP Country based. Subscribe now
               </motion.div>
             )}
           </div>
