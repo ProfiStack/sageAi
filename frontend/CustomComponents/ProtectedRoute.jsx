@@ -25,17 +25,17 @@ export default function ProtectedRoute({ children, requireAuth = true }) {
             router.push("/");
           }, 1000);
         } else {
-          const profile = await Api.client.getProfile(token)
-          if (profile.subscription_status === 'active') {
-            setIsSubscribed(true)
+          const profile = await Api.client.getProfile(token);
+          if (profile.subscription_status === "active") {
+            setIsSubscribed(true);
           } else {
             setIsSubscribed(false);
           }
           setIsChecking(false);
         }
       }
-    }
-    checkRoutes()
+    };
+    checkRoutes();
   }, [token, isAuthenticated, requireAuth]);
 
   return children;

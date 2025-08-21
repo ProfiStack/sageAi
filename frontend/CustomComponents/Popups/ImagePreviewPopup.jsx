@@ -4,6 +4,7 @@ import { Api } from "@/shared/api/api";
 import { useSkinResultStore } from "@/store/skinResult";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import useFormToast from "../FormToast/FormToast";
 
 export default function ImagePreviewPopup({
   open,
@@ -13,6 +14,8 @@ export default function ImagePreviewPopup({
   setPreviewImage,
   onClose,
 }) {
+  const { destructiveToast } = useFormToast();
+
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const handleConfirm = async (imageUrlOrFile) => {
@@ -28,6 +31,10 @@ export default function ImagePreviewPopup({
       }
 
       const apiResponse = await Api.client.analyzeSkinPhoto(formData);
+      if (apiResponse?.detail?.toLowerCase().includes("no face")) {
+        destructiveToast("Face not detected. Please upload a clearer photo.");
+        return;
+      }
 
       const { setHtml } = useSkinResultStore.getState();
       setHtml(apiResponse.results);
@@ -80,7 +87,7 @@ export default function ImagePreviewPopup({
             </div>
           </div>
         )}
-        <div className="absolute bottom-0 -translate-y-5 left-0 w-full px-4 rounded-2xl z-10 flex justify-between  backdrop-blur-sm">
+        <div className="absolute bottom-0 -translate-y-5 left-0 w-full px-4 rounded-2xl z-10 flex justify-between gap-4  ">
           <button
             onClick={handleCancel}
             className="w-1/2 text-center text-[#02331E] bg-white/80  rounded-2xl font-semibold py-2 border-r border-gray-300"
