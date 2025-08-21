@@ -78,7 +78,7 @@ export default function ResultsPage() {
             {/* Buttons */}
             <div className="flex gap-3">
               <button
-                onClick={() => router.push("/skincare/chat")}
+                onClick={() => router.push("/skincare/product-alternative")}
                 className="flex-1 bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 text-[#02331E] py-3 px-6 rounded-xl  transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
               >
                 Start Chat

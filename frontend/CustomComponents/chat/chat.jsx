@@ -6,11 +6,8 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import ReactMarkdown from "react-markdown";
 import useAuthStore from "@/store/authStore";
 import SettingsHeader from "../settingsHeader/settingsHeader";
-import { cn, isUserLoggedIn, incrementGuestMessageCount } from "@/lib/utils";
+import { isUserLoggedIn, incrementGuestMessageCount } from "@/lib/utils";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { z } from "zod";
 import { Api } from "@/shared/api/api";
 import { useWebSocketContext } from "@/app/providers/chatProvider";
 
@@ -47,6 +44,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       "makeup-tools": "makeup_tools",
       "makeup-looks": "makeup_looks",
       "makeup-products": "makeup_products",
+      "product-alternative": "product_alternative",
     };
     return routeTypeMap[route] || route;
   };
@@ -73,7 +71,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         } else if (
           response.role === "system" &&
           response.content &&
-          !response.content.startsWith("You are ") && !response.content.includes("Sagee")
+          !response.content.startsWith("You are ") &&
+          !response.content.includes("Sagee")
         ) {
           convertedMessages.push({
             id: `history-${historyIndex}-${responseIndex}-system`,
