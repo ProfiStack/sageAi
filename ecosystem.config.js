@@ -11,7 +11,7 @@ module.exports = {
     },
     {
       name: "nextjs-frontend",
-      script: "npm",
+      script: "pnpm",
       args: "run start",
       cwd: "/home/ec2-user/sageAi/frontend",
       env: {
