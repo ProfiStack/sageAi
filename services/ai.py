@@ -221,20 +221,20 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
         print(f"[get_ai_response] Fatal error: {outer_err}")
         return "Oops! Something went wrong. Please try again later."
 
-def detect_face(img_np):
-    """Detect faces using Haar cascades. Returns True if face found."""
-    gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+# def detect_face(img_np):
+#     """Detect faces using Haar cascades. Returns True if face found."""
+#     gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
 
-    # Load pre-trained frontal face classifier (comes with OpenCV)
-    face_cascade = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    )
+#     # Load pre-trained frontal face classifier (comes with OpenCV)
+#     face_cascade = cv2.CascadeClassifier(
+#         cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+#     )
 
-    faces = face_cascade.detectMultiScale(
-        gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80)
-    )
+#     faces = face_cascade.detectMultiScale(
+#         gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80)
+#     )
 
-    return len(faces) > 0
+#     return len(faces) > 0
 
 async def analyze_skin_features(image_bytes: bytes):
     # Check if OpenCV is available
@@ -248,11 +248,11 @@ async def analyze_skin_features(image_bytes: bytes):
         # Load and preprocess image
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img_np = np.array(img)
-        if not detect_face(img_np):
-            raise HTTPException(
-                status_code=400,
-                detail="No face detected. Please upload a clear face photo.",
-            )
+        # if not detect_face(img_np):
+        #     raise HTTPException(
+        #         status_code=400,
+        #         detail="No face detected. Please upload a clear face photo.",
+        #     )
         # Multiple resolution analysis
         img_256 = cv2.resize(img_np, (256, 256))
         img_128 = cv2.resize(img_np, (128, 128))
