@@ -8,7 +8,7 @@ export default function ResetPasswordSuccessPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-md mx-auto flex flex-col">
-      <div className="flex-1 bg-white flex items-center justify-center">
+      <div className="flex-1 bg-white flex justify-center">
         <div className="px-6 py-8 text-center">
           {/* Success Animation */}
           <div className="w-32 h-32 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">

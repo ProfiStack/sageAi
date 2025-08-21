@@ -15,6 +15,7 @@ export default function ImageAnalysis() {
   const fileInputRef = useRef(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [file, setFile] = useState(null);
   const [capturedImageFromPopup, setCapturedImageFromPopup] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -49,11 +50,29 @@ export default function ImageAnalysis() {
     fileInputRef.current?.click();
   };
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imgUrl = URL.createObjectURL(file);
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      // Clean up previous preview URL
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+
+      const imgUrl = URL.createObjectURL(selectedFile);
       setPreviewImage(imgUrl);
+      setFile(selectedFile);
       setShowPreview(true);
+    }
+
+    e.target.value = "";
+  };
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewImage(null);
+    setFile(null);
+
+    // Clean up the object URL
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage);
     }
   };
 
@@ -125,6 +144,9 @@ export default function ImageAnalysis() {
         open={showPreview}
         setOpen={setShowPreview}
         image={previewImage}
+        imageFile={file}
+        setPreviewImage={setPreviewImage}
+        onClose={closePreview}
       />
     </div>
   );

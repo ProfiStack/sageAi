@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import { useSkinResultStore } from "@/store/skinResult";
 
 export default function ResultsPage() {
@@ -8,6 +9,10 @@ export default function ResultsPage() {
   if (!html) return <p>No results yet.</p>;
 
   return (
-    <div dangerouslySetInnerHTML={{ __html: html }} />
+    <>
+      <SettingsHeader title={"Result"} />
+
+      <div dangerouslySetInnerHTML={{ __html: html }} />
+    </>
   );
 }

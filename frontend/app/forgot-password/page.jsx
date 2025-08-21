@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Mail } from "lucide-react";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 
 export default function ForgotPasswordPage() {
