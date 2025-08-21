@@ -28,17 +28,6 @@ def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
     profile = get_or_create_user_profile(db, user_db.get("user_id"))
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
-    subscription_status = "expired"
-    if profile.subscription_status == "active" and profile.subscription_end:
-        try:
-            # Parse datetime (your DB saves it like: 2025-09-21 18:42:14.975701)
-          expiry_date = datetime.strptime(
-              str(profile.subscription_end), "%Y-%m-%d %H:%M:%S"
-          )
-          if expiry_date > datetime.now(timezone.utc):
-            subscription_status = "active"
-        except Exception:
-          subscription_status = "expired"
 
     return UserProfileResponse(
         user_id=profile.user_id,
@@ -60,7 +49,7 @@ def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
         hair_concern=profile.hair_concern or "Unknown",
         style_preference=profile.style_preference or "Unknown",
         styling_goal=profile.styling_goal or "Unknown",
-        subscription_status=subscription_status,
+        subscription_status=profile.subscription_status,
     )
 
 
