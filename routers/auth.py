@@ -88,6 +88,7 @@ async def login_user(data: LoginRequest, db: Session = Depends(get_db)):
             profile.email or profile.phone_number,
             profile.user_id,
             profile.name,
+            profile.subscription_status,
             timedelta(days=1)
         )
     # Create new user if not found
