@@ -238,12 +238,12 @@ export default function Login() {
                 </Button>
               </form>
             </Form>
-            <button
+            {/*  <button
               onClick={() => router.push("/forgot-password")}
               className="underline underline-offset-4 flex justify-center w-full text-[#02331E] mt-2 "
             >
               Forgot Password?
-            </button>
+            </button>*/}
           </div>
           {/* Features Section */}
           <div className="mb-8">
@@ -288,7 +288,7 @@ export default function Login() {
               >
                 <div className="absolute inset-0  to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                <div className="relative  ">
+                <div className="relative px-2  ">
                   <div className="w-10 h-10  bg-gradient-to-r from-orange-500/5 to-red-500/5 rounded-full flex items-center justify-center text-[#D4B038] mb-3 mx-auto group-hover:scale-110 transition-transform duration-300">
                     {item.icon}
                   </div>
