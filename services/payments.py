@@ -201,7 +201,7 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
           sub = obj
 
           if typ == "invoice.payment_succeeded":
-              current_period_end = sub.get("period_end")
+              current_period_end = sub["lines"]["data"][0]["period"]["end"]
               sub_id = (
                   sub.get("parent", {})
                   .get("subscription_details", {})
@@ -260,7 +260,6 @@ async def cancel_user_subscription(user_id: int, db: Session):
         user = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
         if user:
             user.subscription_status = "canceled"
-            user.subscription_end = datetime.now()  # or datetime.utcnow() if you want to mark cancel date
             db.commit()
 
         return {"success": True, "message": "Subscription canceled."}
