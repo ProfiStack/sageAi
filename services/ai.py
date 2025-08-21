@@ -17,6 +17,7 @@ from prompts.ingredients import get_ingredient_checker_prompt
 from prompts.skin_care import get_skincare_prompt
 from prompts.trend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
+from retinaface import RetinaFace
 
 
 def format_title(text: str) -> str:
@@ -220,18 +221,9 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
 
 def detect_face(img_np):
     """Detect faces using Haar cascades. Returns True if face found."""
-    gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
-
-    # Load pre-trained frontal face classifier (comes with OpenCV)
-    face_cascade = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    )
-
-    faces = face_cascade.detectMultiScale(
-        gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80)
-    )
-
-    return len(faces) > 0
+    img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    results = RetinaFace.detect_faces(img_bgr)
+    return isinstance(results, dict) and len(results) > 0
 
 async def analyze_skin_features(image_bytes: bytes):
     # Check if OpenCV is available
