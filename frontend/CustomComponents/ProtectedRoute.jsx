@@ -55,7 +55,7 @@ export default function ProtectedRoute({
     };
 
     checkRoutes();
-  }, [token, requireAuth, requireSubscription, router, destructiveToast, setIsSubscribed]);
+  }, [token, requireAuth, requireSubscription, router]);
 
   return <>{children}</>;
 }
