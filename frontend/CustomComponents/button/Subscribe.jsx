@@ -18,6 +18,7 @@ export default function SubscribeButton({ children, route }) {
       router?.push(route);
     } else {
       try {
+        console.log(process.env.NEXT_PUBLIC_PRICE_ID);
         // Call your backend to create a subscription checkout session
         const res = await Api.client.subscribePayment({
           token,
