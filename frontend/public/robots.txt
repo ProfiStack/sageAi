@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /api/
+Disallow: /ws/
+Disallow: /_next/
+Disallow: /static/
+Disallow: /private/
+Allow: /
+
+Sitemap: https://sageeai.com/sitemap.xml
