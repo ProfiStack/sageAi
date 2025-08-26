@@ -55,7 +55,7 @@ async def subscribe(
     """
     try:
         success_url = os.getenv("SUCCESS_URL") + "/success"
-        cancel_url = os.getenv("CANCEL_URL") + "/success"
+        cancel_url = os.getenv("CANCEL_URL")
         result = await create_subscription_checkout(
             price_id=req.price_id,
             success_url=success_url,
