@@ -1,3 +1,6 @@
+import json
+
+
 def get_image_analysis_prompt(user_data):
     skin_types = ", ".join(user_data.get("skin_types", []))
     concerns = ", ".join(user_data.get("concerns", []))
@@ -100,24 +103,28 @@ Remember: JSON format must NEVER break. No extra text, no markdown, no HTML.
 ALWAYS RETURN A JSON IN THE EXPECTED FORMATS, NEVER SWITCH UP THE FORMAT OR LEAVE ANYTHING BLANK
 """
 
-def clean_html_code(html_content):
+def clean_and_parse_json(content: str):
     """
-    Remove ```html at the beginning and ``` at the end of HTML content
+    Cleans model output and parses it into a Python dict.
+    Ensures pure JSON is returned, even if wrapped in markdown fences.
     """
-    # Strip whitespace and remove markdown formatting
-    cleaned = html_content.strip()
-    
-    # Remove ```html at the beginning (case insensitive)
-    if cleaned.startswith('```html'):
-        cleaned = cleaned[7:]  # Remove first 7 characters
-    elif cleaned.startswith('```HTML'):
-        cleaned = cleaned[7:]  # Handle uppercase
-    
-    # Remove ``` at the end
-    if cleaned.endswith('```'):
-        cleaned = cleaned[:-3]  # Remove last 3 characters
-    
-    # Strip any remaining whitespace
+    cleaned = content.strip()
+
+    # Remove common markdown code fences
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    elif cleaned.startswith("```JSON"):
+        cleaned = cleaned[7:]
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+
     cleaned = cleaned.strip()
-    
-    return cleaned
+
+    # Parse into dict
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse JSON from model output: {e}\nRaw output: {cleaned}")

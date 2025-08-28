@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from prompts.image_analysis import clean_html_code, get_image_analysis_prompt
+from prompts.image_analysis import clean_and_parse_json, get_image_analysis_prompt
 from prompts.shade_matching import get_shade_matching_prompt
 from routers.auth import get_current_user
 from services.ai import analyze_skin_features
@@ -159,9 +159,9 @@ async def analyze_skin_photo(
                 temperature=0.7,
             ),
         )
-        html_result = response.choices[0].message.content
-        html_result = clean_html_code(html_result);
-        return {"results": html_result}
+        json_result = response.choices[0].message.content
+        json_result = clean_and_parse_json(json_result);
+        return {"results": json_result}
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
@@ -188,9 +188,9 @@ async def analyze_skin_photo(
                 temperature=0.7,
             ),
         )
-        html_result = response.choices[0].message.content
-        html_result = clean_html_code(html_result);
-        return {"results": html_result}
+        json_result = response.choices[0].message.content
+        json_result = clean_and_parse_json(json_result);
+        return {"results": json_result}
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
