@@ -572,7 +572,6 @@ async def analyze_skin_features(image_bytes: bytes):
             "texture": texture,
             "under_eye": under_eye,
         }
-        print(result)
         return result
     except Exception as e:
         raise HTTPException(
