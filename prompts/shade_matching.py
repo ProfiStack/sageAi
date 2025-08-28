@@ -1,4 +1,4 @@
-def get_shade_matching_prompt(user_data, chat_title):
+def get_shade_matching_prompt(user_data):
     skin_tone = user_data.get("skin_tone") or "Not specified"
     undertone = user_data.get("undertone") or "Not specified"
     skin_type = user_data.get("skin_type") or "Not specified"

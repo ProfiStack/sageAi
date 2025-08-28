@@ -36,6 +36,7 @@
     "framer-motion": "^12.23.3",
     "google-libphonenumber": "^3.2.38",
     "js-cookie": "^3.0.5",
+    "jspdf": "^3.0.2",
     "jwt-decode": "^4.0.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.441.0",
