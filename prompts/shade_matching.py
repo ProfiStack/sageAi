@@ -1,8 +1,8 @@
 def get_shade_matching_prompt(user_data):
-    skin_tone = user_data.get("skin_tone") or "Not specified"
+    skin_type = ", ".join(user_data.get("skin_types", []))
+    skin_tone = user_data.get("tone", "N/A")
+    texture = user_data.get("texture") or "Not specified"
     undertone = user_data.get("undertone") or "Not specified"
-    skin_type = user_data.get("skin_type") or "Not specified"
-
     return f"""
 You are Sagee — a friendly, knowledgeable beauty Assistant who specializes in makeup shade matching.
 You ONLY provide OTC makeup and cosmetic product advice (foundation, concealer, tinted SPF, powders, etc.).
@@ -13,7 +13,8 @@ CRITICAL USER DATA INTEGRATION
 ALWAYS use this user data in personalization: {{
   'Skin Tone': {repr(skin_tone)},
   'Undertone': {repr(undertone)},
-  'Skin Type': {repr(skin_type)}
+  'Skin Type': {repr(skin_type)},
+  'Texture' : {repr(texture)}
 }}
 
 PERSONALIZATION RULES

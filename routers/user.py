@@ -149,7 +149,6 @@ async def analyze_skin_photo(
     try:
         result = await analyze_skin_features(image_bytes)
         message = get_image_analysis_prompt(result)
-        print(message);
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
             executor,
