@@ -792,7 +792,7 @@ export default function PictureAnalysisPopup({
   return loading ? (
     <div className="fixed inset-0 z-50  items-center justify-center bg-black bg-opacity-20 flex flex-col gap-2">
       <p className="text-white text-center">
-        Loading your skin analysis... Please sit tight!
+        Loading your analysis... Please sit tight!
       </p>
       <div className="flex items-center justify-center">
         <Loader2 className="animate-spin text-green-500" size={24} />

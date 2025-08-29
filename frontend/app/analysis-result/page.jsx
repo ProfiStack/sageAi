@@ -92,42 +92,42 @@ export default function ResultsPage() {
         </div>
 
         {/* Navigation Tabs & Content - Shadcn UI */}
-        <Tabs defaultValue="routine" className="mx-2">
-          <TabsList className="flex overflow-x-auto p-2 h-14 gap-2 bg-transparent justify-start mb-6 scrollbar-thin scrollbar-thumb-gray-400 ">
+        <Tabs defaultValue="routine" className="mx-2 no-scrollbar">
+          <TabsList className="flex flex-wrap p-2 h-auto gap-2 bg-transparent justify-start mb-6">
             <TabsTrigger
               value="routine"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Clock className="w-4 h-4" />
               <span>Routine</span>
             </TabsTrigger>
             <TabsTrigger
               value="products"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>Products</span>
             </TabsTrigger>
             <TabsTrigger
-              value="tips"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
-            >
-              <Shield className="w-4 h-4" />
-              <span>Do's & Don'ts</span>
-            </TabsTrigger>
-            <TabsTrigger
               value="seasonal"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Calendar className="w-4 h-4" />
               <span>Seasonal</span>
             </TabsTrigger>
             <TabsTrigger
               value="lifestyle"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Heart className="w-4 h-4" />
               <span>Lifestyle</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="tips"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+            >
+              <Shield className="w-4 h-4" />
+              <span>Do's & Don'ts</span>
             </TabsTrigger>
           </TabsList>
 

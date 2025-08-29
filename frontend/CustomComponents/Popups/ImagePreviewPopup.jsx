@@ -82,7 +82,7 @@ export default function ImagePreviewPopup({
               </svg>
               <p className="font-medium text-[#02331E]">
                 {" "}
-                Loading your skin analysis... Please sit tight!
+                Loading your analysis... Please sit tight!
               </p>
             </div>
           </div>

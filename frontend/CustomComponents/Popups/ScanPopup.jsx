@@ -50,7 +50,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
             {/* Grid of options */}
             <div className="grid grid-cols-2 gap-3">
               {ImageAnalysisData.map((item, index) =>
-                item.title === "Skin Analysis" ? (
+                item.title === "Skin Analysis" || item.title === 'Shade Matching' ? (
                   <SubscribeButton route={item.route}>
                     <div
                       key={index}
@@ -70,7 +70,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                           className="object-cover rounded-2xl"
                         />
                         <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                          {item.title === "Skin Analysis"
+                          {item.title === "Skin Analysis" || item.title === 'Shade Matching'
                             ? !isSubscribed
                               ? "Subscribe Now"
                               : " Subscribed"
@@ -101,7 +101,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                         className="object-cover rounded-2xl"
                       />
                       <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                        {item.title === "Skin Analysis"
+                        {item.title === "Skin Analysis" || item.title === 'Shade Matching'
                           ? isSubscribed
                             ? "Subscribed"
                             : "Subscribe Now"

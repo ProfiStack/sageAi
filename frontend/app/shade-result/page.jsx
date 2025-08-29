@@ -89,29 +89,31 @@ export default function MakeupResultsPage() {
 
         {/* Navigation Tabs & Content - Shadcn UI */}
         <Tabs defaultValue="exact-matches" className="mx-2">
-          <TabsList className="flex overflow-x-auto p-2 h-14 gap-2 bg-transparent justify-start mb-6 scrollbar-thin scrollbar-thumb-gray-400">
+          <TabsList className="flex flex-wrap p-2 h-auto gap-2 bg-transparent justify-start mb-2">
             <TabsTrigger
               value="exact-matches"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Crown className="w-4 h-4" />
               <span>Perfect Matches</span>
             </TabsTrigger>
             <TabsTrigger
-              value="textures"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
-            >
-              <Palette className="w-4 h-4" />
-              <span>By Finish</span>
-            </TabsTrigger>
-            <TabsTrigger
               value="alternatives"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium whitespace-nowrap bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Award className="w-4 h-4" />
               <span>Better Options</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="textures"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+            >
+              <Palette className="w-4 h-4" />
+              <span>By Finish</span>
+            </TabsTrigger>
+
           </TabsList>
+
 
           {/* Tab Content */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-[#D4B038]/20">
@@ -180,7 +182,7 @@ export default function MakeupResultsPage() {
 
             {/* Matching Textures Tab */}
             <TabsContent value="textures" className="mt-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#02331E] text-center mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#02331E] text-center mb-2 sm:mb-8">
                 Products by Finish Type
               </h2>
               <div className="space-y-6 sm:space-y-8 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
