@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Eye,
   Scissors,
@@ -19,10 +19,19 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import useAuthStore from "@/store/authStore";
 import CancelSubscriptionPopup from "@/CustomComponents/Popups/CancelSubscription";
 import SubscribeButton from "@/CustomComponents/button/Subscribe";
+import { Api } from "@/shared/api/api";
 
 export default function SubscriptionPage() {
   const [open, setisOpen] = useState(false);
+  const [price, setPrice] = useState({ usd: null, gbp: null });
   const [selectedPlan, setSelectedPlan] = useState("essential");
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const response = await Api.client.prices();
+      setPrice(response);
+    };
+    fetchPrices();
+  }, []);
 
   const features = {
     basic: [
@@ -123,7 +132,7 @@ export default function SubscriptionPage() {
     {
       id: "essential",
       name: "Essential",
-      price: "£8",
+      price: price,
       image: "/images/essential.png",
       description: "Unlock advanced features and personalized insights",
       popular: true,
@@ -168,17 +177,26 @@ export default function SubscriptionPage() {
               {/* Package Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className={`text-xl font-bold text-[#02331E]`}>
+                  <div className="flex items-start gap-2">
+                    <h3
+                      className={`text-xl leading-none font-semibold text-[#02331E]`}
+                    >
                       {plan.name}
                     </h3>
-                    <p className={`text-xl font-bold text-[#02331E] `}>
+                    <div className={` text-[#02331E] leading-none `}>
                       {plan.price !== "Free" ? (
-                        <span className=" font-bold">{plan.price}/month</span>
+                        <span className=" font-semibold leading-none">
+                          {" "}
+                          {price.usd && `${price.usd.toFixed(0)} USD`}{" "}
+                          {price.gbp && ` or ${price.gbp} GBP`} per month
+                        </span>
                       ) : (
-                        `(${plan.price})`
+                        <p className="text-xl font-semibold leading-none">
+                          {" "}
+                          {plan.price}
+                        </p>
                       )}
-                    </p>
+                    </div>
                   </div>
                   <p className={`text-sm mb-6 text-[#02331E] opacity-80 mt-2`}>
                     {plan.description}
