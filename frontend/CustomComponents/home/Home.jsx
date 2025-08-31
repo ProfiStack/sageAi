@@ -166,6 +166,11 @@ export default function HomePage() {
                       className="group bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 border border-gray-100 rounded-xl p-2 shadow-lg hover:border-[#D4B038]/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
                     >
                       <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#D4B038] to-[#f4c842] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                      {item.new && (
+                        <div className="absolute top-2 right-2 bg-gradient-to-r from-[#D4B038] to-[#f4c842] text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-md animate-pulse duration-1000 ">
+                          New
+                        </div>
+                      )}
 
                       <div className="w-10 h-10 p-2 mb-3 bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 rounded-full flex items-center justify-center text-[#D4B038] group-hover:scale-110 transition-transform duration-300">
                         <item.icon className="w-5 h-5" />
@@ -191,7 +196,7 @@ export default function HomePage() {
 
       {/* Popups */}
       {selectedItem?.scanRoute === "/product-analysis" ||
-      selectedItem?.scanRoute === "/shade-matching" ? (
+      selectedItem?.scanRoute === "/none" ? (
         <OptionPopup
           isOpen={showOptionPopup}
           onClose={handleClosePopup}

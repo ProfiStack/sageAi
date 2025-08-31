@@ -1,12 +1,12 @@
 "use client";
 
 import { Api } from "@/shared/api/api";
-import { useSkinResultStore } from "@/store/skinResult";
+import { useShadeMatchStore, useSkinResultStore } from "@/store/skinResult";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useFormToast from "../FormToast/FormToast";
 
-export default function ImagePreviewPopup({
+export default function ShadePreviewPopup({
   open,
   setOpen,
   image,
@@ -30,16 +30,16 @@ export default function ImagePreviewPopup({
         throw new Error("Expected File object, got: " + typeof imageUrlOrFile);
       }
 
-      const apiResponse = await Api.client.analyzeSkinPhoto(formData);
+      const apiResponse = await Api.client.analyzeShadeMatching(formData);
       if (apiResponse?.detail?.toLowerCase().includes("no face")) {
         destructiveToast("Face not detected. Please upload a clearer photo.");
         return;
       }
 
-      const { setHtml } = useSkinResultStore.getState();
-      setHtml(apiResponse.results);
+      const { setShadeResult } = useShadeMatchStore.getState();
+      setShadeResult(apiResponse.results);
       setPreviewImage(null);
-      router.push("/analysis-result");
+      router.push("/shade-result");
     } catch (err) {
       console.error("Request details:", err.request);
     } finally {
@@ -82,7 +82,7 @@ export default function ImagePreviewPopup({
               </svg>
               <p className="font-medium text-[#02331E]">
                 {" "}
-                Loading your analysis... Please sit tight!
+                Loading your shades... Please sit tight!
               </p>
             </div>
           </div>

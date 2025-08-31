@@ -4,6 +4,7 @@ import { CheckCircle, Download, Mail, ArrowRight, Copy, Check } from 'lucide-rea
 import { useRouter } from 'next/navigation';
 import { Api } from '@/shared/api/api';
 import useAuthStore from '@/store/authStore';
+import { logEvent } from '@amplitude/analytics-browser';
 
 export default function StripeSuccessPage() {
   const [showAnimation, setShowAnimation] = useState(false);
@@ -20,6 +21,9 @@ export default function StripeSuccessPage() {
       }
     }
     fetchProfile();
+    logEvent("Subscription Clicked", {
+      click_value: "Essential",
+    });
   }, [token]);
 
 

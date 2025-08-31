@@ -2,35 +2,81 @@
 
 import PictureAnalysisPopup from "@/CustomComponents/cameraPopups/PictureAnalysis";
 import Footer from "@/CustomComponents/Footer/Footer";
-import ImagePreviewPopup from "@/CustomComponents/Popups/ImagePreviewPopup";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
+import { Api } from "@/shared/api/api";
+import { useShadeMatchStore, useSkinResultStore } from "@/store/skinResult";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import ShadePreviewPopup from "../Popups/ShadeImagePreview";
 
 export default function ShadeAnalysis() {
   const [isOpen, SetIsOpen] = useState(false);
   const fileInputRef = useRef(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [file, setFile] = useState(null);
   const [capturedImageFromPopup, setCapturedImageFromPopup] = useState(null);
-
-  const handleImageCapture = (imageData) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const handleImageCapture = async (imageData) => {
     setCapturedImageFromPopup(imageData);
-    SetIsOpen(false);
+    const byteString = atob(imageData.split(",")[1]);
+    const mimeString = imageData.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const formData = new FormData();
+    formData.append("image", blob, "skin.jpg");
 
-    // 🔁 Now you can send this to an API
-    // sendToSkinAnalysisAPI(imageData) or similar
+    try {
+      setIsLoading(true);
+      const response = await Api.client.analyzeShadeMatching(formData);
+      if (response?.detail?.toLowerCase().includes("no face")) {
+        destructiveToast("Face not detected. Please upload a clearer photo.");
+        return;
+      }
+      const { setShadeResult } = useShadeMatchStore.getState();
+      setShadeResult(response.results);
+      SetIsOpen(false);
+      router.push("/shade-result");
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error sending image to backend:", error);
+      setIsLoading(false);
+    }
   };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imgUrl = URL.createObjectURL(file);
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      // Clean up previous preview URL
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+
+      const imgUrl = URL.createObjectURL(selectedFile);
       setPreviewImage(imgUrl);
+      setFile(selectedFile);
       setShowPreview(true);
+    }
+
+    e.target.value = "";
+  };
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewImage(null);
+    setFile(null);
+
+    // Clean up the object URL
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage);
     }
   };
 
@@ -94,14 +140,18 @@ export default function ShadeAnalysis() {
 
       <Footer />
       <PictureAnalysisPopup
+        loading={isLoading}
         open={isOpen}
         setOpen={SetIsOpen}
         onCapture={handleImageCapture}
       />
-      <ImagePreviewPopup
+      <ShadePreviewPopup
         open={showPreview}
         setOpen={setShowPreview}
         image={previewImage}
+        imageFile={file}
+        setPreviewImage={setPreviewImage}
+        onClose={closePreview}
       />
     </div>
   );

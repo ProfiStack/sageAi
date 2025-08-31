@@ -219,6 +219,21 @@ export const Api = {
         console.log(error);
       }
     },
+    analyzeShadeMatching: async (image) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) =>
+            `${globalBaseUrl}/api/user/analyze/shade-matching`,
+          {
+            method: "POST",
+            body: image,
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
     getCancelSubscription: async (token) => {
       try {
         const response = await baseFetch(

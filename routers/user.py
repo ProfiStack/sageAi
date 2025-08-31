@@ -1,7 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from prompts.image_analysis import clean_html_code, get_image_analysis_prompt
+from prompts.image_analysis import clean_and_parse_json, get_image_analysis_prompt
+from prompts.shade_matching import get_shade_matching_prompt
 from routers.auth import get_current_user
 from services.ai import analyze_skin_features
 from sqlalchemy.orm import Session
@@ -148,7 +149,6 @@ async def analyze_skin_photo(
     try:
         result = await analyze_skin_features(image_bytes)
         message = get_image_analysis_prompt(result)
-
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
             executor,
@@ -158,9 +158,38 @@ async def analyze_skin_photo(
                 temperature=0.7,
             ),
         )
-        html_result = response.choices[0].message.content
-        html_result = clean_html_code(html_result);
-        return {"results": html_result.replace("\n", "").replace("\r", "")}
+        json_result = response.choices[0].message.content
+        json_result = clean_and_parse_json(json_result);
+        return {"results": json_result}
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+@router.post("/user/analyze/shade-matching")
+async def analyze_skin_photo(
+    image: UploadFile = File(..., description="The image to analyze"),
+):
+    if not image.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Invalid image type")
+
+    image_bytes = await image.read()
+
+    try:
+        result = await analyze_skin_features(image_bytes)
+        message = get_shade_matching_prompt(result)
+        print(message);
+        messages = [{"role": "system", "content": message}]
+        response = await asyncio.get_event_loop().run_in_executor(
+            executor,
+            lambda: chat_gpt.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0.7,
+            ),
+        )
+        json_result = response.choices[0].message.content
+        json_result = clean_and_parse_json(json_result);
+        return {"results": json_result}
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})

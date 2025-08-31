@@ -4,6 +4,7 @@ import { Api } from "@/shared/api/api";
 import { Camera } from "lucide-react";
 import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
+import { logEvent } from "@amplitude/analytics-browser";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_PUBLISHABLE_KEY);
 
@@ -18,11 +19,14 @@ export default function SubscribeButton({ children, route }) {
       router?.push(route);
     } else {
       try {
-        console.log(process.env.NEXT_PUBLIC_PRICE_ID);
         // Call your backend to create a subscription checkout session
         const res = await Api.client.subscribePayment({
           token,
           price_id: process.env.NEXT_PUBLIC_PRICE_ID,
+        });
+        logEvent("Subscription Clicked", {
+          click_location: route?.toUpperCase(),
+          click_value: "Essential",
         });
         if (res.checkout_url) {
           await stripePromise;
