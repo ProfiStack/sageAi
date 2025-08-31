@@ -30,18 +30,14 @@ import { jwtDecode } from "jwt-decode";
 const formSchema = z.object({
   email: z.string().refine(
     (value) => {
-      // Email regex pattern
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      // Phone regex pattern (supports various formats)
-      const phonePattern = /^[\+]?[1-9][\d]{0,15}$/;
 
       return (
-        emailPattern.test(value) ||
-        phonePattern.test(value.replace(/[\s\-\(\)]/g, ""))
-      );
+        emailPattern.test(value)
+      )
     },
     {
-      message: "Please enter a valid email address or phone number.",
+      message: "Please enter a valid email address",
     }
   ),
 
@@ -73,7 +69,7 @@ export default function Login() {
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
-        ...(isEmail ? { email: values.email } : { phone_number: values.email }),
+        ...(isEmail && { email: values.email }),
         password: values.password,
       };
       const data = await Api.client.signIn(transformedValues);
@@ -181,11 +177,12 @@ export default function Login() {
                   render={({ field }) => (
                     <FormItem>
                       <Label className="block text-sm font-medium text-[#02331E] ">
-                        Email / Phone Number
+                        Email
                         <FormControl>
                           <Input
                             className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400"
-                            placeholder="Email / Phone Number"
+                            placeholder="Enter your Email"
+                            type="email"
                             {...field}
                           />
                         </FormControl>
