@@ -248,11 +248,6 @@ async def analyze_skin_features(image_bytes: bytes):
         # Load and preprocess image
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img_np = np.array(img)
-        # if not detect_face(img_np):
-        #     raise HTTPException(
-        #         status_code=400,
-        #         detail="No face detected. Please upload a clear face photo.",
-        #     )
         
         # Multiple resolution analysis
         img_256 = cv2.resize(img_np, (256, 256))
@@ -284,16 +279,15 @@ async def analyze_skin_features(image_bytes: bytes):
         # --- IMPROVED Skin Type Detection ---
         skin_types = []
 
-        # Fixed: Oily skin detection - brightness threshold too high, added edge density check
-        if brightness > 120 and overall_color_variation < 40 and saturation > 25 and edge_density > 12:
+        # Oily skin detection - adjusted for darker skin tones
+        if brightness > 100 and overall_color_variation < 45 and saturation > 20 and edge_density > 12:
             skin_types.append("oily")
 
-        # Fixed: Dry skin detection - improved thresholds and added texture consideration
-        if brightness < 100 and overall_color_variation < 30 and saturation < 40 and laplacian_var < 100:
+        # Dry skin detection - adjusted thresholds
+        if brightness < 110 and overall_color_variation < 35 and saturation < 45 and laplacian_var < 120:
             skin_types.append("dry")
 
-        # Fixed: Combination skin detection - improved region analysis
-        center_region = img_256[80:176, 80:176]  # Smaller, more focused T-zone
+        # Combination skin detection - improved region analysis
         t_zone_regions = [
             img_256[64:128, 112:144],  # Forehead
             img_256[128:192, 112:144], # Nose area
@@ -322,29 +316,27 @@ async def analyze_skin_features(image_bytes: bytes):
                 for r in cheek_regions if r.size > 0
             ])
 
-            # More sophisticated combination detection
             brightness_diff = abs(t_zone_brightness - cheek_brightness)
             saturation_diff = abs(t_zone_saturation - cheek_saturation)
             
-            if brightness_diff > 12 or saturation_diff > 15:
+            if brightness_diff > 10 or saturation_diff > 12:
                 skin_types.append("combination")
 
-        # Fixed: Sensitive skin detection - improved criteria
-        if laplacian_var < 90 and overall_color_variation > 30 and edge_density < 15:
-            # Additional check for redness indicators which suggest sensitivity
+        # Sensitive skin detection
+        if laplacian_var < 100 and overall_color_variation > 25 and edge_density < 18:
             red_channel = img_256[:, :, 0].astype(np.float32)
             green_channel = img_256[:, :, 1].astype(np.float32)
             rg_diff = np.mean(red_channel - green_channel)
             
-            if rg_diff > 8:  # Slight redness indication
+            if rg_diff > 6:
                 skin_types.append("sensitive")
 
-        # Fixed: Normal skin detection - better balanced criteria
+        # Normal skin detection - adjusted for wider range of skin tones
         if (
-            90 <= brightness <= 140
-            and 20 <= overall_color_variation <= 35
-            and 25 <= saturation <= 55
-            and 80 <= laplacian_var <= 140
+            80 <= brightness <= 160
+            and 15 <= overall_color_variation <= 40
+            and 20 <= saturation <= 65
+            and 70 <= laplacian_var <= 150
             and not skin_types
         ):
             skin_types.append("normal")
@@ -356,16 +348,16 @@ async def analyze_skin_features(image_bytes: bytes):
         # --- IMPROVED Concerns Detection ---
         concerns = []
 
-        # Fixed: Breakouts detection - better thresholds
-        if laplacian_var > 150 and edge_density > 18:
+        # Breakouts detection
+        if laplacian_var > 140 and edge_density > 16:
             concerns.append("breakouts")
 
-        # --- IMPROVED Redness Detection ---
+        # --- FIXED Redness Detection for Darker Skin ---
         red_channel = img_256[:, :, 0].astype(np.float32)
         green_channel = img_256[:, :, 1].astype(np.float32)
         blue_channel = img_256[:, :, 2].astype(np.float32)
 
-        # Avoid division by zero
+        # Calculate redness differently for darker skin tones
         total_intensity = red_channel + green_channel + blue_channel
         total_intensity = np.where(total_intensity == 0, 1, total_intensity)
         red_ratio = red_channel / total_intensity
@@ -373,43 +365,46 @@ async def analyze_skin_features(image_bytes: bytes):
         rg_diff = red_channel - green_channel
         rb_diff = red_channel - blue_channel
 
+        # For darker skin, redness appears differently in HSV
         hue_channel = img_hsv[:, :, 0]
-        # Fixed: Better red hue detection (HSV hue is 0-179 in OpenCV)
-        red_hue_mask = (hue_channel <= 8) | (hue_channel >= 172)
+        # Expanded red hue range for darker skin tones
+        red_hue_mask = (hue_channel <= 15) | (hue_channel >= 165)
         red_saturation = img_hsv[:, :, 1]
 
         avg_red_ratio = np.mean(red_ratio)
         avg_rg_diff = np.mean(rg_diff)
         avg_rb_diff = np.mean(rb_diff)
 
-        # Fixed: Improved red area calculation
-        red_areas = red_hue_mask & (red_saturation > 50) & (img_hsv[:, :, 2] > 60)
+        # Adaptive thresholds based on overall brightness (darker skin needs different detection)
+        brightness_factor = brightness / 128.0  # Normalize brightness
+        
+        red_areas = red_hue_mask & (red_saturation > 40) & (img_hsv[:, :, 2] > 40)
         red_area_percentage = np.sum(red_areas) / red_areas.size
 
         redness_detected = False
         
-        # Primary redness detection
-        if (
-            avg_red_ratio > 0.38  # Lowered threshold
-            and avg_rg_diff > 12   # Lowered threshold
-            and avg_rb_diff > 10   # Lowered threshold
-            and red_area_percentage > 0.12
-        ):
-            redness_detected = True
-
-        # Secondary redness detection for more obvious cases
-        if (
-            avg_rg_diff > 25
-            and avg_rb_diff > 20
-            and red_area_percentage > 0.10
-            and np.mean(red_saturation[red_hue_mask]) > 60
-        ):
-            redness_detected = True
+        # Adaptive redness detection based on skin tone
+        if brightness_factor < 0.8:  # Darker skin
+            if (
+                avg_red_ratio > 0.36
+                and avg_rg_diff > 8
+                and avg_rb_diff > 6
+                and red_area_percentage > 0.08
+            ):
+                redness_detected = True
+        else:  # Lighter skin
+            if (
+                avg_red_ratio > 0.38
+                and avg_rg_diff > 12
+                and avg_rb_diff > 10
+                and red_area_percentage > 0.12
+            ):
+                redness_detected = True
 
         if redness_detected:
             concerns.append("redness")
 
-        # --- IMPROVED Pigmentation Detection ---
+        # --- SIGNIFICANTLY IMPROVED Pigmentation Detection ---
         l_channel = img_lab[:, :, 0].astype(np.float32)
         a_channel = img_lab[:, :, 1].astype(np.float32)
         b_channel = img_lab[:, :, 2].astype(np.float32)
@@ -417,30 +412,43 @@ async def analyze_skin_features(image_bytes: bytes):
         l_std = np.std(l_channel)
         l_mean = np.mean(l_channel)
 
-        # Fixed: Better dark spot detection
-        kernel = np.ones((7, 7), np.float32) / 49  # Larger kernel for better smoothing
+        # Better dark spot detection with adaptive thresholds
+        kernel = np.ones((5, 5), np.float32) / 25
         l_smooth = cv2.filter2D(l_channel, -1, kernel)
-        dark_spots = l_channel < (l_smooth - 6)  # Less aggressive threshold
+        
+        # Adaptive threshold based on skin tone
+        threshold_factor = 4 if l_mean < 100 else 6
+        dark_spots = l_channel < (l_smooth - threshold_factor)
         dark_spot_percentage = np.sum(dark_spots) / dark_spots.size
 
-        # Fixed: Better melanin detection (LAB values are typically 0-255)
-        melanin_areas = (a_channel > 130) & (b_channel > 130) & (l_channel < l_mean - 3)
+        # Better melanin detection for darker skin
+        # In OpenCV LAB: a* and b* are 0-255, with 128 being neutral
+        melanin_areas = (a_channel > 132) & (b_channel > 132) & (l_channel < l_mean - 2)
         melanin_percentage = np.sum(melanin_areas) / melanin_areas.size
 
-        # Fixed: Age spot detection
-        age_spots = (l_channel < (l_mean - 8)) & (b_channel > 128)
+        # Age spot detection adjusted for skin tone
+        age_threshold = 5 if l_mean < 100 else 8
+        age_spots = (l_channel < (l_mean - age_threshold)) & (b_channel > 130)
         age_spot_percentage = np.sum(age_spots) / age_spots.size
 
         pigmentation_detected = False
         pigment_confidence = 0
 
-        # More lenient thresholds
-        if l_std > 12 and dark_spot_percentage > 0.08:
-            pigment_confidence += 1
-        if melanin_percentage > 0.06:
-            pigment_confidence += 1
-        if age_spot_percentage > 0.03:
-            pigment_confidence += 1
+        # Adaptive thresholds based on skin tone
+        if l_mean < 100:  # Darker skin
+            if l_std > 8 and dark_spot_percentage > 0.05:
+                pigment_confidence += 1
+            if melanin_percentage > 0.04:
+                pigment_confidence += 1
+            if age_spot_percentage > 0.02:
+                pigment_confidence += 1
+        else:  # Lighter skin
+            if l_std > 12 and dark_spot_percentage > 0.08:
+                pigment_confidence += 1
+            if melanin_percentage > 0.06:
+                pigment_confidence += 1
+            if age_spot_percentage > 0.03:
+                pigment_confidence += 1
 
         if pigment_confidence >= 2:
             pigmentation_detected = True
@@ -448,7 +456,7 @@ async def analyze_skin_features(image_bytes: bytes):
         if pigmentation_detected:
             concerns.append("hyperpigmentation")
 
-        # --- IMPROVED Scarring Detection ---
+        # --- Scarring Detection (keeping existing logic) ---
         def apply_gabor_filter(img, theta):
             kernel = cv2.getGaborKernel(
                 (21, 21), 3, theta, 10, 0.5, 0, ktype=cv2.CV_32F
@@ -472,7 +480,7 @@ async def analyze_skin_features(image_bytes: bytes):
                         angle = 2 * np.pi * k / n_points
                         x = int(np.round(i + radius * np.cos(angle)))
                         y = int(np.round(j + radius * np.sin(angle)))
-                        if 0 <= x < h and 0 <= y < w:  # Added bounds checking
+                        if 0 <= x < h and 0 <= y < w:
                             if img[x, y] >= center:
                                 code |= 1 << k
                     lbp[i, j] = code
@@ -481,7 +489,6 @@ async def analyze_skin_features(image_bytes: bytes):
         lbp = local_binary_pattern(img_gray)
         lbp_variance = np.var(lbp)
 
-        # Line detection for scars
         kernel_line_h = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 1))
         kernel_line_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 15))
         lines_h = cv2.morphologyEx(img_gray, cv2.MORPH_OPEN, kernel_line_h)
@@ -489,21 +496,19 @@ async def analyze_skin_features(image_bytes: bytes):
         line_features = cv2.bitwise_or(lines_h, lines_v)
         line_intensity = np.mean(line_features)
 
-        # Fixed: Crater detection with better parameters
         circles = cv2.HoughCircles(
             img_gray,
             cv2.HOUGH_GRADIENT,
             dp=1,
-            minDist=8,   # Reduced for better detection
+            minDist=8,
             param1=50,
-            param2=12,   # Lowered threshold
-            minRadius=1, # Smaller minimum
-            maxRadius=6, # Smaller maximum
+            param2=12,
+            minRadius=1,
+            maxRadius=6,
         )
         crater_count = 0 if circles is None else len(circles[0])
         crater_density = crater_count / (256 * 256) * 10000
 
-        # Gradient analysis
         grad_x = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=5)
         grad_y = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=5)
         gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
@@ -512,7 +517,6 @@ async def analyze_skin_features(image_bytes: bytes):
         scarring_detected = False
         scar_confidence = 0
 
-        # Fixed: More realistic scarring thresholds
         if crater_density > 3 and laplacian_var > 160:
             scar_confidence += 1
         if line_intensity > 35 and gradient_consistency > 50:
@@ -528,53 +532,109 @@ async def analyze_skin_features(image_bytes: bytes):
         if scarring_detected:
             concerns.append("scarring")
 
-        # --- IMPROVED Other Concerns ---
-        # Fine lines detection - improved
-        if laplacian_var > 100 and brightness < 110 and edge_density > 10:
+        # Other concerns (adjusted thresholds)
+        if laplacian_var > 90 and brightness < 120 and edge_density > 8:
             concerns.append("fine lines")
 
-        # Dullness detection - improved
-        if saturation < 30 and brightness < 120 and overall_color_variation < 25:
+        if saturation < 35 and brightness < 130 and overall_color_variation < 30:
             concerns.append("dullness")
 
-        # Enlarged pores - more realistic threshold
-        if edge_density > 25 and crater_density > 2:
+        if edge_density > 22 and crater_density > 2:
             concerns.append("enlarged pores")
 
-        # --- IMPROVED Skin Tone Analysis ---
+        # --- SIGNIFICANTLY IMPROVED Skin Tone Analysis ---
         avg_l = np.mean(l_channel)
         avg_a = np.mean(a_channel)
         avg_b = np.mean(b_channel)
 
-        # Fixed: Better depth categorization (L* ranges 0-100 in LAB)
-        if avg_l < 35:
+        # FIXED: Better depth categorization for wider range of skin tones
+        # OpenCV LAB L* channel is 0-255, not 0-100
+        if avg_l < 80:
+            depth = "very deep"
+        elif avg_l < 110:
             depth = "deep"
-        elif avg_l < 50:
+        elif avg_l < 140:
             depth = "medium-deep"
-        elif avg_l < 65:
+        elif avg_l < 170:
             depth = "medium"
-        elif avg_l < 80:
+        elif avg_l < 200:
             depth = "light"
         else:
             depth = "very light"
 
-        # Fixed: Better undertone detection (a* and b* typically range -128 to +127, but OpenCV uses 0-255)
-        # OpenCV LAB: L=0-255, a=0-255, b=0-255 where 128 is neutral
-        if avg_b > 135 and avg_a > 130:
-            undertone = "warm"
-        elif avg_b < 125 and avg_a < 125:
-            undertone = "cool"
-        elif avg_b > 132 and avg_a < 125:
-            undertone = "neutral-warm"
-        elif avg_b < 125 and avg_a > 130:
-            undertone = "neutral-cool"
+        # FIXED: Much better undertone detection
+        # OpenCV LAB: a* and b* are 0-255, with 128 being neutral
+        # a* < 128 = green, a* > 128 = red/magenta
+        # b* < 128 = blue, b* > 128 = yellow
+        
+        a_deviation = avg_a - 128  # Positive = red/warm, Negative = green/cool
+        b_deviation = avg_b - 128  # Positive = yellow/warm, Negative = blue/cool
+        
+        # Calculate undertone based on a* and b* deviations
+        warm_score = 0
+        cool_score = 0
+        
+        # Yellow undertones (high b*, moderate a*)
+        if b_deviation > 8:  # Strong yellow
+            warm_score += 2
+            if b_deviation > 15:
+                warm_score += 1
+        elif b_deviation < -5:  # Blue undertones
+            cool_score += 2
+            
+        # Red/Pink undertones (high a*)
+        if a_deviation > 6:  # Red/pink
+            if b_deviation > 0:  # Red + yellow = warm
+                warm_score += 1
+            else:  # Red + blue = cool pink
+                cool_score += 1
+        elif a_deviation < -4:  # Green undertones
+            cool_score += 1
+
+        # Additional analysis using RGB ratios for warm tones
+        avg_r = np.mean(img_256[:, :, 0])
+        avg_g = np.mean(img_256[:, :, 1])
+        avg_b_rgb = np.mean(img_256[:, :, 2])
+        
+        # Calculate color temperature indicators
+        rg_ratio = avg_r / avg_g if avg_g > 0 else 1
+        yb_ratio = (avg_r + avg_g) / (2 * avg_b_rgb) if avg_b_rgb > 0 else 1
+        
+        # Warm skin typically has higher red/yellow content
+        if rg_ratio > 1.05 and yb_ratio > 1.1:
+            warm_score += 1
+        elif rg_ratio < 0.95 and yb_ratio < 0.9:
+            cool_score += 1
+
+        # Determine final undertone
+        if warm_score > cool_score + 1:
+            if b_deviation > 12:
+                undertone = "warm (golden/yellow)"
+            elif a_deviation > 8:
+                undertone = "warm (peachy/coral)"
+            else:
+                undertone = "warm"
+        elif cool_score > warm_score + 1:
+            if a_deviation > 3:
+                undertone = "cool (pink)"
+            elif b_deviation < -3:
+                undertone = "cool (blue)"
+            else:
+                undertone = "cool"
+        elif abs(warm_score - cool_score) <= 1:
+            if b_deviation > 5:
+                undertone = "neutral-warm"
+            elif b_deviation < -2:
+                undertone = "neutral-cool"
+            else:
+                undertone = "neutral"
         else:
             undertone = "neutral"
 
         tone = f"{undertone}, {depth} complexion"
 
-        # Fixed: Better texture scoring
-        texture_score = (laplacian_var * 0.6 + edge_density * 0.4)  # Weighted combination
+        # Texture scoring (keeping existing logic)
+        texture_score = (laplacian_var * 0.6 + edge_density * 0.4)
         if texture_score < 25:
             texture = "very smooth"
         elif texture_score < 50:
@@ -586,12 +646,11 @@ async def analyze_skin_features(image_bytes: bytes):
         else:
             texture = "very textured"
 
-        # --- IMPROVED Under-eye Analysis ---
+        # --- IMPROVED Under-eye Analysis for Darker Skin ---
         height, width = img_gray.shape
-        # Fixed: Better under-eye region positioning
         left_eye_region = img_gray[
-            int(height * 0.58) : int(height * 0.72),  # Slightly lower
-            int(width * 0.28) : int(width * 0.42),    # More precise positioning
+            int(height * 0.58) : int(height * 0.72),
+            int(width * 0.28) : int(width * 0.42),
         ]
         right_eye_region = img_gray[
             int(height * 0.58) : int(height * 0.72),
@@ -601,24 +660,33 @@ async def analyze_skin_features(image_bytes: bytes):
         if left_eye_region.size > 0 and right_eye_region.size > 0:
             under_eye_avg = (np.mean(left_eye_region) + np.mean(right_eye_region)) / 2
             
-            # Compare with nearby facial areas instead of whole face
             nearby_regions = [
-                img_gray[int(height * 0.45) : int(height * 0.58), int(width * 0.28) : int(width * 0.72)],  # Upper cheek
-                img_gray[int(height * 0.72) : int(height * 0.85), int(width * 0.28) : int(width * 0.72)],  # Lower cheek
+                img_gray[int(height * 0.45) : int(height * 0.58), int(width * 0.28) : int(width * 0.72)],
+                img_gray[int(height * 0.72) : int(height * 0.85), int(width * 0.28) : int(width * 0.72)],
             ]
             nearby_avg = np.mean([np.mean(region) for region in nearby_regions if region.size > 0])
             
             darkness_ratio = under_eye_avg / nearby_avg if nearby_avg > 0 else 1.0
 
-            # Fixed: More accurate thresholds
-            if darkness_ratio < 0.85:
-                under_eye = "prominent dark circles"
-            elif darkness_ratio < 0.92:
-                under_eye = "visible dark circles"
-            elif darkness_ratio < 0.96:
-                under_eye = "mild dark circles"
-            else:
-                under_eye = "no visible dark circles"
+            # Adjusted thresholds for darker skin tones
+            if avg_l < 100:  # Darker skin - different thresholds
+                if darkness_ratio < 0.88:
+                    under_eye = "prominent dark circles"
+                elif darkness_ratio < 0.94:
+                    under_eye = "visible dark circles"
+                elif darkness_ratio < 0.97:
+                    under_eye = "mild dark circles"
+                else:
+                    under_eye = "no visible dark circles"
+            else:  # Lighter skin - original thresholds
+                if darkness_ratio < 0.85:
+                    under_eye = "prominent dark circles"
+                elif darkness_ratio < 0.92:
+                    under_eye = "visible dark circles"
+                elif darkness_ratio < 0.96:
+                    under_eye = "mild dark circles"
+                else:
+                    under_eye = "no visible dark circles"
         else:
             under_eye = "unable to detect"
 
@@ -626,12 +694,11 @@ async def analyze_skin_features(image_bytes: bytes):
         if not concerns:
             concerns = ["none detected"]
 
-        # ADDED: Include undertone separately in results
         result = {
             "skin_types": skin_types,
             "concerns": concerns,
             "tone": tone,
-            "undertone": undertone,  # Added undertone as separate field
+            "undertone": undertone,
             "texture": texture,
             "under_eye": under_eye,
         }
