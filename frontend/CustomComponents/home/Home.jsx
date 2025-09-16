@@ -111,7 +111,9 @@ export default function HomePage() {
             layout="fill"
           />
         </div>
-        <p className="text-2xl font-bold text-center">Welcome to SageeAi</p>
+        <p className="text-2xl font-bold text-center">
+          Welcome, ready for your glowup
+        </p>
         <div className="max-w-md mx-auto px-6 py-6">
           <div className="mb-8">
             {/* Stats Card */}

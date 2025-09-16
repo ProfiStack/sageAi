@@ -814,7 +814,7 @@ export default function PictureAnalysisPopup({
         </svg>
         <p className="font-medium text-[#02331E]">
           {" "}
-          Loading your analysis... Please sit tight!
+          Almost there,we’ll have your personalised tips in a sec
         </p>
       </div>
     </div>

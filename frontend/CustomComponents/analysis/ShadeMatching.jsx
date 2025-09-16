@@ -90,12 +90,11 @@ export default function ShadeAnalysis() {
       >
         <div className="flex-shrink-0">
           <p className="text-[28px] font-bold leading-tight mt-[10px]">
-            AI-Powered Shade Match. Accurate. Effortless. Inclusive.
+            Your Perfect Shade, Every Time
           </p>
           <p className="text-[#0D171C] mb-4 mt-2">
-            Find your perfect foundation and concealer shade with advanced AI
-            that analyzes your skin tone in real-time—no guesswork, just a
-            flawless match.
+            No more trial & error, your perfect match in seconds. Photos are
+            encrypted, analyzed, and deleted,only you see results
           </p>
         </div>
 
@@ -104,7 +103,7 @@ export default function ShadeAnalysis() {
             <Image
               src="/images/shadeMatching.png"
               fill
-              className="object-contain rounded-xl"
+              className="object-cover rounded-xl"
             />
           </div>
 
@@ -114,13 +113,13 @@ export default function ShadeAnalysis() {
                 onClick={handleUploadClick}
                 className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
-                Upload a clear selfie
+                Upload Selfie
               </button>
               <button
                 onClick={() => SetIsOpen(true)}
                 className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
-                Take a clear selfie
+                Snap My Skin
               </button>
               <input
                 ref={fileInputRef}

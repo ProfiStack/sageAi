@@ -11,21 +11,31 @@ import {
 } from "lucide-react";
 export const featuresData = [
   {
-    icon: <Utensils className="w-5 h-5" />,
+    icon: <ScanFace className="w-5 h-5" />,
 
-    title: "Intelligent Guidance for Nutrition and Wellness",
+    title: "Unlock Your Skin's Potential",
+    subTitle: "Personalized skincare tips and ideal makeup shades in one scan",
   },
   {
     icon: <Shield className="w-5 h-5" />,
-    title: "Smart Consultation for Skin, Makeup, Hair and Styling",
+
+    title: "Look Amazing Every Day",
+    subTitle: " Personalized advice for your skin, makeup & hair",
+  },
+  {
+    icon: <Utensils className="w-5 h-5" />,
+    title: "Eat for Your Best Skin & Energy",
+    subTitle: "Nutrition plans that actually show results",
   },
   {
     icon: <Search className="w-5 h-5" />,
-    title: "Check Products, Ingredients & Trends",
+    title: " Check Products, Ingredients & Trends",
+    subTitle: " Instant ingredient analysis & trend truth checking",
   },
   {
     icon: <CheckCircle className="w-5 h-5" />,
-    title: "Detect Fakes Before They Touch Your Skin",
+    title: "Never Buy Fake Products Again",
+    subTitle: "Protect your skin from dangerous counterfeits",
   },
 ];
 

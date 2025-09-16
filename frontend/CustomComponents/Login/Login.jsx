@@ -23,7 +23,7 @@ import useAuthStore from "@/store/authStore";
 import Image from "next/image";
 import { useAmplitude } from "@/app/providers/amplitudeProvider";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { comingSoonData, featuresData } from "@/mockData/loginMockData";
 import { jwtDecode } from "jwt-decode";
@@ -32,9 +32,7 @@ const formSchema = z.object({
     (value) => {
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      return (
-        emailPattern.test(value)
-      )
+      return emailPattern.test(value);
     },
     {
       message: "Please enter a valid email address",
@@ -152,19 +150,19 @@ export default function Login() {
             <h1 className="text-3xl font-bold text-[#02331E] mb-1 tracking-tight">
               SageeAi
             </h1>
-            <p className="text-[#02331E] text-lg font-medium">
-              Meet your personal lifestyle agent <br /> beauty simplified,
-              wellness personalised, confidence amplified.
+            <p className="text-[#02331E]  font-semibold">
+              Meet Sagee, your beauty & wellness glow up guide
             </p>
           </div>
-          <p className="text-[#02331E]  text-sm max-w-xs mx-auto">
-            SageeAI cuts through the noise to give you science backed answers
-            for skincare, makeup, haircare, style, and nutrition. No hype. No
-            waste. Just clarity
+          <p className="text-[#02331E] text-sm max-w-xs mx-auto">
+            Real advice from real dermatologists and AI that actually gets your
+            skin. Save £100s on products that don't work and hours of research.
+            Trusted by 1000 beauty lovers, real results, real routines. Your
+            data is private and secure, we never share your information
           </p>{" "}
         </div>
         {/* Main Content */}
-        <div className="relative z-10 px-4 py-8">
+        <div className="relative z-10 px-4 py-4">
           <div className="mb-8">
             <Form {...form}>
               <form
@@ -180,8 +178,8 @@ export default function Login() {
                         Email
                         <FormControl>
                           <Input
-                            className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400"
-                            placeholder="Enter your Email"
+                            className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl placeholder:text-gray-400 focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400"
+                            placeholder="Enter your email (so we can save your glow progress)"
                             type="email"
                             {...field}
                           />
@@ -204,8 +202,8 @@ export default function Login() {
                             <div className="relative">
                               <Input
                                 type={showPassword ? "text" : "password"}
-                                className="w-full px-4 py-3 border-2 border-gray-200 mt-1 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400 pr-12"
-                                placeholder="Enter your password"
+                                className="w-full px-4 py-3 border-2 border-gray-200 mt-1 placeholder:text-gray-400 rounded-xl focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400 pr-12"
+                                placeholder="Create a secure password"
                                 {...field}
                               />
                               <button
@@ -229,10 +227,10 @@ export default function Login() {
                 />
 
                 <Button
-                  className="w-full py-4 text-[16p-font-medium bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
+                  className="w-full py-4 text-[16p-font-medium bg-[#02331E] text-white placeholder:text-gray-400 rounded-[24px] hover:bg-[#02331E]"
                   type="submit"
                 >
-                  Sign In / Sign Up
+                  Sign In / Sign Up to my glow
                 </Button>
               </form>
             </Form>
@@ -247,7 +245,9 @@ export default function Login() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1 h-6 bg-gradient-to-b from-[#D4B038] to-[#f4c842] rounded-full"></div>
-              <h2 className="text-xl font-bold text-[#02331E]">Features</h2>
+              <p className="text-xl font-bold text-[#02331E]">
+                What You'll Get:
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -257,16 +257,40 @@ export default function Login() {
                   className="group bg-white bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10  border border-gray-100 rounded-xl p-3 shadow-lg hover:border-[#D4B038]/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
                 >
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#D4B038] to-[#f4c842] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-
-                  <div className="w-10 h-10 p-2 mb-2  bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 rounded-full flex items-center justify-center text-[#D4B038]  group-hover:scale-110 transition-transform duration-300">
-                    {feature.icon}
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className=" p-2 mb-2  bg-gradient-to-r from-[#D4B038]/10 to-[#02331E]/10 rounded-full flex items-center justify-center text-[#D4B038]  group-hover:scale-110 transition-transform duration-300">
+                      {feature.icon}
+                    </div>
+                    <h1 className="font-medium text-sm leading-tight text-[#02331E]">
+                      {feature.title}
+                    </h1>
                   </div>
 
-                  <h3 className=" font-medium text-[#02331E] leading-tight ">
-                    {feature.title}
+                  <h3 className=" font-normal text-xs text-[#02331E] leading-tight ">
+                    {feature.subTitle}
                   </h3>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+        <div className="mx-4 mb-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl px-2 py-4 border border-emerald-100 shadow-sm">
+          <div className="flex items-start space-x-4">
+            <div className="bg-emerald-100 rounded-full p-1">
+              <div className="p-2 bg-emerald-500 rounded-full flex items-center justify-center">
+                <Lightbulb color="white" />
+              </div>
+            </div>
+            <div className="flex-1 ">
+              <p className="text-sm text-emerald-700 font-medium mb-1">
+                DID YOU KNOW?
+              </p>
+
+              <p className="text-gray-700 text-sm leading-relaxed">
+                <span className="font-semibold text-emerald-700">
+                  Average user saves £150+ per year on products that don't work
+                </span>
+              </p>
             </div>
           </div>
         </div>
@@ -300,7 +324,8 @@ export default function Login() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-1">
-              More lifestyle categories dropping soon.
+              New features added weekly based on what you actually need. Join
+              now and help shape SageeAI's future.
             </p>
             <p className="text-xs text-[#D4B038] font-medium">
               Sageai is just getting started.

@@ -79,7 +79,7 @@ export const categoryItemsData = [
         route: "/makeup/true-tone",
         new: true,
         scanRoute: "/shade-matching",
-        description: "Match products perfectly to your skin tone",
+        description: "Never buy the wrong shade again,find your exact match",
       },
       {
         title: "Beauty Brief",
