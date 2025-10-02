@@ -12,10 +12,16 @@ export default function SubscribeButton({ children, route }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [message, setMessage] = useState("");
-  const { token, isSubscribed } = useAuthStore();
+  const { token, isSubscribed, skinAnalysis, shadeMatching, isFreeScan } =
+    useAuthStore();
+
   const handleSubscribe = async () => {
     setLoading(true);
-    if (isSubscribed) {
+    if (
+      (skinAnalysis && route.includes("skin-analysis")) ||
+      (shadeMatching && route.includes("shade-matching")) ||
+      isFreeScan
+    ) {
       router?.push(route);
     } else {
       try {
@@ -23,7 +29,7 @@ export default function SubscribeButton({ children, route }) {
         const res = await Api.client.subscribePayment({
           token,
           price_id: process.env.NEXT_PUBLIC_PRICE_ID,
-          type: route?.split('/')[1]
+          type: route?.split("/")[1],
         });
         logEvent("Subscription Clicked", {
           click_location: route?.toUpperCase(),

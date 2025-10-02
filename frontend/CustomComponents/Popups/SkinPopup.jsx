@@ -9,7 +9,8 @@ import useAuthStore from "@/store/authStore";
 const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
   if (!isOpen || !selectedItem) return null;
   const [price, setPrice] = useState("");
-  const { isSubscribed } = useAuthStore();
+  const { isSubscribed, shadeMatching, skinAnalysis, isFreeScan } =
+    useAuthStore();
   useEffect(() => {
     const fetchPrices = async () => {
       const response = await Api.client.prices();
@@ -17,6 +18,25 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
     };
     fetchPrices();
   }, []);
+  const getScanLabel = () => {
+    if (isFreeScan) {
+      return "1 Free Scan";
+    }
+    if (!isFreeScan && !shadeMatching && selectedItem.title === "True Tone") {
+      return "Quick Scan $1 Only";
+    }
+    if (!isFreeScan && !skinAnalysis && selectedItem.title === "Derm Direct") {
+      return "Quick Scan $1 Only";
+    }
+    if (!isFreeScan && shadeMatching && selectedItem.title === "True Tone") {
+      return "1 Scan Available";
+    }
+    if (!isFreeScan && skinAnalysis && selectedItem.title === "Derm Direct") {
+      return "1 Scan Available";
+    }
+    return "";
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-sm w-full mx-4 shadow-xl">
@@ -74,7 +94,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
             <SubscribeButton route={selectedItem.scanRoute}>
               <div className="relative w-full border border-indigo-200 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-xl p-4 relative">
                 <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
-                  1 Free Scan
+                  {getScanLabel()}
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-start space-x-3">
