@@ -9,10 +9,12 @@ import { useSkinResultStore } from "@/store/skinResult";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import Cookies from "js-cookie";
 
 export default function SkinAnalysis() {
   const [isOpen, SetIsOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const authToken = Cookies.get("authToken");
   const [previewImage, setPreviewImage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [file, setFile] = useState(null);
@@ -34,7 +36,7 @@ export default function SkinAnalysis() {
 
     try {
       setIsLoading(true);
-      const response = await Api.client.analyzeSkinPhoto(formData);
+      const response = await Api.client.analyzeSkinPhoto(formData, authToken);
       if (response?.detail?.toLowerCase().includes("no face")) {
         destructiveToast("Face not detected. Please upload a clearer photo.");
         return;

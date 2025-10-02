@@ -12,7 +12,7 @@ from prompts.makeup import get_makeup_checker_prompt
 from prompts.nutrition import get_nutrition_checker_prompt
 from prompts.styling import get_styling_checker_prompt
 from prompts.wellness import get_wellness_checker_prompt
-from services.db_service import save_chat_message, get_user_session_data
+from services.db_service import save_chat_message, get_user_session_data, update_user_profile
 from concurrent.futures import ThreadPoolExecutor
 from prompts.ingredients import get_ingredient_checker_prompt
 from prompts.skin_care import get_skincare_prompt
@@ -188,7 +188,6 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
             user_data = get_user_session_data(db, user_id, feature_type)
         finally:
             db.close()
-
         system_prompt = get_feature_prompt(feature_type, user_data)
         messages = [{"role": "system", "content": system_prompt}]
         chat_history = user_data.get("chat_history", [])[-10:]

@@ -10,6 +10,7 @@ from models.db_models import  ChatMessage, ChatResults, HairMessage, StylingMess
 from db import SessionLocal
 from services.db_service import (
     get_user_chat_data,
+    update_user_profile,
 )
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
@@ -139,13 +140,14 @@ def get_chat_history_by_type(user_db: user_dependency, limit: int = 20):
 
 @router.post("/user/analyze/skin-photo")
 async def analyze_skin_photo(
+    user_db: user_dependency,
     image: UploadFile = File(..., description="The image to analyze"),
 ):
     if not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid image type")
-
+    db = SessionLocal()
     image_bytes = await image.read()
-
+    await update_user_profile(db, user_db.get('user_id'), {"free_scan": False})
     try:
         result = await analyze_skin_features(image_bytes)
         message = get_image_analysis_prompt(result)

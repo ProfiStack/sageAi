@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.schemas import UserProfileRequest, UserProfileResponse
-from models.db_models import ChatMessage
+from models.db_models import ChatMessage, Payment
 from routers.auth import get_current_user
 from services.db_service import get_or_create_user_profile, update_user_profile
 from db import SessionLocal
@@ -26,6 +26,10 @@ user_dependency = Annotated[Session, Depends(get_current_user)]
 @router.get("/user/profile", response_model=UserProfileResponse)
 def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
     profile = get_or_create_user_profile(db, user_db.get("user_id"))
+    all_payments = db.query(Payment).filter(Payment.user_id == user_db.get("user_id")).all()
+    # Use a list comprehension to get all payment types
+    payment_types = [payment.type for payment in all_payments if payment.type]
+
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -50,11 +54,9 @@ def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
         style_preference=profile.style_preference or "Unknown",
         styling_goal=profile.styling_goal or "Unknown",
         subscription_status=profile.subscription_status,
+        payment_types=payment_types,
+        free_scan=profile.free_scan
     )
-
-
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 
 @router.post("/user/profile")

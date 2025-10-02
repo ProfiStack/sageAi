@@ -126,7 +126,7 @@ async def update_user_profile(db: Session, user_id: str, updates: dict):
     db.commit()  # commit transaction
 
     db.refresh(profile)  # refresh to get latest from DB
-
+    print(profile);
     return profile
 
 

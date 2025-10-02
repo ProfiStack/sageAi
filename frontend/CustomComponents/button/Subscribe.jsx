@@ -23,6 +23,7 @@ export default function SubscribeButton({ children, route }) {
         const res = await Api.client.subscribePayment({
           token,
           price_id: process.env.NEXT_PUBLIC_PRICE_ID,
+          type: route?.split('/')[1]
         });
         logEvent("Subscription Clicked", {
           click_location: route?.toUpperCase(),
