@@ -22,13 +22,20 @@ def get_db():
 
 user_dependency = Annotated[Session, Depends(get_current_user)]
 
-
 @router.get("/user/profile", response_model=UserProfileResponse)
 def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
     profile = get_or_create_user_profile(db, user_db.get("user_id"))
-    all_payments = db.query(Payment).filter(Payment.user_id == user_db.get("user_id")).all()
     # Use a list comprehension to get all payment types
-    payment_types = [payment.type for payment in all_payments if payment.type]
+    all_payments = (
+    db.query(Payment)
+      .filter(
+          Payment.user_id == user_db.get("user_id"),        # comma, not "and"
+          Payment.status == "succeeded"
+      )
+      .all()                                 # ← returns a list
+    )
+    # If your model actually has a "type" column/attr:
+    payment_types = [p.type for p in all_payments if getattr(p, "type", None)]
 
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
@@ -55,7 +62,7 @@ def get_profile(user_db: user_dependency, db: Session = Depends(get_db)):
         styling_goal=profile.styling_goal or "Unknown",
         subscription_status=profile.subscription_status,
         payment_types=payment_types,
-        free_scan=profile.free_scan
+        free_scan=profile.free_scan,
     )
 
 
