@@ -222,7 +222,7 @@ export const Api = {
         console.log(error);
       }
     },
-    analyzeShadeMatching: async (image) => {
+    analyzeShadeMatching: async (image, token) => {
       try {
         const response = await baseFetch(
           ({ globalBaseUrl }) =>
@@ -230,6 +230,9 @@ export const Api = {
           {
             method: "POST",
             body: image,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
         return response;
