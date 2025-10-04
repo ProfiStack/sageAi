@@ -6,10 +6,23 @@ from prompts.shade_matching import get_shade_matching_prompt
 from routers.auth import get_current_user
 from services.ai import analyze_skin_features
 from sqlalchemy.orm import Session
-from models.db_models import  ChatMessage, ChatResults, HairMessage, StylingMessage,  HairMessage, IngredientMessage, NutritionMessage, WellnessMessage, TrendMessage, TreatmentMessage
+from models.db_models import (
+    ChatMessage,
+    ChatResults,
+    HairMessage,
+    StylingMessage,
+    HairMessage,
+    IngredientMessage,
+    NutritionMessage,
+    WellnessMessage,
+    TrendMessage,
+    TreatmentMessage,
+)
 from db import SessionLocal
 from services.db_service import (
     get_user_chat_data,
+    update_user_payment,
+    update_user_profile,
 )
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
@@ -46,6 +59,7 @@ MODEL_MAP = {
     "styling": StylingMessage,  # If styling uses same table as skincare
 }
 
+
 @router.get("/user/chat/{chat_id}")
 async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
     db = SessionLocal()
@@ -57,7 +71,7 @@ async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
     chat_history = chat_data["chat_history"]
     if not chat_history:
         raise HTTPException(status_code=404, detail="No chat messages found.")
-
+    print('hello');
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(chat_history)
     try:
@@ -137,15 +151,18 @@ def get_chat_history_by_type(user_db: user_dependency, limit: int = 20):
         ],
     }
 
+
 @router.post("/user/analyze/skin-photo")
 async def analyze_skin_photo(
+    user_db: user_dependency,
     image: UploadFile = File(..., description="The image to analyze"),
 ):
     if not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid image type")
-
+    db = SessionLocal()
     image_bytes = await image.read()
-
+    await update_user_profile(db, user_db.get("user_id"), {"free_scan": False})
+    await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:
         result = await analyze_skin_features(image_bytes)
         message = get_image_analysis_prompt(result)
@@ -159,25 +176,27 @@ async def analyze_skin_photo(
             ),
         )
         json_result = response.choices[0].message.content
-        json_result = clean_and_parse_json(json_result);
+        json_result = clean_and_parse_json(json_result)
         return {"results": json_result}
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
 
+
 @router.post("/user/analyze/shade-matching")
 async def analyze_skin_photo(
+    user_db: user_dependency,
     image: UploadFile = File(..., description="The image to analyze"),
 ):
     if not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid image type")
-
+    db = SessionLocal()
     image_bytes = await image.read()
-
+    await update_user_profile(db, user_db.get("user_id"), {"free_scan": False})
+    await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:
         result = await analyze_skin_features(image_bytes)
         message = get_shade_matching_prompt(result)
-        print(message);
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
             executor,
@@ -188,7 +207,7 @@ async def analyze_skin_photo(
             ),
         )
         json_result = response.choices[0].message.content
-        json_result = clean_and_parse_json(json_result);
+        json_result = clean_and_parse_json(json_result)
         return {"results": json_result}
 
     except Exception as e:

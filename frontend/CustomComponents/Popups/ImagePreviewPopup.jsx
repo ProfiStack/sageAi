@@ -5,6 +5,7 @@ import { useSkinResultStore } from "@/store/skinResult";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useFormToast from "../FormToast/FormToast";
+import Cookies from "js-cookie";
 
 export default function ImagePreviewPopup({
   open,
@@ -15,7 +16,7 @@ export default function ImagePreviewPopup({
   onClose,
 }) {
   const { destructiveToast } = useFormToast();
-
+  const authToken = Cookies.get("authToken");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const handleConfirm = async (imageUrlOrFile) => {
@@ -30,7 +31,7 @@ export default function ImagePreviewPopup({
         throw new Error("Expected File object, got: " + typeof imageUrlOrFile);
       }
 
-      const apiResponse = await Api.client.analyzeSkinPhoto(formData);
+      const apiResponse = await Api.client.analyzeSkinPhoto(formData, authToken);
       if (apiResponse?.detail?.toLowerCase().includes("no face")) {
         destructiveToast("Face not detected. Please upload a clearer photo.");
         return;

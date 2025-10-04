@@ -175,13 +175,13 @@ export const Api = {
         console.log(error);
       }
     },
-    subscribePayment: async ({ price_id, token }) => {
+    subscribePayment: async ({ price_id, token, type }) => {
       try {
         const response = await baseFetch(
-          ({ globalBaseUrl }) => `${globalBaseUrl}/api/payments/subscribe`,
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/payments/pay`,
           {
             method: "POST",
-            body: validatePayload({ price_id }),
+            body: validatePayload({ price_id, type }),
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -205,13 +205,16 @@ export const Api = {
         console.log(error);
       }
     },
-    analyzeSkinPhoto: async (image) => {
+    analyzeSkinPhoto: async (image, token) => {
       try {
         const response = await baseFetch(
           ({ globalBaseUrl }) => `${globalBaseUrl}/api/user/analyze/skin-photo`,
           {
             method: "POST",
             body: image,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
         return response;
@@ -219,7 +222,7 @@ export const Api = {
         console.log(error);
       }
     },
-    analyzeShadeMatching: async (image) => {
+    analyzeShadeMatching: async (image, token) => {
       try {
         const response = await baseFetch(
           ({ globalBaseUrl }) =>
@@ -227,6 +230,9 @@ export const Api = {
           {
             method: "POST",
             body: image,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
         return response;

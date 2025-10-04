@@ -9,6 +9,7 @@ from models.schemas import SubscriptionRequest
 from routers.auth import get_current_user
 from services.payments import (
     cancel_user_subscription,
+    create_one_time_checkout,
     create_payment_intent,
     create_subscription_checkout,
     handle_stripe_webhook,
@@ -111,5 +112,27 @@ async def getPrices():
         "usd": float(
             Decimal(prices["data"][0]["currency_options"]["usd"]["unit_amount_decimal"])
             / 100
-        )
+        ),
     }
+
+
+@router.post("/pay")
+async def pay_once(
+    body: SubscriptionRequest,
+    user_db: user_dependency,
+    db: Session = Depends(get_db),
+):
+    try:
+        success_url = os.getenv("SUCCESS_URL") + "/success"
+        cancel_url = os.getenv("CANCEL_URL") + "/home"
+
+        return await create_one_time_checkout(
+            price_id=body.price_id,
+            type=body.type,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            user_db=user_db,
+            db=db,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

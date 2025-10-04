@@ -9,7 +9,8 @@ import useAuthStore from "@/store/authStore";
 const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
   if (!isOpen || !selectedItem) return null;
   const [price, setPrice] = useState("");
-  const { isSubscribed } = useAuthStore();
+  const { isSubscribed, shadeMatching, skinAnalysis, isFreeScan } =
+    useAuthStore();
   useEffect(() => {
     const fetchPrices = async () => {
       const response = await Api.client.prices();
@@ -17,6 +18,25 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
     };
     fetchPrices();
   }, []);
+  const getScanLabel = () => {
+    if (isFreeScan) {
+      return "1 Free Scan";
+    }
+    if (!isFreeScan && !shadeMatching && selectedItem.title === "True Tone") {
+      return "Quick Scan $1 Only";
+    }
+    if (!isFreeScan && !skinAnalysis && selectedItem.title === "Derm Direct") {
+      return "Quick Scan $1 Only";
+    }
+    if (!isFreeScan && shadeMatching && selectedItem.title === "True Tone") {
+      return "1 Scan Available";
+    }
+    if (!isFreeScan && skinAnalysis && selectedItem.title === "Derm Direct") {
+      return "1 Scan Available";
+    }
+    return "";
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-sm w-full mx-4 shadow-xl">
@@ -49,38 +69,44 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
             {/* Chat Option */}
             <button
               onClick={() => onChatClick(selectedItem)}
-              className="w-full group bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 hover:border-emerald-200 transition-all duration-300 hover:shadow-md"
+              className=" relative w-full group bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 hover:border-emerald-200 transition-all duration-300 hover:shadow-md"
             >
+              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                FREE
+              </div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <MessageCircle className="w-6 h-6 text-emerald-600" />
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 bg-emerald-100 rounded-full flex items-start justify-center group-hover:scale-110 transition-transform duration-300">
+                    <MessageCircle className=" text-emerald-600" />
                   </div>
                   <div className="text-left">
                     <h3 className="font-semibold text-emerald-800 mb-1">
                       Chat
                     </h3>
                     <p className="text-sm text-emerald-600">
-                      Text-based consultation
+                      Ask me anything and get instant answers about your
+                      routine, products, or concerns
                     </p>
                   </div>
-                </div>
-                <div className="bg-emerald-100 text-emerald-700 text-xs px-3 py-1 rounded-full font-medium">
-                  FREE
                 </div>
               </div>
             </button>
             <SubscribeButton route={selectedItem.scanRoute}>
-              <div className="w-full border border-indigo-200 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-xl p-4 relative">
+              <div className="relative w-full border border-indigo-200 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-xl p-4 relative">
+                <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                  {getScanLabel()}
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <Camera className="w-6 h-6 text-indigo-400" />
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <Camera className=" text-indigo-400" />
                     </div>
                     <div className="text-left">
                       <h3 className="font-semibold text-gray-600 mb-1">Scan</h3>
                       <p className="text-sm text-gray-500">
-                        {"AI-powered image analysis"}
+                        Analyze My Skin and in 30-seconds get photo analysis &
+                        personalized recommendations 🔒 Private & secure photos
+                        are deleted after analysis
                       </p>
                     </div>
                   </div>
@@ -101,7 +127,8 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
                 }}
                 className="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-medium mt-4 shadow-sm text-center"
               >
-                For Scanning Pricing starts from {price['usd']} USD OR {price['gbp']} GBP Country based. Subscribe now
+                For Scanning Pricing starts from {price["usd"]} USD OR{" "}
+                {price["gbp"]} GBP Country based. Subscribe now
               </motion.div>
             )}
           </div>

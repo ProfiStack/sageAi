@@ -70,13 +70,13 @@ export default function ProfilePageContent() {
             onClick: () => router.push("/"),
           },
         ]),
-    {
+    /* {
       icon: Wallet,
       label: "Subscription",
       bgColor: "bg-yellow-50",
       iconColor: "text-yellow-600",
       href: "/subscription",
-    },
+    },*/
     {
       icon: Info,
       label: "About Us",

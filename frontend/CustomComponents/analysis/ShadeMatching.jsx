@@ -9,10 +9,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ShadePreviewPopup from "../Popups/ShadeImagePreview";
+import Cookies from "js-cookie";
 
 export default function ShadeAnalysis() {
   const [isOpen, SetIsOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const authToken = Cookies.get("authToken");
   const [previewImage, setPreviewImage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [file, setFile] = useState(null);
@@ -34,7 +36,7 @@ export default function ShadeAnalysis() {
 
     try {
       setIsLoading(true);
-      const response = await Api.client.analyzeShadeMatching(formData);
+      const response = await Api.client.analyzeShadeMatching(formData, authToken);
       if (response?.detail?.toLowerCase().includes("no face")) {
         destructiveToast("Face not detected. Please upload a clearer photo.");
         return;
@@ -90,12 +92,11 @@ export default function ShadeAnalysis() {
       >
         <div className="flex-shrink-0">
           <p className="text-[28px] font-bold leading-tight mt-[10px]">
-            AI-Powered Shade Match. Accurate. Effortless. Inclusive.
+            Your Perfect Shade, Every Time
           </p>
           <p className="text-[#0D171C] mb-4 mt-2">
-            Find your perfect foundation and concealer shade with advanced AI
-            that analyzes your skin tone in real-time—no guesswork, just a
-            flawless match.
+            No more trial & error, your perfect match in seconds. Photos are
+            encrypted, analyzed, and deleted,only you see results
           </p>
         </div>
 
@@ -104,7 +105,7 @@ export default function ShadeAnalysis() {
             <Image
               src="/images/shadeMatching.png"
               fill
-              className="object-contain rounded-xl"
+              className="object-cover rounded-xl"
             />
           </div>
 
@@ -114,13 +115,13 @@ export default function ShadeAnalysis() {
                 onClick={handleUploadClick}
                 className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
-                Upload a clear selfie
+                Upload Selfie
               </button>
               <button
                 onClick={() => SetIsOpen(true)}
                 className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
-                Take a clear selfie
+                Snap My Skin
               </button>
               <input
                 ref={fileInputRef}

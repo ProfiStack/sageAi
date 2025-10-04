@@ -2,7 +2,9 @@
 from pickle import FALSE
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, JSON, DateTime, TEXT, UniqueConstraint
+from sqlalchemy import Boolean, Column, ForeignKey, String, JSON, DateTime, TEXT, UniqueConstraint
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import expression
 from db import Base
 
 class UserProfile(Base):
@@ -33,6 +35,8 @@ class UserProfile(Base):
     last_active = Column(DateTime, default=datetime.utcnow)
     subscription_status = Column(String, default="free")  # free, active, canceled
     subscription_end = Column(DateTime, nullable=True)
+    payments = relationship("Payment", back_populates="user_profile")
+    free_scan = Column(Boolean, default=True, server_default=expression.true())
 
 
 class ChatMessage(Base):
@@ -132,7 +136,7 @@ class StaticMessages(Base):
 class Payment(Base):
     __tablename__ = "payments"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, index=True, nullable=False)
+    user_id = Column(String, ForeignKey('user_profiles.user_id'), index=True, nullable=False)
     amount = Column(String, nullable=True)  # stored in cents as string
     currency = Column(String, default="usd")
     status = Column(String, default="pending")  # pending, succeeded, failed
@@ -144,3 +148,6 @@ class Payment(Base):
     email = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+    type = Column(String)
+    user_profile = relationship("UserProfile", back_populates="payments")
+

@@ -11,6 +11,7 @@ import { categoryItemsData } from "@/mockData/homeMockData";
 import { getRoutesForItem } from "@/config/routeConfig";
 import SkinPopup from "../Popups/SkinPopup";
 import { Lightbulb } from "lucide-react";
+import useAuthStore from "@/store/authStore";
 
 export default function HomePage() {
   const [messages, setMessages] = useState([]);
@@ -20,8 +21,21 @@ export default function HomePage() {
   const [category, setCategory] = useState("");
   const router = useRouter();
   const categoryItems = categoryItemsData;
+  const { token, isFreeScan, shadeMatching, skinAnalysis } = useAuthStore();
 
   const { logEvent } = useAmplitude();
+  useEffect(() => {
+    const getProfile = async () => {
+      const res = await Api.client.getProfile(token);
+      const skinAnalysis = res.payment_types.includes("skin-analysis");
+      const shadeMatching = res.payment_types.includes("shade-matching");
+      const store = useAuthStore.getState();
+      store.setFreeScan(res.free_scan);
+      store.setShadeMatching(shadeMatching);
+      store.setSkinAnalysis(skinAnalysis);
+    };
+    getProfile();
+  }, [token, isFreeScan, shadeMatching, skinAnalysis]);
 
   // Categories that should show the popup (chat/scan options)
   const popupCategories = ["Skincare", "Makeup"];
@@ -111,7 +125,9 @@ export default function HomePage() {
             layout="fill"
           />
         </div>
-        <p className="text-2xl font-bold text-center">Welcome to SageeAi</p>
+        <p className="text-2xl font-bold text-center">
+          Welcome, ready for your glowup
+        </p>
         <div className="max-w-md mx-auto px-6 py-6">
           <div className="mb-8">
             {/* Stats Card */}

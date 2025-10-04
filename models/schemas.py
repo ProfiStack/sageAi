@@ -1,6 +1,6 @@
 # models/schemas.py
 from pydantic import BaseModel,EmailStr
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 class ChatRequest(BaseModel):
@@ -18,6 +18,7 @@ class ChatResultResponse(BaseModel):
 
 class SubscriptionRequest(BaseModel):
     price_id: str
+    type: str
 
 
 class UserProfileRequest(BaseModel):
@@ -36,6 +37,7 @@ class UserProfileRequest(BaseModel):
     hair_concern: Optional[str] = None
     style_preference: Optional[str] = None
     styling_goal: Optional[str] = None
+    free_scan: Optional[bool] = None
     
 class UserProfileResponse(UserProfileRequest):
     name: Optional[str] = None
@@ -58,6 +60,9 @@ class UserProfileResponse(UserProfileRequest):
     style_preference: Optional[str] = None
     styling_goal: Optional[str] = None
     subscription_status: Optional[str] = None
+    free_scan: Optional[bool] = None
+    payment_types: List[str]
+
 
 class AccessTokenResponse(BaseModel):
     access: str

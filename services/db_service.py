@@ -1,5 +1,18 @@
 from sqlalchemy.orm import Session
-from models.db_models import UserProfile, ChatMessage, ChatResults, HairMessage, StylingMessage,  HairMessage, IngredientMessage, NutritionMessage, WellnessMessage, TrendMessage, TreatmentMessage
+from models.db_models import (
+    Payment,
+    UserProfile,
+    ChatMessage,
+    ChatResults,
+    HairMessage,
+    StylingMessage,
+    HairMessage,
+    IngredientMessage,
+    NutritionMessage,
+    WellnessMessage,
+    TrendMessage,
+    TreatmentMessage,
+)
 from datetime import datetime
 import json
 
@@ -14,6 +27,7 @@ MODEL_MAP = {
     "styling": StylingMessage,  # If styling uses same table as skincare
 }
 
+
 def get_or_create_user_profile(db: Session, user_id: str):
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
     if not profile:
@@ -21,6 +35,10 @@ def get_or_create_user_profile(db: Session, user_id: str):
         db.add(profile)
         db.commit()
         db.refresh(profile)
+    return profile
+
+def get_user_payments(db: Session, user_id: str):
+    profile = db.query(Payment).filter(Payment.user_id == user_id).first()
     return profile
 
 
@@ -70,6 +88,7 @@ def get_user_session_data(db, user_id: str, feature_type: str):
         "concern": profile.concern,
         "preferred_routine": profile.preferred_routine,
     }
+
 
 def get_user_chat_data(db: Session, user_id: str, chat_id: str):
     existing = (
@@ -126,9 +145,24 @@ async def update_user_profile(db: Session, user_id: str, updates: dict):
     db.commit()  # commit transaction
 
     db.refresh(profile)  # refresh to get latest from DB
-
+    print(profile)
     return profile
 
+async def update_user_payment(db: Session, user_id: str, updates: dict):
+    payment = get_user_payments(db, user_id)
+    for k, v in updates.items():
+        if hasattr(payment, k):
+            setattr(payment, k, v)
+        else:
+            print(f"Warning: Userpayment has no attribute '{k}'")
+
+    payment.last_active = datetime.utcnow()
+
+    db.flush()  # flush changes
+    db.commit()  # commit transaction
+
+    db.refresh(payment)  # refresh to get latest from DB
+    return payment
 
 def save_chat_message(
     db: Session, user_id: str, type: str, message: str, response: str

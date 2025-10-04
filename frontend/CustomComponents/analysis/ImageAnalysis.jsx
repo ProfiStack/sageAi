@@ -9,10 +9,12 @@ import { useSkinResultStore } from "@/store/skinResult";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import Cookies from "js-cookie";
 
 export default function SkinAnalysis() {
   const [isOpen, SetIsOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const authToken = Cookies.get("authToken");
   const [previewImage, setPreviewImage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [file, setFile] = useState(null);
@@ -34,7 +36,7 @@ export default function SkinAnalysis() {
 
     try {
       setIsLoading(true);
-      const response = await Api.client.analyzeSkinPhoto(formData);
+      const response = await Api.client.analyzeSkinPhoto(formData, authToken);
       if (response?.detail?.toLowerCase().includes("no face")) {
         destructiveToast("Face not detected. Please upload a clearer photo.");
         return;
@@ -89,12 +91,12 @@ export default function SkinAnalysis() {
         style={{ height: "calc(100vh - 142px)" }}
       >
         <div className="flex-shrink-0">
-          <p className="text-[28px] font-bold leading-tight mt-[10px]">
-            AI-Powered Skin Scan. Personalised. Private. Precise.
+          <p className="text-[20px] text-[#02331E] font-bold leading-tight mt-[10px]">
+            Get Your Personal Skin Report
           </p>
-          <p className="text-[#0D171C] mb-4 mt-2">
-            Get a detailed analysis of your skin's health and personalized
-            recommendations for skincare, makeup, and more.
+          <p className="text-[#02331E] mb-2 mt-1 leading-tight">
+            Quick, private analysis & simple steps to healthier skin. Photos are
+            encrypted, analyzed, and deleted,only you see results
           </p>
         </div>
 
@@ -113,13 +115,13 @@ export default function SkinAnalysis() {
                 onClick={handleUploadClick}
                 className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
-                Upload a clear selfie
+                Upload Selfie
               </button>
               <button
                 onClick={() => SetIsOpen(true)}
                 className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
               >
-                Take a clear selfie
+                Snap My Skin
               </button>
               <input
                 ref={fileInputRef}
