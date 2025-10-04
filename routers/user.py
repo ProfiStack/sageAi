@@ -71,7 +71,7 @@ async def get_or_create_chat_results(user_db: user_dependency, chat_id: str):
     chat_history = chat_data["chat_history"]
     if not chat_history:
         raise HTTPException(status_code=404, detail="No chat messages found.")
-
+    print('hello');
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(chat_history)
     try:
