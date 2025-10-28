@@ -60,3 +60,32 @@ export const changeMessage = (messages, setCurrentMessage) => {
   const randomIndex = Math.floor(Math.random() * messages.length);
   setCurrentMessage(messages[randomIndex].message);
 };
+
+// Transfer guest quiz results to user profile
+export const transferGuestQuizResults = async (userId) => {
+  try {
+    if (typeof window !== "undefined") {
+      const guestQuizResults = localStorage.getItem("sagee_guest_quiz_results");
+
+      if (guestQuizResults) {
+        const { skin_type, concern } = JSON.parse(guestQuizResults);
+
+        if (skin_type || concern) {
+          // Update user profile with guest quiz results
+          const updateData = {
+            skin_type: skin_type || "",
+            concern: concern || "",
+          };
+
+          await Api.client.updateProfile(updateData, userId);
+
+          // Remove guest quiz results from localStorage
+          localStorage.removeItem("sagee_guest_quiz_results");
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error transferring guest quiz results:", error);
+    // Don't block login if transfer fails
+  }
+};

@@ -36,6 +36,7 @@ export default function PersonalDetailsPage() {
     styling_goal: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const { setName } = useAuthStore();
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [initialFormData, setInitialFormData] = useState(null);
 
@@ -97,6 +98,7 @@ export default function PersonalDetailsPage() {
     setIsLoading(true);
     try {
       const response = await Api.client.updateProfile(formData, token);
+      setName(formData.name);
       setInitialFormData(formData);
       primaryToast({ description: "Profile updated successfully!" });
     } catch (error) {

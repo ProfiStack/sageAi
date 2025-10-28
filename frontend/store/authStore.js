@@ -16,7 +16,9 @@ const useAuthStore = create(
       isSubscribed: null,
       shadeMatching: false,
       skinAnalysis: false,
+      name: "",
       setToken: (token) => set({ token }),
+      setName: (name) => set({ name }),
       setShadeMatching: (shadeMatching) => set({ shadeMatching }),
       setSkinAnalysis: (skinAnalysis) => set({ skinAnalysis }),
       setFreeScan: (isFreeScan) => set({ isFreeScan }),
@@ -53,6 +55,7 @@ const useAuthStore = create(
         isFreeScan: state.isFreeScan,
         skinAnalysis: state.skinAnalysis,
         shadeMatching: state.shadeMatching,
+        name: state.name,
       }),
     }
   )

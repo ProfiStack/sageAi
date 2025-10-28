@@ -1,7 +1,7 @@
 "use client";
 
 import DesktopHomePage from "@/CustomComponents/desktop/homePage/HomePage";
-import Login from "@/CustomComponents/Login/Login";
+import HomePage from "@/CustomComponents/home/Home";
 import { useHasHydrated } from "@/shared/utils/useHydration";
 import { isMobileClient } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
@@ -18,7 +18,7 @@ export default function LoginPage() {
     if (isMobileClient()) {
       // ✅ On mobile
       if (hasHydrated && isAuthenticated && token) {
-        router.replace("/home");
+        router.replace("/");
       }
     }
   }, [isAuthenticated, token, hasHydrated, router]);
@@ -33,7 +33,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col justify-between h-screen">
-      {isMobileClient() ? <Login /> : <DesktopHomePage />}
+      {isMobileClient() ? <HomePage /> : <DesktopHomePage />}
     </div>
   );
 }
