@@ -1,11 +1,5 @@
 "use client";
-import {
-  House,
-  UserRound,
-  MessageCircleMore,
-  TvMinimalPlay,
-  ScanFace,
-} from "lucide-react";
+import { House, UserRound, ScanFace, MessageSquare } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import ScanPopup from "../Popups/ScanPopup";
@@ -16,8 +10,8 @@ export default function Footer() {
   const pathName = usePathname();
 
   const footerData = [
-    { icon: House, route: "/home", title: "Home" },
-    { icon: MessageCircleMore, route: "/skincare/chat", title: "Chat" },
+    { icon: House, route: "/", title: "Home" },
+    { icon: MessageSquare, route: "/skincare/chat", title: "Chat" },
     { icon: ScanFace, route: "/image-analysis", title: "Scan" },
     // { icon: TvMinimalPlay, route: "/result", title: "Results" },
     { icon: UserRound, route: "/profile", title: "Profile" },

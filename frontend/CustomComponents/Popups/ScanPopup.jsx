@@ -14,7 +14,28 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
       router.prefetch(item.route);
     });
   }, []);
-  const { isSubscribed } = useAuthStore();
+
+  const { isSubscribed, shadeMatching, skinAnalysis, isFreeScan } =
+    useAuthStore();
+
+  const getScanLabel = (item) => {
+    if (isFreeScan) {
+      return "1 Free Scan";
+    }
+    if (!isFreeScan && !shadeMatching && item.title === "Shade Matching") {
+      return "Quick Scan $1 Only";
+    }
+    if (!isFreeScan && !skinAnalysis && item.title === "Skin Analysis") {
+      return "Quick Scan $1 Only";
+    }
+    if (!isFreeScan && shadeMatching && item.title === "Shade Matching") {
+      return "1 Scan Available";
+    }
+    if (!isFreeScan && skinAnalysis && item.title === "Skin Analysis") {
+      return "1 Scan Available";
+    }
+    return "";
+  };
   return (
     <AnimatePresence>
       {isOpen && (
@@ -50,7 +71,8 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
             {/* Grid of options */}
             <div className="grid grid-cols-2 gap-3">
               {ImageAnalysisData.map((item, index) =>
-                item.title === "Skin Analysis" || item.title === 'Shade Matching' ? (
+                item.title === "Skin Analysis" ||
+                item.title === "Shade Matching" ? (
                   <SubscribeButton route={item.route}>
                     <div
                       key={index}
@@ -70,11 +92,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                           className="object-cover rounded-2xl"
                         />
                         <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                          {item.title === "Skin Analysis" || item.title === 'Shade Matching'
-                            ? !isSubscribed
-                              ? "Subscribe Now"
-                              : " Subscribed"
-                            : "Coming Soon"}
+                          {getScanLabel(item)}
                         </div>
                       </div>
                       <p className="font-semibold text-gray-900 text-sm mt-1">
@@ -101,7 +119,8 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                         className="object-cover rounded-2xl"
                       />
                       <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                        {item.title === "Skin Analysis" || item.title === 'Shade Matching'
+                        {item.title === "Skin Analysis" ||
+                        item.title === "Shade Matching"
                           ? isSubscribed
                             ? "Subscribed"
                             : "Subscribe Now"

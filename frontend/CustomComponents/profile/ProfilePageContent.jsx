@@ -1,6 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Info, User, LogOut, LogIn, Wallet } from "lucide-react";
+import {
+  Info,
+  User,
+  LogOut,
+  LogIn,
+  Wallet,
+  SquarePen,
+  CircleUser,
+} from "lucide-react";
 import Footer from "@/CustomComponents/Footer/Footer";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,22 +18,23 @@ import { useRouter } from "next/navigation";
 import { isUserLoggedIn } from "@/lib/utils";
 import { Api } from "@/shared/api/api";
 import LogoutPopup from "../Popups/LogoutPopup";
+import { profile } from "@tensorflow/tfjs";
 
 export default function ProfilePageContent() {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuthStore();
-  const [userName, setUserName] = useState("");
+  const { isAuthenticated, token, name } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+
+  console.log(profileData);
 
   useEffect(() => {
     setIsLoading(true);
     const loadProfile = async () => {
       try {
-        const profileData = await Api.client.getProfile(token);
-        if (profileData?.name) {
-          setUserName(profileData.name);
-        }
+        const res = await Api.client.getProfile(token);
+        setProfileData(res);
         setIsLoading(false);
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -67,7 +76,7 @@ export default function ProfilePageContent() {
             bgColor: "bg-green-50",
             iconColor: "text-green-600",
             isButton: true,
-            onClick: () => router.push("/"),
+            onClick: () => router.push("/login"),
           },
         ]),
     /* {
@@ -96,107 +105,57 @@ export default function ProfilePageContent() {
     },*/
   ];
 
+  const data = [
+    { label: "Skin Type:", value: profileData?.skin_type },
+    { label: "Concern:", value: profileData?.concern },
+    { label: "Makeup Goal:", value: profileData?.makeup_goal },
+    { label: "Hair Type:", value: profileData?.hair_type },
+    { label: "Hair Concern:", value: profileData?.hair_concern },
+    { label: "Lifestyle:", value: profileData?.lifestyle },
+    { label: "Preferred Routine:", value: profileData?.preferred_routine },
+    { label: "Nutrition Goal:", value: profileData?.nutrition_goal },
+    { label: "Dietary Restriction:", value: profileData?.dietary_restriction },
+    { label: "Wellness Focus:", value: profileData?.wellness_focus },
+    { label: "Dedicated time:", value: profileData?.dedicate_time },
+    { label: "Style Preference:", value: profileData?.style_preference },
+    { label: "Styling Goal:", value: profileData?.styling_goal },
+  ];
+
   return (
-    <div className="h-screen bg-gray-50 max-w-md mx-auto flex flex-col justify-between ">
-      <div>
-        <SettingsHeader title="Profile" />
-
-        <div>
-          {/* Profile Section */}
-          <div className=" px-6 py-4 text-center">
-            <div className="relative inline-block mb-1">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-200 to-orange-200 flex items-center justify-center border-4 border-white shadow-lg">
-                <User size={48} className="text-gray-400" />
-              </div>
+    <div className="">
+      <SettingsHeader title={"Profile"} />
+      <div className="p-4 bg-[#FAFAFA]">
+        <div className="w-full bg-white border border-[#FFFFFF01] p-6 rounded-2xl shadow-lg">
+          <div className="flex justify-between">
+            <div className="flex gap-2 items-center">
+              <CircleUser size={30} />
+              <p className="font-semibold">{profileData?.name}</p>
             </div>
-
-            {isLoading ? (
-              <div className="h-6 bg-gray-200 rounded w-32 mx-auto animate-pulse  mb-2 mt-2" />
-            ) : (
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {isAuthenticated && userName ? userName : "guest user"}
-              </h2>
-            )}
+            <SquarePen size={20} />
           </div>
-
-          {/* Account Section */}
-          <div className="px-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Account
-            </h3>
-            <div className="space-y-3">
-              {menuItems.map((item, index) =>
-                item.isButton ? (
-                  <button
-                    key={index}
-                    className="w-full flex items-center p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-                    onClick={item.onClick}
-                  >
-                    <div className={`p-2 rounded-[10px] ${item.bgColor} mr-4`}>
-                      <item.icon size={20} className={item.iconColor} />
-                    </div>
-                    <span className="text-gray-900 font-medium flex-1 text-left">
-                      {item.label}
-                    </span>
-                  </button>
-                ) : (
-                  <Link
-                    key={index}
-                    href={item.href}
-                    className="w-full flex items-center p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className={`p-2 rounded-[10px] ${item.bgColor} mr-4`}>
-                      <item.icon size={20} className={item.iconColor} />
-                    </div>
-                    <span className="text-gray-900 font-medium flex-1 text-left">
-                      {item.label}
-                    </span>
-                  </Link>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Support Section 
-        <div className="px-6 py-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Support</h3>
-          <div className="space-y-3">
-            {supportItems.map((item, index) => (
-              <Link
-                key={index}
-                href={item.href}
-                className="w-full flex items-center  p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          <div className="flex overflow-x-auto gap-2 mt-4">
+            {data.map(({ label, value }) => (
+              <div
+                key={label}
+                className="flex justify-between items-center gap-2 bg-gray-50 rounded-xl p-2 border border-gray-100 shadow-sm"
               >
-                <div className={`p-2 rounded-[10px] ${item.bgColor} mr-4`}>
-                  <item.icon size={20} className={item.iconColor} />
-                </div>
-                <span className="text-gray-900 font-medium flex-1 text-left">
-                  {item.label}
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {label}
                 </span>
-              </Link>
+                <span className="font-medium text-xs text-gray-800">
+                  {value && value !== "Unknown" ? value : "N/A"}
+                </span>
+              </div>
             ))}
           </div>
-          
-        </div>
-        */}
 
-          {/* SageeAi Logo */}
-          <div className="flex items-center justify-center absolute left-[40%] bottom-[77px]">
-            <Image
-              src="/images/sagelogo2.png"
-              alt="SageeAi"
-              width={78}
-              height={78}
-            />
-          </div>
+          <div></div>
         </div>
       </div>
 
       <Footer />
 
       <LogoutPopup isOpen={isOpen} setIsOpen={setIsOpen} />
-
-      {/* Bottom padding to account for fixed navigation */}
     </div>
   );
 }

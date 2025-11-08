@@ -21,14 +21,17 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSkinResultStore } from "@/store/skinResult";
+
 import {
   downloadSkincareReportPDF,
   shareSkincareReportPDF,
 } from "../resultPdf";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import { useRouter } from "next/navigation";
+import Footer from "@/CustomComponents/Footer/Footer";
 
 export default function ResultsPage() {
+  const [favorites, setFavorites] = useState([]);
   const router = useRouter();
   const resultsData = useSkinResultStore((state) => state.html);
   const handleDownloadReport = () => {
@@ -44,6 +47,47 @@ export default function ResultsPage() {
       shareSkincareReportPDF(resultsData);
     } else {
       alert("No report data available. Please retake the quiz.");
+    }
+  };
+
+  const handleSaveRoutine = async () => {
+    try {
+      const payload = {
+        day_routine: resultsData?.day_routine_section || [],
+        night_routine: resultsData?.night_routine_section || [],
+      };
+
+      const response = await fetch("/api/save-routine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleToggleFavorite = async (product) => {
+    const isFav = favorites.some((fav) => fav.name === product.name);
+    let updatedFavs;
+
+    if (isFav) {
+      updatedFavs = favorites.filter((fav) => fav.name !== product.name);
+    } else {
+      updatedFavs = [...favorites, product];
+    }
+
+    setFavorites(updatedFavs);
+
+    // Send updated favorites to backend
+    try {
+      await fetch("/api/save-favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ favorites: updatedFavs }),
+      });
+    } catch (error) {
+      console.error("Error saving favorites:", error);
     }
   };
 
@@ -138,7 +182,7 @@ export default function ResultsPage() {
               value="routine"
               className="space-y-6 sm:space-y-8 mt-0"
             >
-              <h2 className="text-xl sm:text-2xl font-bold text-[#02331E] text-center mb-6">
+              <h2 className="text-xl sm:text-[18px] font-bold text-[#02331E] text-center mb-6">
                 Your Personalized Skincare Routine
               </h2>
 
@@ -190,6 +234,12 @@ export default function ResultsPage() {
                     ))}
                   </div>
                 </div>
+                <button
+                  onClick={handleSaveRoutine}
+                  className="p-2 rounded-xl font-semibold text-white bg-[#02331E] flex w-full justify-center"
+                >
+                  Save Routine
+                </button>
               </div>
             </TabsContent>
 
@@ -204,15 +254,24 @@ export default function ResultsPage() {
                     key={index}
                     className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-[#D4B038]/20 hover:shadow-lg transition-shadow"
                   >
-                    <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-3">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-2">
+                      <div className="flex flex-1 items-center justify-between w-full">
                         <h3 className="font-bold text-[#02331E] text-base sm:text-lg">
                           {product.name}
                         </h3>
-                        <p className="text-[#D4B038] font-medium text-sm sm:text-base">
-                          {product.brand}
-                        </p>
+                        <Heart
+                          onClick={() => handleToggleFavorite(product)}
+                          className={`w-5 h-5 cursor-pointer transition-colors ${
+                            favorites.some((fav) => fav.name === product.name)
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-400 hover:text-red-500"
+                          }`}
+                        />
                       </div>
+                      <p className="text-[#D4B038] font-medium text-sm sm:text-base">
+                        {product.brand}
+                      </p>
+
                       <div className="text-left sm:text-right">
                         <p className="text-lg sm:text-xl font-bold text-[#02331E]">
                           ${product.price.replace(" USD", "")}
@@ -410,6 +469,7 @@ export default function ResultsPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

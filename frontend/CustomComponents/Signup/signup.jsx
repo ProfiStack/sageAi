@@ -14,9 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Api } from "@/shared/api/api";
 import { useRouter } from "next/navigation";
 import useFormToast from "../FormToast/FormToast";
-import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
+import {
+  setUserId,
+  setAuthToken,
+  setLoginTimestamp,
+} from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
+import Image from "next/image";
 import { useAmplitude } from "@/app/providers/amplitudeProvider";
+import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { comingSoonData, featuresData } from "@/mockData/loginMockData";
@@ -33,12 +39,13 @@ const formSchema = z.object({
       message: "Please enter a valid email address",
     }
   ),
+  email: z.string({ message: "Please enter your name" }),
 
   password: z.string().min(6, {
     message: "Password should contain minimum 6 characters",
   }),
 });
-export default function Login() {
+export default function Signup() {
   const router = useRouter();
   const { logEvent } = useAmplitude();
   const { primaryToast, destructiveToast } = useFormToast();
@@ -49,6 +56,7 @@ export default function Login() {
     defaultValues: {
       email: "",
       password: "",
+      name: "",
     },
   });
   async function onSubmit(values) {
@@ -69,21 +77,19 @@ export default function Login() {
       if (data.token) {
         const token = data.token;
         const decoded = jwtDecode(token);
-        console.log(decoded);
         await setAuthToken(data.token);
         await setLoginTimestamp(Date.now());
         localStorage.setItem("token", data.token);
         localStorage.setItem("sagee_user_id", decoded.user_id);
         const store = useAuthStore.getState();
         store.setUserId(decoded.user_id);
-        store.setName(decoded.name);
         store.setToken(data.token);
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
         logEvent("Onboard Sucessful");
         await transferGuestQuizResults(data.user_id);
-        router.push("/");
-        primaryToast({ description: "Login successful" });
+        router.push("/onboarding");
+        primaryToast({ description: "Signup successful" });
         setIsLoading(false);
       } else if (data.detail) {
         setIsLoading(false);
@@ -130,8 +136,10 @@ export default function Login() {
       )}
       <div className="  bg-[#F5F5F5] shadow-2xl min-h-screen relative overflow-hidden flex px-6 pt-[100px]">
         <div className="flex flex-col justify-center items-center w-full bg-[#ffffff] p-6 rounded-[16px] h-max">
-          <p className="text-[22px] flex justify-center">Login</p>
-          <p className="text-[13px] text-[#525252] mb-6">Welcome to SageeAI</p>
+          <p className="text-[22px] flex justify-center">Sign Up</p>
+          <p className="text-[13px] text-[#525252] mb-6">
+            Join SageeAI and get started
+          </p>
 
           {/* Main Content */}
           <div className="relative z-10 w-full ">
@@ -141,6 +149,24 @@ export default function Login() {
                   onSubmit={form.handleSubmit(onSubmit)}
                   className="flex flex-col w-full gap-4"
                 >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            className="w-full px-4 py-3 border-2 border-[#D1D5DB] mt-1 rounded-xl placeholder:text-[#9CA3AF] focus:border-[#D4B038] focus:outline-none focus:ring-2 focus:ring-[#D4B038]/20 transition-all duration-300 text-[#121212] placeholder-gray-400"
+                            placeholder="Full Name"
+                            type="text"
+                            {...field}
+                          />
+                        </FormControl>
+
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="email"
@@ -195,10 +221,10 @@ export default function Login() {
                   />
 
                   <Button
-                    className="w-full py-4 text-[16px] font-medium bg-[#02331E] text-white placeholder:text-[#9CA3AF] rounded-[12px] hover:bg-[#02331E]"
+                    className="w-full py-4 text-[16px] font-medium bg-[#D4B038] text-white placeholder:text-[#9CA3AF] rounded-[12px] hover:bg-[#D4B038]"
                     type="submit"
                   >
-                    Login
+                    Sign Up
                   </Button>
                 </form>
               </Form>
@@ -210,15 +236,15 @@ export default function Login() {
             </button>*/}
               <div className="flex items-center gap-1 justify-center mt-4">
                 <p className="text-[#525252] text-[13px]">
-                  Don’t have an account?{" "}
+                  Already have an account?{" "}
                 </p>
                 <button
                   onClick={() => {
-                    router.push("/signup");
+                    router.push("/login");
                   }}
-                  className="text-[#02331E] text-[14px]"
+                  className="text-[#D4B038] text-[14px]"
                 >
-                  Sign Up
+                  Login
                 </button>
               </div>
             </div>
