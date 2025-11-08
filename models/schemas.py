@@ -73,6 +73,7 @@ class LoginRequest(BaseModel):
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
     password: str
+    name: Optional[str] = None
 
 class LoginResponse(BaseModel):
     user_id: str

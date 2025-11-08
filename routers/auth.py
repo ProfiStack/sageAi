@@ -98,6 +98,7 @@ async def login_user(data: LoginRequest, db: Session = Depends(get_db)):
         phone_number=data.phone_number,
         created_at=datetime.now(timezone.utc),
         last_active=datetime.now(timezone.utc)
+        name=data.name,
     )
     db.add(new_profile)
     db.commit()
