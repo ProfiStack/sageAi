@@ -151,3 +151,10 @@ class Payment(Base):
     type = Column(String)
     user_profile = relationship("UserProfile", back_populates="payments")
 
+class UserFavourite(Base):
+    __tablename__ = 'user_favourites'
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey('user_profiles.user_id'), index=True, nullable=False)
+    user_favourites = Column(JSON, nullable=False, server_default='{}')
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)

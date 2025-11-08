@@ -155,9 +155,6 @@ async def update_user_payment(db: Session, user_id: str, updates: dict):
             setattr(payment, k, v)
         else:
             print(f"Warning: Userpayment has no attribute '{k}'")
-
-    payment.last_active = datetime.utcnow()
-
     db.flush()  # flush changes
     db.commit()  # commit transaction
 

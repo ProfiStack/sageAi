@@ -3,6 +3,8 @@ from pydantic import BaseModel,EmailStr
 from typing import List, Optional
 from datetime import datetime
 
+from sqlalchemy import JSON
+
 class ChatRequest(BaseModel):
     message: str
     user_id: Optional[str] = None
@@ -97,3 +99,12 @@ class UserProfileUpdateRequest(BaseModel):
     hair_concern: Optional[str] = None
     style_preference: Optional[str] = None
     styling_goal: Optional[str] = None
+
+
+class UserFavouriteRequest(BaseModel):
+    user_favourites: Optional[dict] = None  # Use dict, not JSON
+
+class UserFavouriteResponse(BaseModel):
+    user_favourites: dict
+    created_at: datetime
+    updated_at: datetime
