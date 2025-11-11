@@ -88,7 +88,7 @@ def create_or_update_favourite(data: UserFavouriteRequest, user_db: user_depende
 # --- GET route to fetch favourites by user_id ---
 @router.get("/favourites/{user_id}")
 def get_favourite(user_db: user_dependency, db: Session = Depends(get_db), user_id: str = None):
-    fav = db.query(UserFavourite).filter(user_id == user_db.get("user_id")).all()
+    fav = db.query(UserFavourite).filter(UserFavourite.user_id == user_db.get("user_id")).all()
     if not fav:
         raise HTTPException(status_code=404, detail="User favourites not found")
     print(fav)
