@@ -29,9 +29,12 @@ import {
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import { useRouter } from "next/navigation";
 import Footer from "@/CustomComponents/Footer/Footer";
+import { Api } from "@/shared/api/api";
+import useAuthStore from "@/store/authStore";
 
 export default function ResultsPage() {
   const [favorites, setFavorites] = useState([]);
+  const { token, userId } = useAuthStore();
   const router = useRouter();
   const resultsData = useSkinResultStore((state) => state.html);
   const handleDownloadReport = () => {
@@ -53,15 +56,14 @@ export default function ResultsPage() {
   const handleSaveRoutine = async () => {
     try {
       const payload = {
-        day_routine: resultsData?.day_routine_section || [],
-        night_routine: resultsData?.night_routine_section || [],
+        user_favourites: {
+          day_routine: resultsData?.day_routine_section || [],
+          night_routine: resultsData?.night_routine_section || [],
+        },
       };
-
-      const response = await fetch("/api/save-routine", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      console.log(payload);
+      const response = await Api.client.favourites(token, payload, userId);
+      console.log(response);
     } catch (error) {
       console.error(error);
     }
@@ -79,15 +81,27 @@ export default function ResultsPage() {
 
     setFavorites(updatedFavs);
 
-    // Send updated favorites to backend
     try {
-      await fetch("/api/save-favorites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ favorites: updatedFavs }),
-      });
+      const payload = {
+        user_favourites: {
+          products: updatedFavs,
+        },
+      };
+
+      console.log("Sending favourites payload:", payload);
+
+      const res = await Api.client.favourites(token, payload, userId);
+      console.log("Favourites saved:", res);
     } catch (error) {
       console.error("Error saving favorites:", error);
+    }
+  };
+  const handleget = async () => {
+    try {
+      const res = await Api.client.getFavourites(token, userId);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -106,6 +120,13 @@ export default function ResultsPage() {
             Personalized skincare guidance powered by AI
           </p>
         </div>
+        <button
+          onClick={() => {
+            handleget();
+          }}
+        >
+          get
+        </button>
 
         {/* Profile Summary Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg mb-6 border border-[#D4B038]/20 mx-2">
