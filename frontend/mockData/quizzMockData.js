@@ -145,8 +145,8 @@ const hairCareQuizData = [
         label: "Wavy",
       },
       {
-        id: " Curly",
-        label: " Curly",
+        id: "Curly",
+        label: "Curly",
       },
       { id: "Coily/Kinky", label: "Coily/Kinky" },
       { id: "Not Sure", label: "Not Sure" },

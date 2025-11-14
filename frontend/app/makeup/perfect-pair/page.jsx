@@ -33,6 +33,35 @@ export default function PerfectPair() {
           console.error("Error loading user profile:", error);
           setShowBeautyQuiz(true);
         }
+      } else {
+        // Guest user - check localStorage for specific keys
+        if (typeof window !== "undefined") {
+          const guestQuizResults = localStorage.getItem(
+            "sagee_guest_quiz_results"
+          );
+
+          if (!guestQuizResults) {
+            // No quiz results saved - show the quiz
+            setShowBeautyQuiz(true);
+          } else {
+            try {
+              const results = JSON.parse(guestQuizResults);
+
+              // Check for skin_type and concern (required for skincare page)
+              const hasValidSkinType =
+                results?.skin_type && results.skin_type !== "Unknown";
+              const makeupGoal =
+                results?.makeup_goal && results.makeup_goal !== "Unknown";
+
+              if (!hasValidSkinType || !makeupGoal) {
+                setShowBeautyQuiz(true);
+              }
+            } catch (error) {
+              console.error("Error parsing guest quiz results:", error);
+              setShowBeautyQuiz(true);
+            }
+          }
+        }
       }
     };
 

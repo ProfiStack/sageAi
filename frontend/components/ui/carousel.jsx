@@ -6,7 +6,6 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const CarouselContext = React.createContext(null);
 
@@ -176,7 +175,7 @@ const CarouselPrevious = React.forwardRef(
     const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
     return (
-      <Button
+      <button
         ref={ref}
         variant={variant}
         size={size}
@@ -193,7 +192,7 @@ const CarouselPrevious = React.forwardRef(
       >
         <ArrowLeft className="h-4 w-4" />
         <span className="sr-only">Previous slide</span>
-      </Button>
+      </button>
     );
   }
 );
@@ -204,7 +203,7 @@ const CarouselNext = React.forwardRef(
     const { orientation, scrollNext, canScrollNext } = useCarousel();
 
     return (
-      <Button
+      <button
         ref={ref}
         variant={variant}
         size={size}
@@ -221,7 +220,7 @@ const CarouselNext = React.forwardRef(
       >
         <ArrowRight className="h-4 w-4" />
         <span className="sr-only">Next slide</span>
-      </Button>
+      </button>
     );
   }
 );
@@ -250,7 +249,7 @@ const CarouselNavigation = React.forwardRef(
     return (
       <div>
         {canScrollPrev && (
-          <Button
+          <button
             ref={ref}
             variant={variant}
             size={size}
@@ -276,11 +275,11 @@ const CarouselNavigation = React.forwardRef(
               <ArrowLeft color="#ffffff" />
             )}
             <span className="sr-only">Previous slide</span>
-          </Button>
+          </button>
         )}
 
         {canScrollNext && (
-          <Button
+          <button
             ref={ref}
             variant={variant}
             size={size}
@@ -306,7 +305,7 @@ const CarouselNavigation = React.forwardRef(
               <ArrowRight color="#ffffff" />
             )}
             <span className="sr-only">Next slide</span>
-          </Button>
+          </button>
         )}
       </div>
     );
@@ -335,7 +334,7 @@ const CarouselNavigationWithArrow = React.forwardRef(
 
     return (
       <div className="flex items-center justify-center mt-6">
-        <Button
+        <button
           ref={ref}
           variant="link"
           size={size}
@@ -346,7 +345,7 @@ const CarouselNavigationWithArrow = React.forwardRef(
         >
           <ArrowLeft size={24} color="black" />
           <span className="sr-only">Previous slide</span>
-        </Button>
+        </button>
         <div className="space-x-2 rtl:space-x-reverse flex mx-6">
           {Array.from({ length: count }).map((item, index) => (
             <div className="w-[24px] h-[24px] flex items-center justify-center">
@@ -359,7 +358,7 @@ const CarouselNavigationWithArrow = React.forwardRef(
             </div>
           ))}
         </div>
-        <Button
+        <button
           ref={ref}
           variant="link"
           size={size}
@@ -370,7 +369,7 @@ const CarouselNavigationWithArrow = React.forwardRef(
         >
           <ArrowRight size={24} color="black" />
           <span className="sr-only">Next slide</span>
-        </Button>
+        </button>
       </div>
     );
   }

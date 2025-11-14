@@ -6,21 +6,36 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import useAuthStore from "@/store/authStore";
 import SubscribeButton from "../button/Subscribe";
+import LoginScanPopup from "./LoginPopup";
+import { useState } from "react";
 
 const ScanPopup = ({ isOpen, setIsOpen }) => {
   const router = useRouter();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   useEffect(() => {
     ImageAnalysisData.forEach((item) => {
       router.prefetch(item.route);
     });
   }, []);
 
-  const { isSubscribed, shadeMatching, skinAnalysis, isFreeScan } =
-    useAuthStore();
+  const handleClose = () => {
+    setIsLoginOpen(false);
+  };
+
+  const {
+    isSubscribed,
+    shadeMatching,
+    skinAnalysis,
+    isFreeScan,
+    isAuthenticated,
+  } = useAuthStore();
 
   const getScanLabel = (item) => {
     if (isFreeScan) {
       return "1 Free Scan";
+    }
+    if (!isAuthenticated) {
+      return "Login";
     }
     if (!isFreeScan && !shadeMatching && item.title === "Shade Matching") {
       return "Quick Scan $1 Only";
@@ -36,11 +51,21 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
     }
     return "";
   };
+
+  const handleScanRoute = (route) => {
+    setIsOpen(false);
+    if (isAuthenticated) {
+      router.push(route);
+    } else {
+      setIsLoginOpen(true);
+    }
+  };
   return (
     <AnimatePresence>
+      {isLoginOpen && <LoginScanPopup onClose={handleClose} />}
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-20"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 2 } }}
@@ -76,12 +101,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                   <SubscribeButton route={item.route}>
                     <div
                       key={index}
-                      onClick={() => {
-                        setIsOpen(false);
-                        if (isSubscribed) {
-                          router.push(item.route);
-                        }
-                      }}
+                      onClick={() => handleScanRoute(item.route)}
                       className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
                     >
                       <div className="w-full h-40 rounded-2xl relative">
@@ -103,12 +123,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                 ) : (
                   <div
                     key={index}
-                    onClick={() => {
-                      setIsOpen(false);
-                      if (isSubscribed) {
-                        router.push(item.route);
-                      }
-                    }}
+                    onClick={() => handleScanRoute(item.route)}
                     className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
                   >
                     <div className="w-full h-40 rounded-2xl relative">

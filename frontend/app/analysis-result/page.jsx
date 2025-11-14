@@ -63,7 +63,6 @@ export default function ResultsPage() {
       };
       console.log(payload);
       const response = await Api.client.favourites(token, payload, userId);
-      console.log(response);
     } catch (error) {
       console.error(error);
     }
@@ -84,24 +83,13 @@ export default function ResultsPage() {
     try {
       const payload = {
         user_favourites: {
-          products: updatedFavs,
+          products: product,
         },
       };
 
-      console.log("Sending favourites payload:", payload);
-
       const res = await Api.client.favourites(token, payload, userId);
-      console.log("Favourites saved:", res);
     } catch (error) {
       console.error("Error saving favorites:", error);
-    }
-  };
-  const handleget = async () => {
-    try {
-      const res = await Api.client.getFavourites(token, userId);
-      console.log(res);
-    } catch (error) {
-      console.log(error);
     }
   };
 
@@ -120,13 +108,6 @@ export default function ResultsPage() {
             Personalized skincare guidance powered by AI
           </p>
         </div>
-        <button
-          onClick={() => {
-            handleget();
-          }}
-        >
-          get
-        </button>
 
         {/* Profile Summary Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg mb-6 border border-[#D4B038]/20 mx-2">

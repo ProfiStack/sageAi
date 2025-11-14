@@ -21,11 +21,22 @@ export const WebSocketProvider = ({ children, route }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
   const [isReady, setIsReady] = useState(false);
+  const [guestMessageCount, setGuestMessageCount] = useState(0);
+  const GUEST_MESSAGE_LIMIT = 4;
 
   // Loading state for history
   const loadingHistory = useRef(false);
   // Queue incoming messages while loading history
   const queuedMessages = useRef([]);
+
+  useEffect(() => {
+    if (!token && typeof window !== "undefined") {
+      const savedCount = localStorage.getItem("sagee_guest_message_count");
+      if (savedCount) {
+        setGuestMessageCount(parseInt(savedCount, 10));
+      }
+    }
+  }, [token]);
 
   const socketUrl =
     typeof window !== "undefined" && userId && route
@@ -75,7 +86,9 @@ export const WebSocketProvider = ({ children, route }) => {
   }, [token, route]);
 
   useEffect(() => {
-    if (!token || !route) return;
+    const canConnect =
+      token || (!token && guestMessageCount < GUEST_MESSAGE_LIMIT);
+    if (!canConnect || !route) return;
 
     let retryTimeout = null;
 

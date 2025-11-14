@@ -36,15 +36,16 @@ export default function ProtectedRoute({
         if (token && storedUserId) {
           try {
             const profile = await Api.client.getProfile(token);
-            
+
             // Update subscription status in store
-            const hasActiveSubscription = profile.subscription_status === "active";
+            const hasActiveSubscription =
+              profile.subscription_status === "active";
             setIsSubscribed(hasActiveSubscription);
 
             // Case 3: Requires subscription but user doesn't have active subscription
             if (requireSubscription && !hasActiveSubscription) {
               destructiveToast("Subscription required to access this content");
-              router.push("/home");
+              router.push("/");
               setIsChecking(false);
               return;
             }
@@ -52,12 +53,11 @@ export default function ProtectedRoute({
             // Case 4: All checks passed - user can access the route
             setIsChecking(false);
             return;
-
           } catch (err) {
             console.error("Error fetching profile:", err);
             destructiveToast("Unable to verify account status");
             setIsSubscribed(false);
-            router.push("/home");
+            router.push("/");
             setIsChecking(false);
             return;
           }
@@ -71,7 +71,6 @@ export default function ProtectedRoute({
 
         // Fallback case
         setIsChecking(false);
-
       } catch (error) {
         console.error("Error in route protection:", error);
         setIsChecking(false);

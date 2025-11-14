@@ -22,10 +22,15 @@ import { downloadMakeupReportPDF, shareMakeupReportPDF } from "../shadePdf";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import { useRouter } from "next/navigation";
 import { useShadeMatchStore } from "@/store/skinResult";
+import useAuthStore from "@/store/authStore";
+import { Api } from "@/shared/api/api";
 
 export default function MakeupResultsPage() {
   const router = useRouter();
   const resultsData = useShadeMatchStore((state) => state.shadeResult);
+  const [favorites, setFavorites] = useState([]);
+
+  const { token, userId } = useAuthStore();
 
   const handleDownloadReport = () => {
     if (resultsData) {
@@ -40,6 +45,31 @@ export default function MakeupResultsPage() {
       shareMakeupReportPDF(resultsData);
     } else {
       alert("No report data available. Please retake the quiz.");
+    }
+  };
+
+  const handleToggleFavorite = async (product) => {
+    const isFav = favorites.some((fav) => fav.shade === product.shade);
+    let updatedFavs;
+
+    if (isFav) {
+      updatedFavs = favorites.filter((fav) => fav.shade !== product.shade);
+    } else {
+      updatedFavs = [...favorites, product];
+    }
+
+    setFavorites(updatedFavs);
+
+    try {
+      const payload = {
+        user_favourites: {
+          products: product,
+        },
+      };
+
+      const res = await Api.client.favourites(token, payload, userId);
+    } catch (error) {
+      console.error("Error saving favorites:", error);
     }
   };
 
@@ -111,9 +141,7 @@ export default function MakeupResultsPage() {
               <Palette className="w-4 h-4" />
               <span>By Finish</span>
             </TabsTrigger>
-
           </TabsList>
-
 
           {/* Tab Content */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-[#D4B038]/20">
@@ -140,6 +168,16 @@ export default function MakeupResultsPage() {
                             <h3 className="font-bold text-[#02331E] text-base sm:text-lg">
                               {product.product}
                             </h3>
+                            <Heart
+                              onClick={() => handleToggleFavorite(product)}
+                              className={`w-5 h-5 cursor-pointer transition-colors ${
+                                favorites.some(
+                                  (fav) => fav.shade === product.shade
+                                )
+                                  ? "fill-red-500 text-red-500"
+                                  : "text-gray-400 hover:text-red-500"
+                              }`}
+                            />
                           </div>
                           <p className="text-[#D4B038] font-medium text-sm sm:text-base mb-1">
                             {product.brand}

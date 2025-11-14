@@ -27,12 +27,39 @@ export default function CheckIngredients() {
 
           if (!hasValidSkinType || !hasValidConcern) {
             setShowBeautyQuiz(true);
-          } else {
-            console.log("User has complete profile, no quiz needed");
           }
         } catch (error) {
           console.error("Error loading user profile:", error);
           setShowBeautyQuiz(true);
+        }
+      } else {
+        // Guest user - check localStorage for specific keys
+        if (typeof window !== "undefined") {
+          const guestQuizResults = localStorage.getItem(
+            "sagee_guest_quiz_results"
+          );
+
+          if (!guestQuizResults) {
+            // No quiz results saved - show the quiz
+            setShowBeautyQuiz(true);
+          } else {
+            try {
+              const results = JSON.parse(guestQuizResults);
+
+              // Check for skin_type and concern (required for skincare page)
+              const hasValidSkinType =
+                results?.skin_type && results.skin_type !== "Unknown";
+              const hasValidConcern =
+                results?.concern && results.concern !== "Unknown";
+
+              if (!hasValidSkinType || !hasValidConcern) {
+                setShowBeautyQuiz(true);
+              }
+            } catch (error) {
+              console.error("Error parsing guest quiz results:", error);
+              setShowBeautyQuiz(true);
+            }
+          }
         }
       }
     };
@@ -48,17 +75,15 @@ export default function CheckIngredients() {
         skinTypePopup={true}
         title={"Skin Analysis"}
       />
-      <ProtectedRoute requireAuth={true}>
-        <WebSocketProvider route="ingredient_checker">
-          <ConsultationChat
-            route="ingredient_checker"
-            title="Formula Finder"
-            initialMessage={
-              "Got a product or ingredient in mind? Let’s break it down together. I’ll tell you what’s inside, what it does, and if it’s right for your skin."
-            }
-          />
-        </WebSocketProvider>
-      </ProtectedRoute>
+      <WebSocketProvider route="ingredient_checker">
+        <ConsultationChat
+          route="ingredient_checker"
+          title="Formula Finder"
+          initialMessage={
+            "Got a product or ingredient in mind? Let’s break it down together. I’ll tell you what’s inside, what it does, and if it’s right for your skin."
+          }
+        />
+      </WebSocketProvider>
     </>
   );
 }

@@ -6,7 +6,6 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -114,24 +113,24 @@ const OnboardingCarousel = () => {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between items-center mt-8">
-              <Button
+              <button
                 variant="ghost"
                 onClick={() => api?.scrollPrev()}
                 disabled={current === 0}
                 className="text-gray-600 disabled:opacity-0"
               >
                 Back
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() =>
                   current === slides.length - 1
                     ? router.push("/")
                     : api?.scrollNext()
                 }
-                className="bg-[#02331E] rounded-[12px] hover:bg-[#02331E] text-white px-8"
+                className="bg-[#02331E] rounded-[12px] hover:bg-[#02331E] text-white px-6 py-2"
               >
                 {current === slides.length - 1 ? "Get Started" : "Next"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

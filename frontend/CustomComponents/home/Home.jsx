@@ -13,6 +13,13 @@ import SkinPopup from "../Popups/SkinPopup";
 import { Lightbulb } from "lucide-react";
 import useAuthStore from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CircleUserRound } from "lucide-react";
 
 export default function HomePage() {
   const [messages, setMessages] = useState([]);
@@ -127,7 +134,7 @@ export default function HomePage() {
       <div className="max-w-md mx-auto bg-white mb-4">
         <div>
           <div className="bg-white rounded-[16px] shadow-lg p-4 my-4 ">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[20px] font-semibold">
                   Welcome {isAuthenticated && name ? name : "Guest user"}
@@ -137,16 +144,36 @@ export default function HomePage() {
                 </h2>
               </div>
 
-              <div className="flex justify-end ">
-                <div className="relative w-[40px] h-[40px]">
-                  <Image
-                    src="/images/sagelogo.png"
-                    alt="sage"
-                    fill
-                    className="object-contain"
-                  />
+              {isAuthenticated ? (
+                <div className="flex justify-end ">
+                  <div className="relative w-[40px] h-[40px]">
+                    <Image
+                      src="/images/sagelogo.png"
+                      alt="sage"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <CircleUserRound />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white">
+                    <DropdownMenuLabel>
+                      <button onClick={() => router.push("/login")}>
+                        Login
+                      </button>
+                    </DropdownMenuLabel>
+                    <DropdownMenuLabel>
+                      <button onClick={() => router.push("/signup")}>
+                        Signup
+                      </button>
+                    </DropdownMenuLabel>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
             <div className="max-w-md mx-auto  pt-4">
               <div className="">

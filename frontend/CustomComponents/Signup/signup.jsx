@@ -2,7 +2,6 @@
 import { useForm as useFormHook } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -14,20 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Api } from "@/shared/api/api";
 import { useRouter } from "next/navigation";
 import useFormToast from "../FormToast/FormToast";
-import {
-  setUserId,
-  setAuthToken,
-  setLoginTimestamp,
-} from "@/shared/utils/utils";
+import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
-import Image from "next/image";
 import { useAmplitude } from "@/app/providers/amplitudeProvider";
-import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lightbulb } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { comingSoonData, featuresData } from "@/mockData/loginMockData";
 import { jwtDecode } from "jwt-decode";
 import { transferGuestQuizResults } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 const formSchema = z.object({
   email: z.string().refine(
     (value) => {
@@ -39,7 +32,7 @@ const formSchema = z.object({
       message: "Please enter a valid email address",
     }
   ),
-  email: z.string({ message: "Please enter your name" }),
+  name: z.string({ message: "Please enter your name" }),
 
   password: z.string().min(6, {
     message: "Password should contain minimum 6 characters",
@@ -51,6 +44,7 @@ export default function Signup() {
   const { primaryToast, destructiveToast } = useFormToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
   const form = useFormHook({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -83,14 +77,15 @@ export default function Signup() {
         localStorage.setItem("sagee_user_id", decoded.user_id);
         const store = useAuthStore.getState();
         store.setUserId(decoded.user_id);
+        store.setName(decoded.name);
         store.setToken(data.token);
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
         logEvent("Onboard Sucessful");
-        await transferGuestQuizResults(data.user_id);
-        router.push("/onboarding");
+        await transferGuestQuizResults(data.token);
         primaryToast({ description: "Signup successful" });
         setIsLoading(false);
+        router.push("/onboarding");
       } else if (data.detail) {
         setIsLoading(false);
         destructiveToast(data.detail);
@@ -102,9 +97,6 @@ export default function Signup() {
       setIsLoading(false);
     }
   }
-
-  const features = featuresData;
-  const comingSoon = comingSoonData;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

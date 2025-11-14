@@ -31,7 +31,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const [userMessageCount, setUserMessageCount] = useState(0);
-  const { primaryToast, destructiveToast } = useFormToast();
 
   useEffect(() => {
     setIsMounted(true);
@@ -422,8 +421,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
-            <div className="text-gray-500">
+            <Loader2 className="w-8 h-8 animate-spin text-[#02331E] mx-auto mb-2" />
+            <div className="text-[#02331E]">
               {isLoadingHistory ? "Loading chat history..." : "Loading..."}
             </div>
           </div>
@@ -438,12 +437,12 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     if (isReady) return null;
 
     return (
-      <div className="bg-orange-100 border-l-4 border-orange-500 p-3 mb-4">
+      <div className="bg-[#FAFAFA] border-l-4 border-[#02331E] p-3 mb-4">
         <div className="flex items-center">
           {connectionStatus === "disconnected" && (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-orange-500 mr-2" />
-              <span className="text-sm text-orange-700">
+              <Loader2 className="w-4 h-4 animate-spin text-[#02331E] mr-2" />
+              <span className="text-sm text-[#02331E]">
                 Connecting to consultant...
               </span>
             </>

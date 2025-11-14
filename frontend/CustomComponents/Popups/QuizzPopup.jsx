@@ -16,7 +16,6 @@ import {
 const BeautyQuizPopup = ({
   isOpen,
   setIsOpen,
-  onComplete,
   quizzData,
   skinTypePopup = false,
   title,
@@ -25,9 +24,7 @@ const BeautyQuizPopup = ({
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [allergies, setAllergies] = useState("");
   const [budget, setBudget] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSelects, setOpenSelects] = useState({});
-  console.log(quizzData);
 
   const { isAuthenticated } = useAuthStore();
   const { token } = useAuthStore();
@@ -52,15 +49,23 @@ const BeautyQuizPopup = ({
   const showAllergiesField = quizzData.some((q) => q.allergies === true);
 
   // Save quiz results to localStorage for guest users
-  const saveQuizResultsForGuest = (skin_type, concern) => {
+  const saveQuizResultsForGuest = (results) => {
     if (typeof window !== "undefined") {
+      // Get previous results if any
+      const prevResults = JSON.parse(
+        localStorage.getItem("sagee_guest_quiz_results") || "{}"
+      );
+
+      // Merge current results with previous ones
+      const updatedResults = {
+        ...prevResults,
+        ...results,
+        timestamp: Date.now(),
+      };
+
       localStorage.setItem(
         "sagee_guest_quiz_results",
-        JSON.stringify({
-          skin_type,
-          concern,
-          timestamp: Date.now(),
-        })
+        JSON.stringify(updatedResults)
       );
     }
   };
@@ -79,12 +84,14 @@ const BeautyQuizPopup = ({
 
       try {
         await Api.client.updateProfile(results, token);
+        setIsOpen(false);
       } catch (error) {
         console.error("Error updating profile with quiz results:", error);
       }
     } else {
       try {
         await Api.client.updateProfile(results, token);
+        setIsOpen(false);
       } catch (error) {
         console.error("Error updating profile with quiz results:", error);
       }

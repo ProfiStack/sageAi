@@ -27,12 +27,39 @@ export default function TreatmentPlanning() {
 
           if (!hasValidSkinType || !hasValidConcern) {
             setShowBeautyQuiz(true);
-          } else {
-            console.log("User has complete profile, no quiz needed");
           }
         } catch (error) {
           console.error("Error loading user profile:", error);
           setShowBeautyQuiz(true);
+        }
+      } else {
+        // Guest user - check localStorage for specific keys
+        if (typeof window !== "undefined") {
+          const guestQuizResults = localStorage.getItem(
+            "sagee_guest_quiz_results"
+          );
+
+          if (!guestQuizResults) {
+            // No quiz results saved - show the quiz
+            setShowBeautyQuiz(true);
+          } else {
+            try {
+              const results = JSON.parse(guestQuizResults);
+
+              // Check for skin_type and concern (required for skincare page)
+              const hasValidSkinType =
+                results?.skin_type && results.skin_type !== "Unknown";
+              const hasValidConcern =
+                results?.concern && results.concern !== "Unknown";
+
+              if (!hasValidSkinType || !hasValidConcern) {
+                setShowBeautyQuiz(true);
+              }
+            } catch (error) {
+              console.error("Error parsing guest quiz results:", error);
+              setShowBeautyQuiz(true);
+            }
+          }
         }
       }
     };
@@ -48,17 +75,15 @@ export default function TreatmentPlanning() {
         skinTypePopup={true}
         title={"Skin Analysis"}
       />
-      <ProtectedRoute requireAuth={true}>
-        <WebSocketProvider route="treatment_planning">
-          <ConsultationChat
-            route="treatment_planning"
-            title="Skin Strategy"
-            initialMessage={
-              "Let’s design your personalized treatment path from facials to advanced skin therapies, so you can get closer to your dream skin."
-            }
-          />
-        </WebSocketProvider>
-      </ProtectedRoute>
+      <WebSocketProvider route="treatment_planning">
+        <ConsultationChat
+          route="treatment_planning"
+          title="Skin Strategy"
+          initialMessage={
+            "Let’s design your personalized treatment path from facials to advanced skin therapies, so you can get closer to your dream skin."
+          }
+        />
+      </WebSocketProvider>
     </>
   );
 }

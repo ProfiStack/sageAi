@@ -1,14 +1,13 @@
 "use client";
-
-import DesktopHomePage from "@/CustomComponents/desktop/homePage/HomePage";
 import HomePage from "@/CustomComponents/home/Home";
+import DesktopHomePage from "../DesktopComponents/desktop/homePage/HomePage";
 import { useHasHydrated } from "@/shared/utils/useHydration";
 import { isMobileClient } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function LoginPage() {
+export default function Home() {
   const router = useRouter();
   const hasHydrated = useHasHydrated();
   const { isAuthenticated, token } = useAuthStore();

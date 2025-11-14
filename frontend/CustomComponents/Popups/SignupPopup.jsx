@@ -1,5 +1,9 @@
 "use client";
-import { cn, resetGuestMessageCount } from "@/lib/utils";
+import {
+  cn,
+  resetGuestMessageCount,
+  transferGuestQuizResults,
+} from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -15,7 +19,6 @@ import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import useFormToast from "../FormToast/FormToast";
 import { jwtDecode } from "jwt-decode";
@@ -75,10 +78,9 @@ export default function SignUpPopup() {
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
         resetGuestMessageCount();
-        setUserMessageCount(0);
         logEvent("Onboard Sucessful");
         await transferGuestQuizResults(data.token);
-        router.push("/home");
+        router.push("/");
         primaryToast({ description: "Login successful" });
         setIsLoading(false);
       } else if (data.detail) {
@@ -89,33 +91,9 @@ export default function SignUpPopup() {
       destructiveToast(error.message);
     }
   }
-  // Transfer guest quiz results to user profile
-  const transferGuestQuizResults = async (token) => {
-    try {
-      if (typeof window !== "undefined") {
-        const guestQuizResults = localStorage.getItem(
-          "sagee_guest_quiz_results"
-        );
-
-        if (guestQuizResults) {
-          const result = JSON.parse(guestQuizResults);
-
-          if (result) {
-            await Api.client.updateProfile(result, token);
-
-            // Remove guest quiz results from localStorage
-            localStorage.removeItem("sagee_guest_quiz_results");
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error transferring guest quiz results:", error);
-      // Don't block login if transfer fails
-    }
-  };
 
   return (
-    <div className="fixed inset-0   flex items-end bottom-[78px] justify-center z-50">
+    <div className="fixed inset-0   flex items-end bottom-[78px] justify-center   ">
       <div className=" bg-white p-6 w-full">
         <div className="text-center mb-3">
           <Form {...form}>
@@ -166,14 +144,14 @@ export default function SignUpPopup() {
                 </div>
               </div>
 
-              <Button
+              <button
                 className={cn(
                   "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
                 )}
                 type="submit"
               >
                 Sign Up
-              </Button>
+              </button>
             </form>
           </Form>
 

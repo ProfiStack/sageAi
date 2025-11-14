@@ -6,12 +6,19 @@ import { motion } from "framer-motion";
 import SubscribeButton from "../button/Subscribe";
 import useAuthStore from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import LoginScanPopup from "./LoginPopup";
 
 const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
   if (!isOpen || !selectedItem) return null;
   const [price, setPrice] = useState("");
-  const { isSubscribed, shadeMatching, skinAnalysis, isFreeScan } =
-    useAuthStore();
+  const [isloginOpen, setIsLoginOpen] = useState(false);
+  const {
+    isSubscribed,
+    shadeMatching,
+    skinAnalysis,
+    isFreeScan,
+    isAuthenticated,
+  } = useAuthStore();
   useEffect(() => {
     const fetchPrices = async () => {
       const response = await Api.client.prices();
@@ -19,9 +26,23 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
     };
     fetchPrices();
   }, []);
+
+  const handleLoginPopup = () => {
+    if (!isAuthenticated) {
+      setIsLoginOpen(true);
+    }
+  };
+
+  const handleClose = () => {
+    setIsLoginOpen(false);
+  };
+
   const getScanLabel = () => {
     if (isFreeScan) {
       return "1 Free Scan";
+    }
+    if (!isAuthenticated) {
+      return "Login";
     }
     if (!isFreeScan && !shadeMatching && selectedItem.title === "True Tone") {
       return "Quick Scan $1 Only";
@@ -39,7 +60,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-20 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-sm w-full mx-4 shadow-xl">
         {/* Header */}
         <div className="flex  items-center justify-between bg-[linear-gradient(90deg,#02331E_0%,#046E3C_100%)] rounded-t-2xl  p-6 border-b border-gray-100">
@@ -85,30 +106,58 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
                 </div>
               </div>
             </button>
-            <SubscribeButton route={selectedItem.scanRoute}>
-              <div className="relative w-full bg-[#f5f5f5] border border-[#D4B0384D]  rounded-xl p-4 ">
-                <div className="absolute -top-2 -right-2 bg-[linear-gradient(90deg,#D4B038_0%,#E9C84C_100%)] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
-                  {getScanLabel()}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-indigo-100 rounded-[8px] flex items-center justify-center">
-                      <Camera className=" text-[#02331E]" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-semibold text-[#02331E] mb-1">
-                        Scan
-                      </h3>
-                      <p className="text-sm text-[#4B5563]">
-                        Analyze My Skin and in 30-seconds get photo analysis &
-                        personalized recommendations 🔒 Private & secure photos
-                        are deleted after analysis
-                      </p>
+            {!isAuthenticated ? (
+              <button onClick={handleLoginPopup}>
+                <div className="relative w-full bg-[#f5f5f5] border border-[#D4B0384D]  rounded-xl p-4 ">
+                  <div className="absolute -top-2 -right-2 bg-[linear-gradient(90deg,#D4B038_0%,#E9C84C_100%)] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                    {getScanLabel()}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start space-x-3">
+                      <div className="p-2 bg-indigo-100 rounded-[8px] flex items-center justify-center">
+                        <Camera className=" text-[#02331E]" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-[#02331E] mb-1">
+                          Scan
+                        </h3>
+                        <p className="text-sm text-[#4B5563]">
+                          Analyze My Skin and in 30-seconds get photo analysis &
+                          personalized recommendations 🔒 Private & secure
+                          photos are deleted after analysis
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </SubscribeButton>
+              </button>
+            ) : (
+              <SubscribeButton route={selectedItem.scanRoute}>
+                <div className="relative w-full bg-[#f5f5f5] border border-[#D4B0384D]  rounded-xl p-4 ">
+                  <div className="absolute -top-2 -right-2 bg-[linear-gradient(90deg,#D4B038_0%,#E9C84C_100%)] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                    {getScanLabel()}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start space-x-3">
+                      <div className="p-2 bg-indigo-100 rounded-[8px] flex items-center justify-center">
+                        <Camera className=" text-[#02331E]" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-[#02331E] mb-1">
+                          Scan
+                        </h3>
+                        <p className="text-sm text-[#4B5563]">
+                          Analyze My Skin and in 30-seconds get photo analysis &
+                          personalized recommendations 🔒 Private & secure
+                          photos are deleted after analysis
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </SubscribeButton>
+            )}
+
             {!isSubscribed && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -137,6 +186,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
           </p>
         </div>
       </div>
+      {isloginOpen && <LoginScanPopup onClose={handleClose} />}
     </div>
   );
 };

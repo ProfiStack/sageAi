@@ -4,7 +4,7 @@ import Image from "next/image";
 export default function ComingSoon({ image }) {
   const router = useRouter();
   const handleToDashboard = () => {
-    router.push("/home");
+    router.push("/");
   };
   return (
     <div className="flex flex-col items-center justify-center p-6">

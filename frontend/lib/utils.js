@@ -1,41 +1,11 @@
-import useAuthStore from "@/store/authStore";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Api } from "@/shared/api/api";
+import useAuthStore from "@/store/authStore";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
-
-export const isUserLoggedIn = (userId) => {
-  // Check if userId exists and is NOT a guest user
-  if (userId && !userId.startsWith("user-")) {
-    return true;
-  }
-
-  // If userId is a guest user, continue to check other sources
-  if (userId && userId.startsWith("user-")) {
-    console.log("User is guest user, checking other auth sources");
-  }
-
-  // Only run browser-specific code on the client side
-  if (typeof window === "undefined") {
-    return false; // Return false during SSR
-  }
-
-  // Check localStorage for user ID, but make sure it's not just a guest ID
-  const storedUserId = localStorage.getItem("sagee_user_id");
-  const authToken =
-    localStorage.getItem("authToken") || document.cookie.includes("authToken");
-
-  // Only consider logged in if we have both a user ID and auth token
-  // AND the stored user ID is not a guest user
-  if (storedUserId && authToken && !storedUserId.startsWith("user-")) {
-    return true;
-  }
-
-  return false;
-};
-
 // Add this function to track guest messages
 export const incrementGuestMessageCount = () => {
   if (typeof window === "undefined") return 0;
@@ -56,36 +26,47 @@ export const resetGuestMessageCount = () => {
   localStorage.removeItem("sagee_guest_message_count");
 };
 
-export const changeMessage = (messages, setCurrentMessage) => {
-  const randomIndex = Math.floor(Math.random() * messages.length);
-  setCurrentMessage(messages[randomIndex].message);
+export const isUserLoggedIn = (userId) => {
+  // Check if userId exists and is NOT a guest user
+  if (userId && !userId.startsWith("user-")) {
+    return true;
+  }
+
+  // Only run browser-specific code on the client side
+  if (typeof window === "undefined") {
+    return false; // Return false during SSR
+  }
+
+  // Check localStorage for user ID, but make sure it's not just a guest ID
+  const storedUserId = localStorage.getItem("sagee_user_id");
+  const authToken =
+    localStorage.getItem("authToken") || document.cookie.includes("authToken");
+
+  // Only consider logged in if we have both a user ID and auth token
+  // AND the stored user ID is not a guest user
+  if (storedUserId && authToken && !storedUserId.startsWith("user-")) {
+    return true;
+  }
+
+  return false;
 };
-
-// Transfer guest quiz results to user profile
-export const transferGuestQuizResults = async (userId) => {
+export const transferGuestQuizResults = async (token) => {
   try {
-    if (typeof window !== "undefined") {
-      const guestQuizResults = localStorage.getItem("sagee_guest_quiz_results");
+    if (typeof window === "undefined") return;
 
-      if (guestQuizResults) {
-        const { skin_type, concern } = JSON.parse(guestQuizResults);
+    const guestQuizResults = localStorage.getItem("sagee_guest_quiz_results");
+    if (!guestQuizResults) {
+      return;
+    }
 
-        if (skin_type || concern) {
-          // Update user profile with guest quiz results
-          const updateData = {
-            skin_type: skin_type || "",
-            concern: concern || "",
-          };
+    const results = JSON.parse(guestQuizResults);
+    const { timestamp, ...profileData } = results; // Remove timestamp
 
-          await Api.client.updateProfile(updateData, userId);
-
-          // Remove guest quiz results from localStorage
-          localStorage.removeItem("sagee_guest_quiz_results");
-        }
-      }
+    if (Object.keys(profileData).length > 0) {
+      await Api.client.updateProfile(profileData, token);
+      localStorage.removeItem("sagee_guest_quiz_results");
     }
   } catch (error) {
-    console.error("Error transferring guest quiz results:", error);
-    // Don't block login if transfer fails
+    console.error("Transfer failed:", error);
   }
 };

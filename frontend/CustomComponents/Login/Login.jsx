@@ -2,7 +2,6 @@
 import { useForm as useFormHook } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -69,7 +68,6 @@ export default function Login() {
       if (data.token) {
         const token = data.token;
         const decoded = jwtDecode(token);
-        console.log(decoded);
         await setAuthToken(data.token);
         await setLoginTimestamp(Date.now());
         localStorage.setItem("token", data.token);
@@ -81,7 +79,7 @@ export default function Login() {
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
         logEvent("Onboard Sucessful");
-        await transferGuestQuizResults(data.user_id);
+        await transferGuestQuizResults(data.token);
         router.push("/");
         primaryToast({ description: "Login successful" });
         setIsLoading(false);
@@ -194,12 +192,12 @@ export default function Login() {
                     )}
                   />
 
-                  <Button
+                  <button
                     className="w-full py-4 text-[16px] font-medium bg-[#02331E] text-white placeholder:text-[#9CA3AF] rounded-[12px] hover:bg-[#02331E]"
                     type="submit"
                   >
                     Login
-                  </Button>
+                  </button>
                 </form>
               </Form>
               {/*  <button

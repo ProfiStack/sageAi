@@ -13,7 +13,7 @@ export default function ShadeMatching() {
 
   useEffect(() => {
     if (hydrated && shadeMatching === false && !isFreeScan) {
-      router.push("/home");
+      router.push("/");
     }
   }, [hydrated, shadeMatching, router]);
   useEffect(() => {

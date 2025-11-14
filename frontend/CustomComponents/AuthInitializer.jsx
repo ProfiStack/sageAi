@@ -7,8 +7,6 @@ export default function AuthInitializer() {
   const { setUserId, userId } = useAuthStore();
 
   useEffect(() => {
-    console.log("AuthInitializer effect running:", { userId });
-
     if (typeof window !== "undefined") {
       const storedUserId = localStorage.getItem("sagee_user_id");
 
@@ -17,17 +15,14 @@ export default function AuthInitializer() {
         const newGuestId = `user-${Date.now()}`;
         localStorage.setItem("sagee_user_id", newGuestId);
         setUserId(newGuestId);
-        console.log("AuthInitializer: Created new guest user:", newGuestId);
       }
       // If we have a stored ID but no userId in store, use the stored one
       else if (storedUserId && !userId) {
         setUserId(storedUserId);
-        console.log("AuthInitializer: Using stored userId:", storedUserId);
       }
       // If we have userId in store but no stored ID, save it to localStorage
       else if (userId && !storedUserId) {
         localStorage.setItem("sagee_user_id", userId);
-        console.log("AuthInitializer: Saved userId to localStorage:", userId);
       }
     }
   }, [userId, setUserId]);
