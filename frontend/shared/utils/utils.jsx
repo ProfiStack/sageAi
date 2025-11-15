@@ -546,10 +546,11 @@ export const transformToFilters = (obj) =>
   }, {});
 
 export function hydrateMobileNumber(number, length = 9) {
+  console.log(number);
   if (number) {
     return {
-      watchMobileNumber: number.replace(/\s/g, ""),
-      isValidMobileLength: number.replace(/\s/g, "").length === length,
+      watchMobileNumber: number?.replace(/\s/g, ""),
+      isValidMobileLength: number?.replace(/\s/g, "").length === length,
     };
   }
   return {
