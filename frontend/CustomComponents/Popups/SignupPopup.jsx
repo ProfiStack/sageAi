@@ -22,6 +22,7 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import useFormToast from "../FormToast/FormToast";
 import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().refine(
@@ -49,7 +50,7 @@ export default function SignUpPopup() {
       password: "",
     },
   });
-
+  const router = useRouter();
   const { destructiveToast, primaryToast } = useFormToast();
   async function onSubmit(values) {
     try {
@@ -82,9 +83,7 @@ export default function SignUpPopup() {
         await transferGuestQuizResults(data.token);
         router.push("/");
         primaryToast({ description: "Login successful" });
-        setIsLoading(false);
       } else if (data.detail) {
-        setIsLoading(false);
         destructiveToast(data.detail);
       }
     } catch (error) {
@@ -111,7 +110,7 @@ export default function SignUpPopup() {
                         <FormControl>
                           <Input
                             className="mb-3  rounded-[8px] border-[#02331E66] border w-full text-[#363636] "
-                            placeholder="Email or Phone Number (starts with eg +123)"
+                            placeholder="Email"
                             {...field}
                           />
                         </FormControl>
