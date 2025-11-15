@@ -1,5 +1,5 @@
 "use client";
-import Signup from "@/CustomComponents/Signup/Signup";
+import Signup from "@/CustomComponents/Signup/signup";
 import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
