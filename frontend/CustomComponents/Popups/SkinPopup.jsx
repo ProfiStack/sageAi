@@ -39,7 +39,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
 
   const getScanLabel = () => {
     if (isFreeScan) {
-      return "1 Free Scan";
+      return "Free Scan";
     }
     if (!isAuthenticated) {
       return "Login";

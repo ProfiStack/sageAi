@@ -32,7 +32,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
 
   const getScanLabel = (item) => {
     if (isFreeScan) {
-      return "1 Free Scan";
+      return "Free Scan";
     }
     if (!isAuthenticated) {
       return "Login";
