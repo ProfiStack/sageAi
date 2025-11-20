@@ -13,7 +13,7 @@ export default function SkinCare() {
 
   useEffect(() => {
     if (hydrated && skinAnalysis === false && !isFreeScan) {
-      router.push("/home");
+      router.push("/");
     }
   }, [hydrated, skinAnalysis, router]);
   useEffect(() => {

@@ -28,12 +28,37 @@ export default function BeautyBreakdown() {
 
           if (!hasValidSkinType || !hasValidGoal) {
             setShowBeautyQuiz(true);
-          } else {
-            console.log("User has complete profile, no quiz needed");
           }
         } catch (error) {
           console.error("Error loading user profile:", error);
           setShowBeautyQuiz(true);
+        }
+      } else {
+        // Guest user - check localStorage for specific keys
+        if (typeof window !== "undefined") {
+          const guestQuizResults = localStorage.getItem(
+            "sagee_guest_quiz_results"
+          );
+
+          if (!guestQuizResults) {
+            // No quiz results saved - show the quiz
+            setShowBeautyQuiz(true);
+          } else {
+            try {
+              const results = JSON.parse(guestQuizResults);
+
+              // Check for skin_type and concern (required for skincare page)
+              const hasValidSkinType = results?.skin_type;
+              const makeupGoal = results?.makeup_goal;
+
+              if (!hasValidSkinType || !makeupGoal) {
+                setShowBeautyQuiz(true);
+              }
+            } catch (error) {
+              console.error("Error parsing guest quiz results:", error);
+              setShowBeautyQuiz(true);
+            }
+          }
         }
       }
     };

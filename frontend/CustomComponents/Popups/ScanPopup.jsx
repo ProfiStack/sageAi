@@ -6,20 +6,66 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import useAuthStore from "@/store/authStore";
 import SubscribeButton from "../button/Subscribe";
+import LoginScanPopup from "./LoginPopup";
+import { useState } from "react";
 
 const ScanPopup = ({ isOpen, setIsOpen }) => {
   const router = useRouter();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   useEffect(() => {
     ImageAnalysisData.forEach((item) => {
       router.prefetch(item.route);
     });
   }, []);
-  const { isSubscribed } = useAuthStore();
+
+  const handleClose = () => {
+    setIsLoginOpen(false);
+  };
+
+  const {
+    isSubscribed,
+    shadeMatching,
+    skinAnalysis,
+    isFreeScan,
+    isAuthenticated,
+  } = useAuthStore();
+
+  const getScanLabel = (item) => {
+    if (isFreeScan) {
+      return "Free Scan";
+    }
+    if (!isAuthenticated) {
+      return "Login";
+    }
+    if (!isFreeScan && !shadeMatching && item.title === "Shade Matching") {
+      return "Quick Scan Free";
+    }
+    if (!isFreeScan && !skinAnalysis && item.title === "Skin Analysis") {
+      return "Quick Scan Free";
+    }
+    if (!isFreeScan && shadeMatching && item.title === "Shade Matching") {
+      return "1 Scan Available";
+    }
+    if (!isFreeScan && skinAnalysis && item.title === "Skin Analysis") {
+      return "1 Scan Available";
+    }
+    return "";
+  };
+
+  const handleScanRoute = (route) => {
+    setIsOpen(false);
+    if (isAuthenticated) {
+      router.push(route);
+    } else {
+      setIsLoginOpen(true);
+    }
+  };
   return (
     <AnimatePresence>
+      {isLoginOpen && <LoginScanPopup onClose={handleClose} />}
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-20"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 2 } }}
@@ -50,16 +96,12 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
             {/* Grid of options */}
             <div className="grid grid-cols-2 gap-3">
               {ImageAnalysisData.map((item, index) =>
-                item.title === "Skin Analysis" || item.title === 'Shade Matching' ? (
+                item.title === "Skin Analysis" ||
+                item.title === "Shade Matching" ? (
                   <SubscribeButton route={item.route}>
                     <div
                       key={index}
-                      onClick={() => {
-                        setIsOpen(false);
-                        if (isSubscribed) {
-                          router.push(item.route);
-                        }
-                      }}
+                      onClick={() => handleScanRoute(item.route)}
                       className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
                     >
                       <div className="w-full h-40 rounded-2xl relative">
@@ -70,11 +112,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                           className="object-cover rounded-2xl"
                         />
                         <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                          {item.title === "Skin Analysis" || item.title === 'Shade Matching'
-                            ? !isSubscribed
-                              ? "Subscribe Now"
-                              : " Subscribed"
-                            : "Coming Soon"}
+                          {getScanLabel(item)}
                         </div>
                       </div>
                       <p className="font-semibold text-gray-900 text-sm mt-1">
@@ -85,12 +123,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                 ) : (
                   <div
                     key={index}
-                    onClick={() => {
-                      setIsOpen(false);
-                      if (isSubscribed) {
-                        router.push(item.route);
-                      }
-                    }}
+                    onClick={() => handleScanRoute(item.route)}
                     className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
                   >
                     <div className="w-full h-40 rounded-2xl relative">
@@ -101,7 +134,8 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                         className="object-cover rounded-2xl"
                       />
                       <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                        {item.title === "Skin Analysis" || item.title === 'Shade Matching'
+                        {item.title === "Skin Analysis" ||
+                        item.title === "Shade Matching"
                           ? isSubscribed
                             ? "Subscribed"
                             : "Subscribe Now"

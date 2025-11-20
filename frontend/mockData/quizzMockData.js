@@ -2,8 +2,8 @@
 const beautyQuizData = [
   {
     id: "skin_type",
-    title: "What's your skin type?",
-    type: "single-choice",
+    title: "Skin type",
+    allergies: true,
     options: [
       { id: "oily", label: "Oily" },
       { id: "dry", label: "Dry" },
@@ -13,12 +13,10 @@ const beautyQuizData = [
       { id: "sensitive", label: "Sensitive" },
       { id: "normal", label: "Normal" },
     ],
-    selectedOptions: [],
   },
   {
     id: "concern",
-    title: "What specific concerns would you like to address?",
-    type: "single-choice",
+    title: "Concerns",
     options: [
       { id: "breakouts", label: "Breakouts" },
       { id: "discoloration", label: "Discoloration" },
@@ -26,15 +24,14 @@ const beautyQuizData = [
       { id: "aging", label: "Aging" },
       { id: "dullness", label: "Dullness" },
     ],
-    selectedOptions: [],
   },
 ];
 
 const makeupQuizData = [
   {
     id: "skin_type",
-    title: "What's your skin type?",
-    type: "single-choice",
+    title: "Skin type",
+    allergies: true,
     options: [
       { id: "oily", label: "Oily" },
       { id: "dry", label: "Dry" },
@@ -44,12 +41,10 @@ const makeupQuizData = [
       { id: "sensitive", label: "Sensitive" },
       { id: "normal", label: "Normal" },
     ],
-    selectedOptions: [],
   },
   {
     id: "makeup_goal",
-    title: "What's your main makeup goal?",
-    type: "single-choice",
+    title: "Makeup goal",
     options: [
       { id: "Natural everyday look", label: "Natural everyday look" },
       { id: "Full glam/evening looks", label: "Full glam/evening looks" },
@@ -63,15 +58,14 @@ const makeupQuizData = [
         label: "Color matching and application",
       },
     ],
-    selectedOptions: [],
   },
 ];
 
 const nutritionQuizData = [
   {
     id: "nutrition_goal",
-    title: "What's your primary nutrition goal?",
-    type: "single-choice",
+    title: "Nutrition goal",
+    allergies: false,
     options: [
       { id: "Weight loss", label: "Weight loss" },
       {
@@ -85,12 +79,10 @@ const nutritionQuizData = [
       { id: "More energy", label: "More energy" },
       { id: "General wellness", label: "General wellness" },
     ],
-    selectedOptions: [],
   },
   {
     id: "dietary_restriction",
-    title: "Do you follow any dietary restrictions?",
-    type: "single-choice",
+    title: "Dietary restrictions",
     options: [
       { id: "None", label: "None" },
       { id: "Vegetarian/Vegan", label: "Vegetarian/Vegan" },
@@ -104,15 +96,14 @@ const nutritionQuizData = [
         label: "Other allergies/intolerances",
       },
     ],
-    selectedOptions: [],
   },
 ];
 
 const wellnessQuizData = [
   {
     id: "wellness_focus",
-    title: "What's your main wellness focus?",
-    type: "single-choice",
+    title: "Wellness focus",
+    allergies: false,
     options: [
       { id: "Stress management", label: "Stress management" },
       {
@@ -126,12 +117,10 @@ const wellnessQuizData = [
       { id: "Fitness/exercise", label: "Fitness/exercise" },
       { id: "Building confidence", label: "Building confidence" },
     ],
-    selectedOptions: [],
   },
   {
     id: "dedicate_time",
-    title: "How much time can you dedicate to wellness daily?",
-    type: "single-choice",
+    title: "Daily wellness duration",
     options: [
       { id: "5-10 minutes", label: "5-10 minutes" },
       { id: "15-20 minutes", label: "15-20 minutes" },
@@ -141,15 +130,14 @@ const wellnessQuizData = [
       },
       { id: "It varies", label: "It varies" },
     ],
-    selectedOptions: [],
   },
 ];
 
 const hairCareQuizData = [
   {
     id: "hair_type",
-    title: "What's your hair type?",
-    type: "single-choice",
+    title: "Hair type",
+    allergies: true,
     options: [
       { id: "Straight", label: "Straight" },
       {
@@ -157,18 +145,16 @@ const hairCareQuizData = [
         label: "Wavy",
       },
       {
-        id: " Curly",
-        label: " Curly",
+        id: "Curly",
+        label: "Curly",
       },
       { id: "Coily/Kinky", label: "Coily/Kinky" },
       { id: "Not Sure", label: "Not Sure" },
     ],
-    selectedOptions: [],
   },
   {
     id: "hair_concern",
-    title: "What's your main hair concern?",
-    type: "single-choice",
+    title: "Hair concern",
     options: [
       { id: "Dryness and damage", label: "Dryness and damage" },
       { id: "Oily scalp", label: "Oily scalp" },
@@ -179,15 +165,14 @@ const hairCareQuizData = [
       { id: "Frizz and unmanageability", label: "Frizz and unmanageability" },
       { id: "Lack of volume", label: "Lack of volume" },
     ],
-    selectedOptions: [],
   },
 ];
 
 const stylingQuizData = [
   {
     id: "style_preference",
-    title: "What's your current style preference?",
-    type: "single-choice",
+    title: "Style preference",
+    allergies: false,
     options: [
       { id: "Classic and timeless", label: "Classic and timeless" },
       {
@@ -201,12 +186,10 @@ const stylingQuizData = [
       { id: " Professional and polished", label: " Professional and polished" },
       { id: " Still figuring it out", label: " Still figuring it out" },
     ],
-    selectedOptions: [],
   },
   {
     id: "styling_goal",
-    title: "What's your main styling goal?",
-    type: "single-choice",
+    title: "Styling goal",
     options: [
       {
         id: "Learn to dress for my body type",
@@ -226,7 +209,6 @@ const stylingQuizData = [
         label: "Express my personality through style",
       },
     ],
-    selectedOptions: [],
   },
 ];
 

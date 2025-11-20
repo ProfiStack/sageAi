@@ -259,5 +259,39 @@ export const Api = {
         console.log(error);
       }
     },
+
+    favourites: async (token, data, userId) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/favourites/${userId}`,
+          {
+            method: "POST",
+            body: validatePayload(data),
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getFavourites: async (token, userId) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/favourites/${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 };

@@ -28,12 +28,39 @@ export default function Chat() {
 
           if (!hasValidSkinType || !hasValidConcern) {
             setShowBeautyQuiz(true);
-          } else {
-            console.log("User has complete profile, no quiz needed");
           }
         } catch (error) {
           console.error("Error loading user profile:", error);
           setShowBeautyQuiz(true);
+        }
+      } else {
+        // Guest user - check localStorage for specific keys
+        if (typeof window !== "undefined") {
+          const guestQuizResults = localStorage.getItem(
+            "sagee_guest_quiz_results"
+          );
+
+          if (!guestQuizResults) {
+            // No quiz results saved - show the quiz
+            setShowBeautyQuiz(true);
+          } else {
+            try {
+              const results = JSON.parse(guestQuizResults);
+
+              // Check for skin_type and concern (required for skincare page)
+              const hasValidSkinType =
+                results?.skin_type && results.skin_type !== "Unknown";
+              const hasValidConcern =
+                results?.concern && results.concern !== "Unknown";
+
+              if (!hasValidSkinType || !hasValidConcern) {
+                setShowBeautyQuiz(true);
+              }
+            } catch (error) {
+              console.error("Error parsing guest quiz results:", error);
+              setShowBeautyQuiz(true);
+            }
+          }
         }
       }
     };
@@ -50,15 +77,13 @@ export default function Chat() {
         title={"Skin Analysis"}
       />
 
-      <ProtectedRoute requireAuth={true}>
-        <WebSocketProvider route="skincare">
-          <ConsultationChat
-            route="skincare"
-            title="Derm Direct"
-            initialMessage="Hi! I’m your personal skin consultant. Share your skin concerns and goals, and I’ll guide you with expert advice tailored just for you."
-          />
-        </WebSocketProvider>
-      </ProtectedRoute>
+      <WebSocketProvider route="skincare">
+        <ConsultationChat
+          route="skincare"
+          title="Derm Direct"
+          initialMessage="Hi! I’m your personal skin consultant. Share your skin concerns and goals, and I’ll guide you with expert advice tailored just for you."
+        />
+      </WebSocketProvider>
     </>
   );
 }

@@ -10,9 +10,11 @@ import { isUserLoggedIn, incrementGuestMessageCount } from "@/lib/utils";
 
 import { Api } from "@/shared/api/api";
 import { useWebSocketContext } from "@/app/providers/chatProvider";
+import SignupPopup from "../Popups/SignupPopup";
+import useFormToast from "../FormToast/FormToast";
 
 function ConsultationChatComponent({ route, title, initialMessage }) {
-  const { token, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated, userId } = useAuthStore();
   const [message, setMessage] = useState("");
   const {
     messages,
@@ -28,6 +30,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
   const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [userMessageCount, setUserMessageCount] = useState(0);
 
   useEffect(() => {
     setIsMounted(true);
@@ -61,7 +64,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       "formula-focus": "formula_focus",
       "hair-decode": "hair_decode",
       "style-spark": "style_spark",
-      "tress-therapy": "tress_therapy"
+      "tress-therapy": "tress_therapy",
     };
     return routeTypeMap[route] || route;
   };
@@ -88,7 +91,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         } else if (
           response.role === "system" &&
           response.content &&
-          !response.content.startsWith("You are ") && !response.content.includes("Sagee")
+          !response.content.startsWith("You are ") &&
+          !response.content.includes("Sagee")
         ) {
           convertedMessages.push({
             id: `history-${historyIndex}-${responseIndex}-system`,
@@ -103,6 +107,57 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     });
 
     return convertedMessages.sort((a, b) => a.timestamp - b.timestamp);
+  };
+  // Set mounted state after component mounts
+  useEffect(() => {
+    setIsMounted(true);
+    // Load message count from window.localStorage after mounting
+    if (!isUserLoggedIn(userId)) {
+      const savedCount = window.localStorage.getItem(
+        "sagee_guest_message_count"
+      );
+      if (savedCount) {
+        setUserMessageCount(parseInt(savedCount, 10));
+      }
+    } else {
+      // Clear the count when user is logged in
+      window.localStorage.removeItem("sagee_guest_message_count");
+      setUserMessageCount(0);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (isMounted && !isUserLoggedIn(userId)) {
+      // User is not logged in, ensure guest message count is loaded
+      const savedCount = window.localStorage.getItem(
+        "sagee_guest_message_count"
+      );
+      if (savedCount) {
+        setUserMessageCount(parseInt(savedCount, 10));
+      } else {
+        setUserMessageCount(0);
+      }
+    }
+  }, [userId, isMounted]);
+  // Save message count to window.localStorage whenever it changes
+  useEffect(() => {
+    if (isMounted && typeof window !== "undefined") {
+      if (!isUserLoggedIn(userId)) {
+        window.localStorage.setItem(
+          "sagee_guest_message_count",
+          userMessageCount.toString()
+        );
+      } else {
+        // Clear the count when user logs in
+        window.localStorage.removeItem("sagee_guest_message_count");
+        setUserMessageCount(0);
+      }
+    }
+  }, [userMessageCount, userId, isMounted]);
+
+  const canSendMessage = () => {
+    if (isUserLoggedIn(userId)) return true; // Logged in users can send unlimited messages
+    return userMessageCount < 3; // Non-logged in users limited to 3 messages
   };
 
   // Load chat history
@@ -366,8 +421,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
-            <div className="text-gray-500">
+            <Loader2 className="w-8 h-8 animate-spin text-[#02331E] mx-auto mb-2" />
+            <div className="text-[#02331E]">
               {isLoadingHistory ? "Loading chat history..." : "Loading..."}
             </div>
           </div>
@@ -382,12 +437,12 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     if (isReady) return null;
 
     return (
-      <div className="bg-orange-100 border-l-4 border-orange-500 p-3 mb-4">
+      <div className="bg-[#FAFAFA] border-l-4 border-[#02331E] p-3 mb-4">
         <div className="flex items-center">
           {connectionStatus === "disconnected" && (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-orange-500 mr-2" />
-              <span className="text-sm text-orange-700">
+              <Loader2 className="w-4 h-4 animate-spin text-[#02331E] mr-2" />
+              <span className="text-sm text-[#02331E]">
                 Connecting to consultant...
               </span>
             </>
@@ -402,7 +457,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
     );
   };
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col max-w-md mx-auto">
+    <div className="bg-[#F5F5F5] min-h-screen flex flex-col max-w-md mx-auto">
       <div className="sticky top-0 z-10 inset-0">
         <SettingsHeader title={title} />
       </div>
@@ -415,17 +470,11 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
             key={msg.id}
             className={`flex ${msg.type === "sent" ? "justify-end" : "items-start"} space-x-3`}
           >
-            {msg.type === "received" && (
-              <div className="w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
-                <div className="w-6 h-6 bg-orange-400 rounded-full"></div>
-              </div>
-            )}
-
             <div
               className={`flex-1 ${msg.type === "sent" ? "flex flex-col items-end" : ""}`}
             >
               <div
-                className={`text-sm font-medium mb-1 ${msg.type === "sent" ? "text-orange-500 mr-2" : "text-gray-900"}`}
+                className={`text-sm font-medium mb-1 ${msg.type === "sent" ? "text-[#02331E] mr-2" : "text-gray-900"}`}
               >
                 {msg.type === "received"
                   ? "Consultant"
@@ -434,7 +483,7 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
                     : "guest user"}
               </div>
               <div
-                className={`rounded-2xl overflow-x-hidden flex flex-wrap px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-yellow-100 rounded-tr-md" : "bg-green-100 rounded-tl-md"}`}
+                className={`rounded-2xl overflow-x-hidden flex flex-wrap px-4 py-3 text-gray-800 text-sm leading-relaxed max-w-xs ${msg.type === "sent" ? "bg-[#02331E] rounded-tr-md text-white" : "bg-white rounded-tl-md"}`}
               >
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
@@ -445,12 +494,6 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
                 })}
               </div>
             </div>
-
-            {msg.type === "sent" && (
-              <div className="w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
-                <div className="w-6 h-6 bg-orange-400 rounded-full"></div>
-              </div>
-            )}
           </div>
         ))}
 
@@ -484,15 +527,31 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
       </div>
 
       <div className="bg-white border-t border-gray-200 p-4 sticky bottom-[76px]  ">
+        {!isUserLoggedIn(userId) && isMounted && (
+          <div className="mb-3 text-center">
+            <span className="text-sm text-gray-600">
+              Messages: {userMessageCount}/3
+            </span>
+            {userMessageCount >= 3 && (
+              <p className="text-xs text-red-500 mt-1">
+                Please log in to continue chatting
+              </p>
+            )}
+          </div>
+        )}
         <div className="relative flex items-center space-x-3 bg-gray-100 rounded-[20px] px-4 min-h-[44px]">
           <textarea
             ref={textareaRef}
             type="text"
-            placeholder="Message"
+            placeholder={
+              !isUserLoggedIn(userId) && isMounted && userMessageCount >= 3
+                ? "Please log in to continue"
+                : "Message"
+            }
             value={message}
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
-            disabled={!isReady}
+            disabled={!canSendMessage() || !isReady}
             className="flex-1 bg-transparent border-none outline-none py-1 text-gray-700 placeholder-gray-500 disabled:opacity-50 resize-none overflow-hidden min-h-[28px] max-h-[200px]"
             rows={1}
             style={{
@@ -510,13 +569,20 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
               // Reset textarea height after sending
               resetTextareaHeight();
             }}
-            disabled={!message.trim() || connectionStatus !== "connected"}
-            className="p-2 text-green-600 hover:bg-green-50 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            disabled={
+              !message.trim() ||
+              connectionStatus !== "connected" ||
+              !canSendMessage()
+            }
+            className="p-2 text-[#D4B038] hover:bg-green-50 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-6 h-6" />
           </button>
         </div>
       </div>
+      {!isAuthenticated && userMessageCount >= 3 && (
+        <SignupPopup setUserMessageCount={setUserMessageCount} />
+      )}
       <Footer />
     </div>
   );

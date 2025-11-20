@@ -6,7 +6,7 @@ export default function LogoutPopup({ isOpen, setIsOpen }) {
   const router = useRouter();
   const handleLogout = () => {
     logout();
-    router.push("/");
+    router.push("/login");
     setIsOpen(false);
   };
 

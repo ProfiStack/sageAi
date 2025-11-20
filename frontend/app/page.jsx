@@ -1,14 +1,13 @@
 "use client";
-
-import DesktopHomePage from "@/CustomComponents/desktop/homePage/HomePage";
-import Login from "@/CustomComponents/Login/Login";
+import HomePage from "@/CustomComponents/home/Home";
+import DesktopHomePage from "../DesktopComponents/desktop/homePage/HomePage";
 import { useHasHydrated } from "@/shared/utils/useHydration";
 import { isMobileClient } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function LoginPage() {
+export default function Home() {
   const router = useRouter();
   const hasHydrated = useHasHydrated();
   const { isAuthenticated, token } = useAuthStore();
@@ -18,7 +17,7 @@ export default function LoginPage() {
     if (isMobileClient()) {
       // ✅ On mobile
       if (hasHydrated && isAuthenticated && token) {
-        router.replace("/home");
+        router.replace("/");
       }
     }
   }, [isAuthenticated, token, hasHydrated, router]);
@@ -33,7 +32,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col justify-between h-screen">
-      {isMobileClient() ? <Login /> : <DesktopHomePage />}
+      {isMobileClient() ? <HomePage /> : <DesktopHomePage />}
     </div>
   );
 }

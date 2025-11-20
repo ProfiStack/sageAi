@@ -106,7 +106,7 @@ export const metadata = {
     images: ["https://sageeai.com/icon.ico"], // replace with your twitter image
     creator: "@sageeai",
   },
-}
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -118,6 +118,7 @@ export default function RootLayout({ children }) {
           <Toaster />
           <AuthInitializer />
           <AuthChecker>{children}</AuthChecker>
+          <Toaster />
         </AmplitudeProvider>
       </body>
     </html>

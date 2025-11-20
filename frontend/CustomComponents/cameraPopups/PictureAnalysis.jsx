@@ -5,6 +5,7 @@ import "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
 import { motion, AnimatePresence } from "framer-motion"; // Import AnimatePresence for exit animations
 import {
+  Camera,
   ChevronsDown,
   ChevronsLeft,
   ChevronsRight,
@@ -741,6 +742,14 @@ export default function PictureAnalysisPopup({
             const imageData = croppedCanvas.toDataURL("image/jpeg");
             if (imageData) {
               onCapture(imageData); // send image back to main page
+
+              //  Turn off the camera automatically after capture
+              if (videoRef.current && videoRef.current.srcObject) {
+                videoRef.current.srcObject
+                  .getTracks()
+                  .forEach((track) => track.stop());
+                videoRef.current.srcObject = null;
+              }
             }
           } else {
             setCountdown(0);
@@ -877,8 +886,18 @@ export default function PictureAnalysisPopup({
               <canvas ref={croppedRef} className="hidden"></canvas>
 
               {!isReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 text-white text-lg">
-                  Loading camera and model...
+                <div className="absolute inset-0 flex items-center justify-center bg-[#FAFAFA] bg-opacity-75 text-white text-lg">
+                  <motion.div
+                    className="absolute w-full h-0.5 bg-yellow-400"
+                    initial={{ top: "0%" }}
+                    animate={{ top: ["0%", "100%", "0%"] }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                  <Camera size={30} color="black" />
                 </div>
               )}
 

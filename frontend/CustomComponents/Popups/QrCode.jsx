@@ -1,50 +1,39 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { X, QrCode, Download, Share2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import QRCode from "qrcode";
 
 // QR Code Modal Component
 export default function QRCodeModal({ isOpen, onClose }) {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const websiteUrl = "https://sageeai.com/";
 
   useEffect(() => {
-    if (isOpen && websiteUrl) {
-      // Generate QR code using QR Server API (free service)
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(websiteUrl)}`;
-      setQrCodeUrl(qrUrl);
+    if (isOpen) {
+      QRCode.toDataURL("https://sageeai.com/", { width: 300 })
+        .then(setQrCodeUrl)
+        .catch(console.error);
     }
-  }, [isOpen, websiteUrl]);
+  }, [isOpen]);
 
-  const downloadQRCode = async () => {
-    try {
-      const response = await fetch(qrCodeUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "sageai-qr-code.png";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading QR code:", error);
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
     }
-  };
+    return () => (document.body.style.overflow = "auto");
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        {/* Close Button */}
+      <div className="relative bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl z-10">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
@@ -52,7 +41,6 @@ export default function QRCodeModal({ isOpen, onClose }) {
           <X className="w-6 h-6" />
         </button>
 
-        {/* Content */}
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-to-r from-[#02331E] to-[#D4B038] rounded-2xl flex items-center justify-center mx-auto mb-6">
             <QrCode className="w-8 h-8 text-white" />
@@ -65,18 +53,14 @@ export default function QRCodeModal({ isOpen, onClose }) {
             Scan this code to visit SageeAI on your mobile device
           </p>
 
-          {/* QR Code */}
-          <div className="bg-white p-4 rounded-2xl border-4 border-[#D4B038]/20 mb-6 inline-block">
-            {qrCodeUrl && (
-              <img
-                src={qrCodeUrl}
-                alt="QR Code for SageeAI"
-                className="w-64 h-64"
-              />
-            )}
-          </div>
+          {qrCodeUrl && (
+            <div className="bg-white p-4 rounded-2xl border-4 border-[#D4B038]/20 inline-block">
+              <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body // ✅ ensures modal is rendered outside all layout containers
   );
 }

@@ -30,12 +30,40 @@ export default function SuppSmart() {
 
           if (!hasValidRestrictions || !hasValidNutritionGoal) {
             setShowBeautyQuiz(true);
-          } else {
-            console.log("User has complete profile, no quiz needed");
           }
         } catch (error) {
           console.error("Error loading user profile:", error);
           setShowBeautyQuiz(true);
+        }
+      } else {
+        // Guest user - check localStorage for specific keys
+        if (typeof window !== "undefined") {
+          const guestQuizResults = localStorage.getItem(
+            "sagee_guest_quiz_results"
+          );
+
+          if (!guestQuizResults) {
+            // No quiz results saved - show the quiz
+            setShowBeautyQuiz(true);
+          } else {
+            try {
+              const results = JSON.parse(guestQuizResults);
+
+              // Check for skin_type and concern (required for skincare page)
+              const NutritionGoal =
+                results?.nutrition_goal && results.nutrition_goal !== "Unknown";
+              const Restriction =
+                results?.dietary_restriction &&
+                results.dietary_restriction !== "Unknown";
+
+              if (!NutritionGoal || !Restriction) {
+                setShowBeautyQuiz(true);
+              }
+            } catch (error) {
+              console.error("Error parsing guest quiz results:", error);
+              setShowBeautyQuiz(true);
+            }
+          }
         }
       }
     };

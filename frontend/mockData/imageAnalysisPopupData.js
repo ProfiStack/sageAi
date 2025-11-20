@@ -6,7 +6,7 @@ export const ImageAnalysisData = [
   },
   {
     image: "/images/products.png",
-    route: "/home",
+    route: "/",
     title: "Product Analysis",
   },
   {
@@ -16,7 +16,7 @@ export const ImageAnalysisData = [
   },
   {
     image: "/images/mole.png",
-    route: "/home",
+    route: "/",
     title: "Mole Analysis",
   },
 ];
