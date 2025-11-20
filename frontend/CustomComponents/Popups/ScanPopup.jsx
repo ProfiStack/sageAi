@@ -38,10 +38,10 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
       return "Login";
     }
     if (!isFreeScan && !shadeMatching && item.title === "Shade Matching") {
-      return "Quick Scan $1 Only";
+      return "Quick Scan Free";
     }
     if (!isFreeScan && !skinAnalysis && item.title === "Skin Analysis") {
-      return "Quick Scan $1 Only";
+      return "Quick Scan Free";
     }
     if (!isFreeScan && shadeMatching && item.title === "Shade Matching") {
       return "1 Scan Available";
