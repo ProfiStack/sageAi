@@ -59,10 +59,10 @@ const LoginScanPopup = ({ onClose }) => {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm">
-                  Free First Scan
+                  Free Scan
                 </h3>
                 <p className="text-gray-600 text-xs mt-0.5">
-                  Get your first scan absolutely free
+                  Get your scan absolutely free
                 </p>
               </div>
             </div>
@@ -104,7 +104,7 @@ const LoginScanPopup = ({ onClose }) => {
               }}
               className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Log In to Get Free Scan
+              Log In to Get Free unlimited Scan
             </button>
 
             <button
@@ -119,7 +119,8 @@ const LoginScanPopup = ({ onClose }) => {
 
           {/* Footer text */}
           <p className="text-center text-xs text-gray-500 pt-2">
-            Join thousands of users getting personalized skincare advice
+            Join thousands of users getting personalized skin and lifestyle
+            advice
           </p>
         </div>
       </div>
