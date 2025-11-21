@@ -507,6 +507,7 @@ export default function PictureAnalysisPopup({
 
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
+            facingMode: "user",
             width: { ideal: 640 },
             height: { ideal: 480 },
           },
@@ -540,7 +541,7 @@ export default function PictureAnalysisPopup({
         faceLandmarkerRef.current = null;
       }
     };
-  }, [open, setOpen]); // Depend on 'open' to re-run effect when popup state changes
+  }, [open]); // Depend on 'open' to re-run effect when popup state changes
 
   // --- Analysis Loop ---
   useEffect(() => {
