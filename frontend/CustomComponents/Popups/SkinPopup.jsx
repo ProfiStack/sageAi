@@ -51,10 +51,10 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
       return "Quick Scan Free";
     }
     if (!isFreeScan && shadeMatching && selectedItem.title === "True Tone") {
-      return "1 Scan Available";
+      return "Quick Scan Free";
     }
     if (!isFreeScan && skinAnalysis && selectedItem.title === "Derm Direct") {
-      return "1 Scan Available";
+      return "Quick Scan Free";
     }
     return "";
   };

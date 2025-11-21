@@ -31,11 +31,15 @@ import { useRouter } from "next/navigation";
 import Footer from "@/CustomComponents/Footer/Footer";
 import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
+import useFormToast from "@/CustomComponents/FormToast/FormToast";
 
 export default function ResultsPage() {
   const [favorites, setFavorites] = useState([]);
   const { token, userId } = useAuthStore();
+  const { primaryToast, destructiveToast } = useFormToast();
+
   const router = useRouter();
+  const [isRoutineSaved, setIsRoutineSaved] = useState(false);
   const resultsData = useSkinResultStore((state) => state.html);
   const handleDownloadReport = () => {
     if (resultsData) {
@@ -61,8 +65,14 @@ export default function ResultsPage() {
           night_routine: resultsData?.night_routine_section || [],
         },
       };
-      console.log(payload);
-      const response = await Api.client.favourites(token, payload, userId);
+      const res = await Api.client.favourites(token, payload, userId);
+      if (res.message === "New favourite added successfully") {
+        setIsRoutineSaved(true);
+        primaryToast({ description: "Routine added successfully" });
+      } else if (res.message === "Existing favourite removed successfully") {
+        setIsRoutineSaved(false);
+        destructiveToast("Routine removed");
+      }
     } catch (error) {
       console.error(error);
     }
@@ -238,9 +248,14 @@ export default function ResultsPage() {
                 </div>
                 <button
                   onClick={handleSaveRoutine}
-                  className="p-2 rounded-xl font-semibold text-white bg-[#02331E] flex w-full justify-center"
+                  className={`p-2 rounded-xl font-semibold text-white flex w-full justify-center
+    transition-all duration-300 ease-out
+    active:scale-95
+    hover:scale-[1.02]
+    hover:shadow-lg
+    ${isRoutineSaved ? "bg-red-800" : "bg-[#02331E] "}`}
                 >
-                  Save Routine
+                  {isRoutineSaved ? "Remove Routine" : "Save Routine"}
                 </button>
               </div>
             </TabsContent>

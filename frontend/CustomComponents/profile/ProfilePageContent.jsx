@@ -271,7 +271,7 @@ export default function ProfilePageContent() {
           </div>
         </div>
       </div>
-      <div>
+      <div className="sticky inset-0">
         <Footer />
       </div>
       <FavouritesPopup
