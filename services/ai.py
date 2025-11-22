@@ -1452,7 +1452,7 @@ async def analyze_skin_features(image_bytes: bytes):
             # Optional diagnostics for debugging
             # "diagnostics": diagnostics
         }
-        print(result)
+        print(result);
         clean = {
             k: ([item["value"] for item in v] if isinstance(v, list) else v["value"])
             for k, v in result.items()
