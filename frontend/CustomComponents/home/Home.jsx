@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Footer from "../Footer/Footer";
 import { useRouter } from "next/navigation";
-import { useAmplitude } from "@/app/providers/amplitudeProvider";
+import { usePostHog } from "@/app/providers/posthogProvider";
 import OptionPopup from "../Popups/OptionPopup"; // Import the new popup
 import { useEffect, useState } from "react";
 import { Api } from "@/shared/api/api";
@@ -38,7 +38,7 @@ export default function HomePage() {
     isAuthenticated,
   } = useAuthStore();
 
-  const { logEvent } = useAmplitude();
+  const { logEvent } = usePostHog();
   useEffect(() => {
     const getProfile = async () => {
       const res = await Api.client.getProfile(token);

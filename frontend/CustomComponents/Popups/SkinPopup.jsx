@@ -158,7 +158,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
               </SubscribeButton>
             )}
 
-            {!isSubscribed && (
+            {/*{!isSubscribed && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -175,7 +175,7 @@ const SkinPopup = ({ isOpen, onClose, selectedItem, onChatClick }) => {
                 For Scanning Pricing starts from {price["usd"]} USD OR{" "}
                 {price["gbp"]} GBP Country based. Subscribe now
               </motion.div>
-            )}
+            )}*/}
           </div>
         </div>
 

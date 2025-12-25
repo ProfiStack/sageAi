@@ -83,63 +83,70 @@ export default function SkinAnalysis() {
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      <SettingsHeader title={"Skin Analysis"} />
+    <div className="h-screen flex flex-col justify-between">
+      <div>
+        <SettingsHeader title={"Skin Analysis"} />
 
-      <div
-        className="flex-1 px-4 flex flex-col"
-        style={{ height: "calc(100vh - 142px)" }}
-      >
-        <div className="flex-shrink-0">
-          <p className="text-[20px] text-[#02331E] font-bold leading-tight mt-[10px]">
-            Get Your Personal Skin Report
-          </p>
-          <p className="text-[#02331E] mb-2 mt-1 leading-tight">
-            Quick, private analysis & simple steps to healthier skin. Photos are
-            encrypted, analyzed, and deleted,only you see results
-          </p>
-        </div>
-
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="relative flex-1 mb-4" style={{ minHeight: "200px" }}>
-            <Image
-              src="/images/imageanalysis.png"
-              fill
-              className="object-cover rounded-xl"
-            />
+        <div
+          className="flex-1 px-4 flex flex-col"
+          style={{ height: "calc(100vh - 142px)" }}
+        >
+          <div className="flex-shrink-0">
+            <p className="text-[20px] text-[#02331E] font-bold leading-tight mt-[10px]">
+              Get Your Personal Skin Report
+            </p>
+            <p className="text-[#02331E] mb-2 mt-1 leading-tight">
+              Quick, private analysis & simple steps to healthier skin. Photos
+              are encrypted, analyzed, and deleted,only you see results
+            </p>
           </div>
 
-          <div className="flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleUploadClick}
-                className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
-              >
-                Upload Selfie
-              </button>
-              <button
-                onClick={() => SetIsOpen(true)}
-                className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
-              >
-                Snap My Skin
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div
+              className="relative flex-1 mb-4"
+              style={{ minHeight: "200px" }}
+            >
+              <Image
+                src="/images/imageanalysis.png"
+                fill
+                className="object-cover rounded-xl"
               />
             </div>
 
-            <p className="w-full flex justify-center text-[#4F8096] text-sm my-2">
-              Works better without makeup. Best in natural light.
-            </p>
+            <div className="flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleUploadClick}
+                  className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
+                >
+                  Upload Selfie
+                </button>
+                <button
+                  onClick={() => SetIsOpen(true)}
+                  className="w-full text-white py-2 rounded-3xl font-medium bg-[#02331E]"
+                >
+                  Snap My Skin
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </div>
+
+              <p className="w-full flex justify-center text-[#4F8096] text-sm my-2">
+                Works better without makeup. Best in natural light.
+              </p>
+            </div>
           </div>
         </div>
       </div>
+      <div className="sticky inset-0">
+        <Footer />
+      </div>
 
-      <Footer />
       <PictureAnalysisPopup
         loading={isLoading}
         open={isOpen}

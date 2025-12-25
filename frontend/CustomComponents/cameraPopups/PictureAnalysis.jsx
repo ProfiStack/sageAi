@@ -16,6 +16,7 @@ import {
 import { useRouter } from "next/navigation"; // Import useRouter
 import useFormToast from "../FormToast/FormToast";
 import { Loader2 } from "lucide-react";
+import CameraPermissionModal from "../Popups/CameraPermission";
 
 export default function PictureAnalysisPopup({
   open,
@@ -44,6 +45,7 @@ export default function PictureAnalysisPopup({
   const [allCurrentChecksPass, setAllCurrentChecksPass] = useState(false);
   const [isYawOff, setIsYawOff] = useState(false);
   const [isPitchOff, setIsPitchOff] = useState(false);
+  const [cameraPermission, setCameraPermission] = useState(false);
 
   const lastFaceCenterRef = useRef({ x: null, y: null });
   // Ref to control detection frequency
@@ -507,6 +509,7 @@ export default function PictureAnalysisPopup({
 
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
+            facingMode: "user",
             width: { ideal: 640 },
             height: { ideal: 480 },
           },
@@ -518,7 +521,9 @@ export default function PictureAnalysisPopup({
         };
       } catch (error) {
         destructiveToast(error.message);
-        console.error("Error loading model or camera:", error);
+        if (error.message === "Permission denied") {
+          setCameraPermission(true);
+        }
         // Optionally, close the popup or show an error message to the user
         setOpen(false);
       }
@@ -540,7 +545,7 @@ export default function PictureAnalysisPopup({
         faceLandmarkerRef.current = null;
       }
     };
-  }, [open, setOpen]); // Depend on 'open' to re-run effect when popup state changes
+  }, [open]); // Depend on 'open' to re-run effect when popup state changes
 
   // --- Analysis Loop ---
   useEffect(() => {
@@ -1091,6 +1096,10 @@ export default function PictureAnalysisPopup({
           </motion.div>
         </motion.div>
       )}
+      <CameraPermissionModal
+        isOpen={cameraPermission}
+        setIsOpen={setCameraPermission}
+      />
     </AnimatePresence>
   );
 }

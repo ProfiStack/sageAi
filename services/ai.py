@@ -11,6 +11,7 @@ from prompts.hair_care import get_hair_care_checker_prompt
 from prompts.makeup import get_makeup_checker_prompt
 from prompts.nutrition import get_nutrition_checker_prompt
 from prompts.styling import get_styling_checker_prompt
+from prompts.perplexity import get_perplexity_prompt
 from prompts.wellness import get_wellness_checker_prompt
 from services.db_service import save_chat_message, get_user_session_data, update_user_profile
 from concurrent.futures import ThreadPoolExecutor
@@ -23,7 +24,7 @@ import cv2
 from PIL import Image
 from io import BytesIO
 # from sklearn.cluster import KMeans
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -178,6 +179,8 @@ def get_feature_prompt(feature_type: str, user_metrics: dict):
         ):
             chat_title = format_title(feature_type)
             return get_makeup_checker_prompt(user_metrics, chat_title)
+        elif feature_type == "perplexity":
+            return get_perplexity_prompt(user_metrics)
         else:
             return get_skincare_prompt(user_metrics)
     except Exception as e:
@@ -1360,7 +1363,7 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
 
 async def analyze_skin_features(image_bytes: bytes):
     """
-    Analyze skin features from image bytes with lighting-invariant preprocessing.
+    Analyze skin features from image bytes with improved accuracy and robustness.
     
     Args:
         image_bytes: Raw image bytes
@@ -1369,7 +1372,6 @@ async def analyze_skin_features(image_bytes: bytes):
         Dictionary with skin_types, concerns, tone, undertone, texture, 
         under_eye, and lip_color - all with confidence scores
     """
-    # Check if OpenCV is available
     if cv2 is None:
         raise HTTPException(
             status_code=503,
@@ -1377,70 +1379,81 @@ async def analyze_skin_features(image_bytes: bytes):
         )
 
     try:
-        # ==================== STEP 1: LOAD IMAGE ====================
+        # ==================== STEP 1: LOAD & VALIDATE IMAGE ====================
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img_np = np.array(img)
         
-        # Diagnostics tracking
         diagnostics = {
             "warnings": [],
             "preprocessing_applied": [],
-            "original_size": img_np.shape[:2]
+            "original_size": img_np.shape[:2],
+            "validation_warnings": []
         }
         
-        # ==================== STEP 2: COLOR CONSTANCY ====================
-        # Apply Gray World algorithm to normalize lighting
-        img_normalized = _apply_color_constancy(img_np, diagnostics)
+        # ==================== STEP 2: ENHANCED COLOR CONSTANCY ====================
+        img_normalized = _apply_enhanced_color_constancy(img_np, diagnostics)
         
         # ==================== STEP 3: CLAHE ENHANCEMENT ====================
-        # Apply CLAHE for contrast enhancement
         img_enhanced = _apply_clahe_enhancement(img_normalized, diagnostics)
         
-        # ==================== STEP 4: MULTI-RESOLUTION ANALYSIS ====================
+        # ==================== STEP 4: MULTI-RESOLUTION PREPARATION ====================
         img_256 = cv2.resize(img_enhanced, (256, 256))
         img_128 = cv2.resize(img_enhanced, (128, 128))
         
-        # Create augmented versions for ensemble
+        # ==================== STEP 5: SKIN DETECTION ====================
+        img_hsv = cv2.cvtColor(img_256, cv2.COLOR_RGB2HSV)
+        img_lab = cv2.cvtColor(img_256, cv2.COLOR_RGB2LAB)
+        img_ycrcb = cv2.cvtColor(img_256, cv2.COLOR_RGB2YCrCb)
+        img_gray = cv2.cvtColor(img_256, cv2.COLOR_RGB2GRAY)
+        
+        skin_mask = _detect_skin_regions(img_256, img_hsv, img_ycrcb)
+        
+        # Validate skin coverage
+        skin_coverage = np.sum(skin_mask > 0) / skin_mask.size
+        diagnostics["skin_coverage_percentage"] = round(skin_coverage * 100, 2)
+        
+        if skin_coverage < 0.15:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient skin visible ({diagnostics['skin_coverage_percentage']}%). Please provide a clearer face photo."
+            )
+        
+        # ==================== STEP 6: CREATE AUGMENTED VERSIONS ====================
         augmented_images = _create_augmented_versions(img_256)
         diagnostics["augmentation_count"] = len(augmented_images)
         
-        # ==================== STEP 5: COLOR SPACE CONVERSIONS ====================
-        img_hsv = cv2.cvtColor(img_256, cv2.COLOR_RGB2HSV)
-        img_lab = cv2.cvtColor(img_256, cv2.COLOR_RGB2LAB)
-        img_gray = cv2.cvtColor(img_256, cv2.COLOR_RGB2GRAY)
+        # ==================== STEP 7: EXTRACT COMPREHENSIVE METRICS ====================
+        metrics = _extract_image_metrics(img_256, img_hsv, img_lab, img_gray, skin_mask)
         
-        # ==================== STEP 6: EXTRACT METRICS ====================
-        metrics = _extract_image_metrics(img_256, img_hsv, img_lab, img_gray)
-        
-        # ==================== STEP 7: ANALYZE SKIN TYPE ====================
-        skin_types_result = _analyze_skin_type_with_confidence(
-            img_256, img_hsv, img_gray, metrics, augmented_images
+        # ==================== STEP 8: ANALYZE SKIN TYPE ====================
+        skin_types_result = _analyze_skin_type_ensemble(
+            img_256, img_hsv, img_gray, metrics, augmented_images, skin_mask
         )
         
-        # ==================== STEP 8: ANALYZE CONCERNS ====================
-        concerns_result = _analyze_concerns_with_confidence(
-            img_256, img_hsv, img_lab, img_gray, metrics
+        # ==================== STEP 9: ANALYZE CONCERNS ====================
+        concerns_result = _analyze_concerns_comprehensive(
+            img_256, img_hsv, img_lab, img_gray, metrics, skin_mask
         )
         
-        # ==================== STEP 9: ANALYZE TONE & UNDERTONE ====================
-        tone_result, undertone_result = _analyze_tone_and_undertone(
-            img_256, img_lab, img_hsv, metrics
+        # ==================== STEP 10: ANALYZE TONE & UNDERTONE ====================
+        tone_result, undertone_result = _analyze_tone_and_undertone_enhanced(
+            img_256, img_lab, img_hsv, metrics, skin_mask
         )
         
-        # ==================== STEP 10: ANALYZE TEXTURE ====================
-        texture_result = _analyze_texture_with_confidence(metrics)
+        # ==================== STEP 11: ANALYZE TEXTURE ====================
+        texture_result = _analyze_texture_enhanced(metrics, skin_mask)
         
-        # ==================== STEP 11: ANALYZE UNDER-EYE ====================
-        under_eye_result = _analyze_under_eye_with_confidence(
-            img_gray, img_lab, metrics
+        # ==================== STEP 12: ANALYZE UNDER-EYE ====================
+        under_eye_result = _analyze_under_eye_adaptive(
+            img_gray, img_lab, metrics, skin_mask
         )
         
-        # ==================== STEP 12: ANALYZE LIP COLOR ====================
-        lip_color_result = _analyze_lip_color_with_confidence(
-            img_256, img_lab
+        # ==================== STEP 13: ANALYZE LIP COLOR ====================
+        lip_color_result = _analyze_lip_color_enhanced(
+            img_256, img_lab, img_hsv, skin_mask
         )
         
-        # ==================== STEP 13: COMPILE RESULTS ====================
+        # ==================== STEP 14: COMPILE & VALIDATE RESULTS ====================
         result = {
             "skin_types": skin_types_result,
             "concerns": concerns_result,
@@ -1449,51 +1462,83 @@ async def analyze_skin_features(image_bytes: bytes):
             "texture": texture_result,
             "under_eye": under_eye_result,
             "lip_color": lip_color_result,
-            # Optional diagnostics for debugging
-            # "diagnostics": diagnostics
         }
-        print(result)
+        print(result);
+        # Validate results for consistency
+        result = _validate_analysis_results(result, metrics, diagnostics)
+        
+        # Add diagnostics if needed for debugging
+        # result["diagnostics"] = diagnostics
+        
+        # Clean format for API response
         clean = {
             k: ([item["value"] for item in v] if isinstance(v, list) else v["value"])
             for k, v in result.items()
+            if k not in ["diagnostics", "validation_warnings"]
         }
+        
+        # Add validation warnings if any
+        if diagnostics.get("validation_warnings"):
+            clean["warnings"] = diagnostics["validation_warnings"]
         print(clean);
         return clean
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to analyze image: {str(e)}"
         )
 
 
-# ==================== PREPROCESSING FUNCTIONS ====================
+# ==================== ENHANCED PREPROCESSING FUNCTIONS ====================
 
-def _apply_color_constancy(img_np: np.ndarray, diagnostics: Dict) -> np.ndarray:
+def _apply_enhanced_color_constancy(img_np: np.ndarray, diagnostics: Dict) -> np.ndarray:
     """
-    Apply Gray World color constancy to normalize lighting conditions.
-    This reduces the impact of color casts from different light sources.
+    Apply enhanced color constancy using Gray World + White Patch ensemble.
+    More robust to various lighting conditions.
     """
     try:
         img_float = img_np.astype(np.float32)
         
-        # Calculate channel means
+        # ===== METHOD 1: GRAY WORLD =====
         mean_r = np.mean(img_float[:, :, 0])
         mean_g = np.mean(img_float[:, :, 1])
         mean_b = np.mean(img_float[:, :, 2])
         
-        # Gray world mean
         gray_mean = (mean_r + mean_g + mean_b) / 3.0
         
-        # Scale channels
+        img_gw = img_float.copy()
         if mean_r > 1e-5 and mean_g > 1e-5 and mean_b > 1e-5:
-            img_float[:, :, 0] *= (gray_mean / mean_r)
-            img_float[:, :, 1] *= (gray_mean / mean_g)
-            img_float[:, :, 2] *= (gray_mean / mean_b)
+            img_gw[:, :, 0] *= (gray_mean / mean_r)
+            img_gw[:, :, 1] *= (gray_mean / mean_g)
+            img_gw[:, :, 2] *= (gray_mean / mean_b)
         
-        img_normalized = np.clip(img_float, 0, 255).astype(np.uint8)
-        diagnostics["preprocessing_applied"].append("gray_world_color_constancy")
+        # ===== METHOD 2: WHITE PATCH =====
+        max_r = np.percentile(img_float[:, :, 0], 99)
+        max_g = np.percentile(img_float[:, :, 1], 99)
+        max_b = np.percentile(img_float[:, :, 2], 99)
+        
+        max_val = max(max_r, max_g, max_b)
+        
+        img_wp = img_float.copy()
+        if max_r > 1e-5 and max_g > 1e-5 and max_b > 1e-5:
+            img_wp[:, :, 0] *= (max_val / max_r)
+            img_wp[:, :, 1] *= (max_val / max_g)
+            img_wp[:, :, 2] *= (max_val / max_b)
+        
+        # ===== WEIGHTED ENSEMBLE =====
+        # Gray World is better for overall cast, White Patch for highlights
+        img_normalized = 0.6 * img_gw + 0.4 * img_wp
+        img_normalized = np.clip(img_normalized, 0, 255).astype(np.uint8)
+        
+        # Detect color cast strength
+        cast_strength = abs(mean_r - gray_mean) + abs(mean_g - gray_mean) + abs(mean_b - gray_mean)
+        diagnostics["color_cast_strength"] = round(cast_strength, 2)
+        diagnostics["preprocessing_applied"].append("enhanced_color_constancy")
         
         return img_normalized
+        
     except Exception as e:
         diagnostics["warnings"].append(f"Color constancy failed: {str(e)}")
         return img_np
@@ -1501,102 +1546,154 @@ def _apply_color_constancy(img_np: np.ndarray, diagnostics: Dict) -> np.ndarray:
 
 def _apply_clahe_enhancement(img: np.ndarray, diagnostics: Dict) -> np.ndarray:
     """
-    Apply CLAHE (Contrast Limited Adaptive Histogram Equalization).
-    Enhances local contrast and handles varying exposure.
+    Apply CLAHE with optimized parameters for skin analysis.
     """
     try:
-        # Convert to LAB color space
         img_lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
         l, a, b = cv2.split(img_lab)
         
-        # Apply CLAHE to L channel
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        # Adaptive CLAHE based on image brightness
+        avg_l = np.mean(l)
+        clip_limit = 2.5 if avg_l < 100 else 2.0
+        
+        clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(8, 8))
         l_enhanced = clahe.apply(l)
         
-        # Merge and convert back to RGB
         img_lab_enhanced = cv2.merge([l_enhanced, a, b])
         img_enhanced = cv2.cvtColor(img_lab_enhanced, cv2.COLOR_LAB2RGB)
         
-        diagnostics["preprocessing_applied"].append("clahe_enhancement")
+        diagnostics["preprocessing_applied"].append("adaptive_clahe")
         return img_enhanced
+        
     except Exception as e:
         diagnostics["warnings"].append(f"CLAHE failed: {str(e)}")
         return img
 
 
+def _detect_skin_regions(img_rgb: np.ndarray, img_hsv: np.ndarray, 
+                        img_ycrcb: np.ndarray) -> np.ndarray:
+    """
+    Detect skin regions using multi-color-space approach.
+    More robust than fixed coordinate regions.
+    """
+    # HSV skin detection
+    lower_hsv = np.array([0, 20, 60], dtype=np.uint8)
+    upper_hsv = np.array([20, 170, 255], dtype=np.uint8)
+    mask_hsv = cv2.inRange(img_hsv, lower_hsv, upper_hsv)
+    
+    # YCrCb skin detection (more robust to lighting)
+    lower_ycrcb = np.array([0, 133, 77], dtype=np.uint8)
+    upper_ycrcb = np.array([255, 173, 127], dtype=np.uint8)
+    mask_ycrcb = cv2.inRange(img_ycrcb, lower_ycrcb, upper_ycrcb)
+    
+    # RGB ratio-based detection
+    r = img_rgb[:, :, 0].astype(np.float32)
+    g = img_rgb[:, :, 1].astype(np.float32)
+    b = img_rgb[:, :, 2].astype(np.float32)
+    
+    # Skin typically has R > G > B with specific ratios
+    mask_rgb = ((r > 95) & (g > 40) & (b > 20) & 
+                (r > g) & (r > b) & 
+                (abs(r - g) > 15)).astype(np.uint8) * 255
+    
+    # Combine all masks
+    skin_mask = cv2.bitwise_and(mask_hsv, mask_ycrcb)
+    skin_mask = cv2.bitwise_and(skin_mask, mask_rgb)
+    
+    # Morphological operations to clean up
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+    skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_OPEN, kernel)
+    
+    # Fill small holes
+    kernel_large = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+    skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_CLOSE, kernel_large)
+    
+    return skin_mask
+
+
 def _create_augmented_versions(img: np.ndarray) -> List[np.ndarray]:
     """
     Create augmented versions for ensemble analysis.
-    Helps reduce sensitivity to lighting variations.
     """
-    augmented = [img]  # Original
+    augmented = [img]
     
-    # Brightness variations
+    # Brightness variations (±10%)
     bright_up = np.clip(img.astype(np.float32) * 1.1, 0, 255).astype(np.uint8)
     bright_down = np.clip(img.astype(np.float32) * 0.9, 0, 255).astype(np.uint8)
     augmented.extend([bright_up, bright_down])
     
     # Temperature variations
     warmer = img.copy().astype(np.float32)
-    warmer[:, :, 0] *= 1.05  # More red
-    warmer[:, :, 1] *= 1.02  # Slight green increase
-    warmer = np.clip(warmer, 0, 255).astype(np.uint8)
+    warmer[:, :, 0] = np.clip(warmer[:, :, 0] * 1.05, 0, 255)
+    warmer[:, :, 1] = np.clip(warmer[:, :, 1] * 1.02, 0, 255)
     
     cooler = img.copy().astype(np.float32)
-    cooler[:, :, 2] *= 1.05  # More blue
-    cooler = np.clip(cooler, 0, 255).astype(np.uint8)
+    cooler[:, :, 2] = np.clip(cooler[:, :, 2] * 1.05, 0, 255)
     
-    augmented.extend([warmer, cooler])
+    augmented.extend([warmer.astype(np.uint8), cooler.astype(np.uint8)])
     
     return augmented
 
 
 def _extract_image_metrics(img_256: np.ndarray, img_hsv: np.ndarray, 
-                          img_lab: np.ndarray, img_gray: np.ndarray) -> Dict:
+                          img_lab: np.ndarray, img_gray: np.ndarray,
+                          skin_mask: np.ndarray) -> Dict:
     """
-    Extract comprehensive image metrics used across multiple analyses.
+    Extract comprehensive metrics from skin regions only.
     """
-    # HSV metrics
-    brightness = np.mean(img_hsv[:, :, 2])
-    saturation = np.mean(img_hsv[:, :, 1])
-    hue = np.mean(img_hsv[:, :, 0])
+    # Get skin pixels only
+    skin_pixels_rgb = img_256[skin_mask > 0]
+    skin_pixels_hsv = img_hsv[skin_mask > 0]
+    skin_pixels_lab = img_lab[skin_mask > 0]
+    skin_gray = img_gray[skin_mask > 0]
     
-    # Color variation
-    color_std = np.std(img_256, axis=(0, 1))
+    if len(skin_pixels_rgb) == 0:
+        # Fallback to full image if skin detection failed
+        skin_pixels_rgb = img_256.reshape(-1, 3)
+        skin_pixels_hsv = img_hsv.reshape(-1, 3)
+        skin_pixels_lab = img_lab.reshape(-1, 3)
+        skin_gray = img_gray.flatten()
+    
+    # HSV metrics (skin regions only)
+    brightness = np.mean(skin_pixels_hsv[:, 2])
+    saturation = np.mean(skin_pixels_hsv[:, 1])
+    hue = np.mean(skin_pixels_hsv[:, 0])
+    
+    brightness_std = np.std(skin_pixels_hsv[:, 2])
+    saturation_std = np.std(skin_pixels_hsv[:, 1])
+    
+    # RGB metrics
+    avg_r = np.mean(skin_pixels_rgb[:, 0])
+    avg_g = np.mean(skin_pixels_rgb[:, 1])
+    avg_b_rgb = np.mean(skin_pixels_rgb[:, 2])
+    
+    color_std = np.std(skin_pixels_rgb, axis=0)
     overall_color_variation = np.mean(color_std)
     
-    # Texture metrics
+    # LAB metrics
+    avg_l = np.mean(skin_pixels_lab[:, 0])
+    avg_a = np.mean(skin_pixels_lab[:, 1])
+    avg_b = np.mean(skin_pixels_lab[:, 2])
+    
+    l_std = np.std(skin_pixels_lab[:, 0])
+    a_std = np.std(skin_pixels_lab[:, 1])
+    b_std = np.std(skin_pixels_lab[:, 2])
+    
+    # Texture metrics (full image for edge detection)
     laplacian_var = cv2.Laplacian(img_gray, cv2.CV_64F).var()
     
-    # Edge detection
     sobel_x = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=3)
     sobel_y = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=3)
     sobel_magnitude = np.sqrt(sobel_x**2 + sobel_y**2)
-    edge_density = np.mean(sobel_magnitude)
-    
-    # LAB metrics
-    l_channel = img_lab[:, :, 0].astype(np.float32)
-    a_channel = img_lab[:, :, 1].astype(np.float32)
-    b_channel = img_lab[:, :, 2].astype(np.float32)
-    
-    avg_l = np.mean(l_channel)
-    avg_a = np.mean(a_channel)
-    avg_b = np.mean(b_channel)
-    l_std = np.std(l_channel)
-    
-    # RGB metrics
-    red_channel = img_256[:, :, 0].astype(np.float32)
-    green_channel = img_256[:, :, 1].astype(np.float32)
-    blue_channel = img_256[:, :, 2].astype(np.float32)
-    
-    avg_r = np.mean(red_channel)
-    avg_g = np.mean(green_channel)
-    avg_b_rgb = np.mean(blue_channel)
+    edge_density = np.mean(sobel_magnitude[skin_mask > 0]) if np.any(skin_mask) else np.mean(sobel_magnitude)
     
     return {
         "brightness": brightness,
         "saturation": saturation,
         "hue": hue,
+        "brightness_std": brightness_std,
+        "saturation_std": saturation_std,
         "overall_color_variation": overall_color_variation,
         "laplacian_var": laplacian_var,
         "edge_density": edge_density,
@@ -1604,242 +1701,309 @@ def _extract_image_metrics(img_256: np.ndarray, img_hsv: np.ndarray,
         "avg_a": avg_a,
         "avg_b": avg_b,
         "l_std": l_std,
+        "a_std": a_std,
+        "b_std": b_std,
         "avg_r": avg_r,
         "avg_g": avg_g,
         "avg_b_rgb": avg_b_rgb,
-        "l_channel": l_channel,
-        "a_channel": a_channel,
-        "b_channel": b_channel,
+        "l_channel": img_lab[:, :, 0],
+        "a_channel": img_lab[:, :, 1],
+        "b_channel": img_lab[:, :, 2],
         "img_hsv": img_hsv,
-        "img_gray": img_gray
+        "img_gray": img_gray,
+        "skin_pixels_lab": skin_pixels_lab,
+        "skin_pixels_hsv": skin_pixels_hsv,
+        "skin_gray": skin_gray
     }
 
 
-# ==================== ANALYSIS FUNCTIONS WITH CONFIDENCE ====================
+# ==================== ENHANCED ANALYSIS FUNCTIONS ====================
 
-def _analyze_skin_type_with_confidence(img_256: np.ndarray, img_hsv: np.ndarray,
-                                      img_gray: np.ndarray, metrics: Dict,
-                                      augmented: List[np.ndarray]) -> Dict:
+def _analyze_skin_type_ensemble(img_256: np.ndarray, img_hsv: np.ndarray,
+                               img_gray: np.ndarray, metrics: Dict,
+                               augmented: List[np.ndarray], 
+                               skin_mask: np.ndarray) -> Dict:
     """
-    Analyze skin type with confidence scoring using ensemble approach.
+    Analyze skin type using ensemble approach with relative metrics.
     """
-    skin_types = []
-    confidences = []
+    predictions = []
     
+    # Analyze original + augmented versions
+    for aug_img in [img_256] + augmented[:2]:
+        result = _analyze_single_skin_type(aug_img, metrics, skin_mask)
+        if result:
+            predictions.append(result)
+    
+    if not predictions:
+        return {"value": "normal", "confidence": 0.60}
+    
+    # Vote on most common prediction
+    values = [p["value"] for p in predictions]
+    most_common = max(set(values), key=values.count)
+    
+    # Calculate confidence from agreement
+    agreement = values.count(most_common) / len(values)
+    matching_confs = [p["confidence"] for p in predictions if p["value"] == most_common]
+    base_conf = np.mean(matching_confs)
+    
+    final_confidence = base_conf * (0.7 + 0.3 * agreement)
+    
+    return {"value": most_common, "confidence": round(final_confidence, 2)}
+
+
+def _analyze_single_skin_type(img: np.ndarray, metrics: Dict, 
+                              skin_mask: np.ndarray) -> Optional[Dict]:
+    """
+    Analyze skin type for a single image using relative metrics.
+    """
     brightness = metrics["brightness"]
     saturation = metrics["saturation"]
-    overall_color_variation = metrics["overall_color_variation"]
+    brightness_std = metrics["brightness_std"]
+    saturation_std = metrics["saturation_std"]
     laplacian_var = metrics["laplacian_var"]
     edge_density = metrics["edge_density"]
     
-    # Oily skin detection
-    if brightness > 100 and overall_color_variation < 45 and saturation > 20 and edge_density > 12:
-        confidence = min(0.70 + (brightness - 100) / 200, 0.90)
-        skin_types.append({"value": "oily", "confidence": round(confidence, 2)})
+    # Calculate shine/oiliness using local variance
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    v_channel = img_hsv[:, :, 2][skin_mask > 0] if np.any(skin_mask) else img_hsv[:, :, 2].flatten()
     
-    # Dry skin detection
-    if brightness < 110 and overall_color_variation < 35 and saturation < 45 and laplacian_var < 120:
-        confidence = min(0.68 + (110 - brightness) / 180, 0.88)
-        skin_types.append({"value": "dry", "confidence": round(confidence, 2)})
+    # High brightness peaks indicate oily shine
+    bright_pixels = np.sum(v_channel > np.percentile(v_channel, 85))
+    shine_ratio = bright_pixels / len(v_channel)
     
-    # Combination skin detection with regional analysis
-    t_zone_regions = [
-        img_256[64:128, 112:144],   # Forehead
-        img_256[128:192, 112:144],  # Nose area
-    ]
-    cheek_regions = [
-        img_256[128:192, 64:112],   # Left cheek
-        img_256[128:192, 144:192],  # Right cheek
-    ]
+    # OILY SKIN: High brightness, low variation, shine spots
+    if shine_ratio > 0.20 and brightness > 110 and saturation > 25:
+        confidence = min(0.72 + shine_ratio, 0.88)
+        return {"value": "oily", "confidence": round(confidence, 2)}
     
-    if len(t_zone_regions) > 0 and len(cheek_regions) > 0:
-        t_zone_brightness = np.mean([
-            np.mean(cv2.cvtColor(r, cv2.COLOR_RGB2HSV)[:, :, 2])
-            for r in t_zone_regions if r.size > 0
-        ])
-        cheek_brightness = np.mean([
-            np.mean(cv2.cvtColor(r, cv2.COLOR_RGB2HSV)[:, :, 2])
-            for r in cheek_regions if r.size > 0
-        ])
+    # DRY SKIN: Low saturation, high L* variance, low shine
+    if saturation < 40 and brightness_std > 15 and shine_ratio < 0.10:
+        confidence = min(0.70 + (40 - saturation) / 100, 0.86)
+        return {"value": "dry", "confidence": round(confidence, 2)}
+    
+    # COMBINATION SKIN: Regional differences
+    h, w = img.shape[:2]
+    t_zone = img[int(h*0.25):int(h*0.65), int(w*0.35):int(w*0.65)]
+    cheek_left = img[int(h*0.45):int(h*0.75), int(w*0.15):int(w*0.40)]
+    cheek_right = img[int(h*0.45):int(h*0.75), int(w*0.60):int(w*0.85)]
+    
+    regions = []
+    for region in [t_zone, cheek_left, cheek_right]:
+        if region.size > 0:
+            region_hsv = cv2.cvtColor(region, cv2.COLOR_RGB2HSV)
+            regions.append({
+                'brightness': np.mean(region_hsv[:, :, 2]),
+                'saturation': np.mean(region_hsv[:, :, 1])
+            })
+    
+    if len(regions) >= 2:
+        brightness_range = max([r['brightness'] for r in regions]) - min([r['brightness'] for r in regions])
+        saturation_range = max([r['saturation'] for r in regions]) - min([r['saturation'] for r in regions])
         
-        t_zone_saturation = np.mean([
-            np.mean(cv2.cvtColor(r, cv2.COLOR_RGB2HSV)[:, :, 1])
-            for r in t_zone_regions if r.size > 0
-        ])
-        cheek_saturation = np.mean([
-            np.mean(cv2.cvtColor(r, cv2.COLOR_RGB2HSV)[:, :, 1])
-            for r in cheek_regions if r.size > 0
-        ])
-        
-        brightness_diff = abs(t_zone_brightness - cheek_brightness)
-        saturation_diff = abs(t_zone_saturation - cheek_saturation)
-        
-        if brightness_diff > 10 or saturation_diff > 12:
-            confidence = min(0.72 + max(brightness_diff, saturation_diff) / 100, 0.89)
-            skin_types.append({"value": "combination", "confidence": round(confidence, 2)})
+        if brightness_range > 15 or saturation_range > 20:
+            confidence = min(0.74 + max(brightness_range, saturation_range) / 100, 0.87)
+            return {"value": "combination", "confidence": round(confidence, 2)}
     
-    # Sensitive skin detection
-    if laplacian_var < 100 and overall_color_variation > 25 and edge_density < 18:
-        red_channel = img_256[:, :, 0].astype(np.float32)
-        green_channel = img_256[:, :, 1].astype(np.float32)
-        rg_diff = np.mean(red_channel - green_channel)
-        
-        if rg_diff > 6:
-            confidence = min(0.65 + rg_diff / 50, 0.82)
-            skin_types.append({"value": "sensitive", "confidence": round(confidence, 2)})
+    # SENSITIVE SKIN: High color variation, redness, low texture
+    avg_a = metrics["avg_a"]
+    a_std = metrics["a_std"]
     
-    # Normal skin detection - expanded ranges
-    if not skin_types:
-        if (70 <= brightness <= 180 and 
-            10 <= overall_color_variation <= 50 and 
-            15 <= saturation <= 80 and 
-            40 <= laplacian_var <= 200):
-            skin_types.append({"value": "normal", "confidence": 0.78})
-        else:
-            # Fallback
-            skin_types.append({"value": "normal", "confidence": 0.60})
+    if a_std > 8 and avg_a > 133 and laplacian_var < 110:
+        confidence = min(0.68 + a_std / 50, 0.82)
+        return {"value": "sensitive", "confidence": round(confidence, 2)}
     
-    # Return the most confident result
-    if skin_types:
-        best_result = max(skin_types, key=lambda x: x["confidence"])
-        return best_result
+    # NORMAL SKIN: Balanced metrics
+    if (80 <= brightness <= 150 and 
+        20 <= saturation <= 70 and 
+        50 <= laplacian_var <= 180):
+        return {"value": "normal", "confidence": 0.80}
     
     return {"value": "normal", "confidence": 0.65}
 
 
-def _analyze_concerns_with_confidence(img_256: np.ndarray, img_hsv: np.ndarray,
-                                     img_lab: np.ndarray, img_gray: np.ndarray,
-                                     metrics: Dict) -> List[Dict]:
+def _analyze_concerns_comprehensive(img_256: np.ndarray, img_hsv: np.ndarray,
+                                   img_lab: np.ndarray, img_gray: np.ndarray,
+                                   metrics: Dict, skin_mask: np.ndarray) -> List[Dict]:
     """
-    Multi-label concern detection with confidence scores.
+    Multi-label concern detection with improved accuracy.
     """
     concerns = []
     
-    brightness = metrics["brightness"]
-    saturation = metrics["saturation"]
-    laplacian_var = metrics["laplacian_var"]
-    edge_density = metrics["edge_density"]
-    l_channel = metrics["l_channel"]
-    a_channel = metrics["a_channel"]
-    b_channel = metrics["b_channel"]
-    avg_l = metrics["avg_l"]
-    avg_a = metrics["avg_a"]
-    avg_b = metrics["avg_b"]
-    l_std = metrics["l_std"]
-    avg_r = metrics["avg_r"]
-    avg_g = metrics["avg_g"]
-    avg_b_rgb = metrics["avg_b_rgb"]
-    
-    # ==================== REDNESS DETECTION ====================
-    redness_confidence = 0
-    
-    # Method 1: LAB a* channel (red/magenta indicator)
-    a_deviation = avg_a - 128
-    if a_deviation > 8:
-        redness_confidence += 1
-    
-    # Method 2: RGB ratio analysis
-    total_rgb = avg_r + avg_g + avg_b_rgb
-    if total_rgb > 0:
-        red_ratio = avg_r / total_rgb
-        if red_ratio > 0.40 and avg_r > avg_g + 15 and avg_r > avg_b_rgb + 10:
-            redness_confidence += 1
-    
-    # Method 3: HSV hue analysis
-    hue_channel = img_hsv[:, :, 0]
-    saturation_channel = img_hsv[:, :, 1]
-    value_channel = img_hsv[:, :, 2]
-    
-    red_hue_mask = (
-        ((hue_channel <= 10) | (hue_channel >= 170)) &
-        (saturation_channel > 50) &
-        (value_channel > 60)
-    )
-    red_pixel_percentage = np.sum(red_hue_mask) / red_hue_mask.size
-    
-    if red_pixel_percentage > 0.15:
-        if np.sum(red_hue_mask) > 0:
-            avg_sat_red = np.mean(saturation_channel[red_hue_mask])
-            if avg_sat_red > 80:
-                redness_confidence += 1
-    
-    # Method 4: Skin tone adaptive
-    brightness_factor = brightness / 128.0
-    if brightness_factor < 0.8:
-        if avg_a > 132 and (avg_r - avg_g) > 5 and red_pixel_percentage > 0.10:
-            redness_confidence += 1
-    else:
-        if avg_a > 135 and (avg_r - avg_g) > 10 and red_pixel_percentage > 0.12:
-            redness_confidence += 1
-    
-    # Flag redness if multiple methods agree
-    if redness_confidence >= 3:
-        confidence = min(0.70 + redness_confidence * 0.05, 0.88)
-        concerns.append({"value": "redness", "confidence": round(confidence, 2)})
+    # ==================== REDNESS DETECTION (vs warm undertone) ====================
+    redness = _detect_redness_vs_warmth(img_256, img_hsv, img_lab, metrics, skin_mask)
+    if redness:
+        concerns.append(redness)
     
     # ==================== BREAKOUTS DETECTION ====================
-    if laplacian_var > 140 and edge_density > 16:
-        confidence = min(0.68 + (laplacian_var - 140) / 300, 0.85)
-        concerns.append({"value": "breakouts", "confidence": round(confidence, 2)})
+    breakouts = _detect_breakouts(img_gray, metrics, skin_mask)
+    if breakouts:
+        concerns.append(breakouts)
     
-    # ==================== PIGMENTATION DETECTION ====================
-    l_mean = np.mean(l_channel)
-    
-    # Dark spot detection
-    kernel = np.ones((5, 5), np.float32) / 25
-    l_smooth = cv2.filter2D(l_channel, -1, kernel)
-    
-    threshold_factor = 4 if l_mean < 100 else 6
-    dark_spots = l_channel < (l_smooth - threshold_factor)
-    dark_spot_percentage = np.sum(dark_spots) / dark_spots.size
-    
-    # Melanin detection
-    melanin_areas = (a_channel > 132) & (b_channel > 132) & (l_channel < l_mean - 2)
-    melanin_percentage = np.sum(melanin_areas) / melanin_areas.size
-    
-    # Age spot detection
-    age_threshold = 5 if l_mean < 100 else 8
-    age_spots = (l_channel < (l_mean - age_threshold)) & (b_channel > 130)
-    age_spot_percentage = np.sum(age_spots) / age_spots.size
-    
-    pigment_confidence = 0
-    
-    if l_mean < 100:  # Darker skin
-        if l_std > 8 and dark_spot_percentage > 0.05:
-            pigment_confidence += 1
-        if melanin_percentage > 0.04:
-            pigment_confidence += 1
-        if age_spot_percentage > 0.02:
-            pigment_confidence += 1
-    else:  # Lighter skin
-        if l_std > 12 and dark_spot_percentage > 0.08:
-            pigment_confidence += 1
-        if melanin_percentage > 0.06:
-            pigment_confidence += 1
-        if age_spot_percentage > 0.03:
-            pigment_confidence += 1
-    
-    if pigment_confidence >= 2:
-        confidence = min(0.65 + pigment_confidence * 0.06, 0.84)
-        concerns.append({"value": "hyperpigmentation", "confidence": round(confidence, 2)})
+    # ==================== HYPERPIGMENTATION DETECTION ====================
+    hyperpig = _detect_hyperpigmentation_adaptive(img_lab, metrics, skin_mask)
+    if hyperpig:
+        concerns.append(hyperpig)
     
     # ==================== SCARRING DETECTION ====================
-    scar_confidence = _detect_scarring(img_gray, laplacian_var)
-    if scar_confidence > 0:
-        concerns.append({"value": "scarring", "confidence": round(scar_confidence, 2)})
+    scarring = _detect_scarring_enhanced(img_gray, metrics, skin_mask)
+    if scarring:
+        concerns.append(scarring)
     
-    # ==================== FINE LINES ====================
-    if laplacian_var > 90 and brightness < 120 and edge_density > 8:
-        confidence = min(0.58 + (laplacian_var - 90) / 200, 0.78)
-        concerns.append({"value": "fine_lines", "confidence": round(confidence, 2)})
+    # ==================== FINE LINES DETECTION ====================
+    fine_lines = _detect_fine_lines(img_gray, metrics)
+    if fine_lines:
+        concerns.append(fine_lines)
     
-    # ==================== DULLNESS ====================
-    if saturation < 35 and brightness < 130 and metrics["overall_color_variation"] < 30:
-        confidence = min(0.62 + (35 - saturation) / 100, 0.80)
-        concerns.append({"value": "dullness", "confidence": round(confidence, 2)})
+    # ==================== DULLNESS DETECTION ====================
+    dullness = _detect_dullness(metrics, skin_mask)
+    if dullness:
+        concerns.append(dullness)
     
-    # ==================== ENLARGED PORES ====================
-    # Detect circular patterns (pores)
+    # ==================== ENLARGED PORES DETECTION ====================
+    pores = _detect_enlarged_pores(img_gray, metrics)
+    if pores:
+        concerns.append(pores)
+    
+    if not concerns:
+        concerns.append({"value": "none_detected", "confidence": 0.85})
+    
+    return concerns
+
+
+def _detect_redness_vs_warmth(img_256: np.ndarray, img_hsv: np.ndarray,
+                              img_lab: np.ndarray, metrics: Dict,
+                              skin_mask: np.ndarray) -> Optional[Dict]:
+    """
+    Differentiate between undertone warmth and actual redness/inflammation.
+    Key: Redness is patchy/uneven, undertone is uniform.
+    """
+    skin_pixels_lab = metrics["skin_pixels_lab"]
+    a_channel = img_lab[:, :, 1][skin_mask > 0] if np.any(skin_mask) else img_lab[:, :, 1].flatten()
+    
+    avg_a = np.mean(a_channel)
+    a_variance = np.var(a_channel)
+    
+    # High a* with LOW variance = warm undertone (uniform)
+    # High a* with HIGH variance = redness (patchy)
+    
+    is_high_red = avg_a > 135
+    is_patchy = a_variance > 30
+    
+    if not is_high_red:
+        return None
+    
+    # Check for localized red spots
+    a_threshold = np.percentile(a_channel, 85)
+    red_spots = a_channel > a_threshold
+    red_percentage = np.sum(red_spots) / len(a_channel)
+    
+    # Additional check: red hue in HSV
+    skin_hsv = img_hsv[skin_mask > 0] if np.any(skin_mask) else img_hsv.reshape(-1, 3)
+    hue = skin_hsv[:, 0]
+    sat = skin_hsv[:, 1]
+    
+    red_hue_mask = ((hue <= 10) | (hue >= 170)) & (sat > 60)
+    red_hue_percentage = np.sum(red_hue_mask) / len(hue)
+    
+    # Decision logic
+    if is_patchy and red_hue_percentage > 0.12:
+        # Patchy redness = concern
+        confidence = min(0.72 + a_variance / 100, 0.87)
+        return {"value": "redness", "confidence": round(confidence, 2)}
+    elif is_high_red and not is_patchy and red_percentage < 0.20:
+        # Uniform warmth = not a concern
+        return None
+    elif red_hue_percentage > 0.18:
+        # Significant red hue = concern
+        confidence = min(0.70 + red_hue_percentage, 0.85)
+        return {"value": "redness", "confidence": round(confidence, 2)}
+    
+    return None
+
+
+def _detect_breakouts(img_gray: np.ndarray, metrics: Dict, 
+                     skin_mask: np.ndarray) -> Optional[Dict]:
+    """
+    Detect breakouts using texture and edge analysis.
+    """
+    laplacian_var = metrics["laplacian_var"]
+    edge_density = metrics["edge_density"]
+    
+    # High texture variance indicates bumps/breakouts
+    if laplacian_var > 150 and edge_density > 18:
+        confidence = min(0.70 + (laplacian_var - 150) / 250, 0.86)
+        return {"value": "breakouts", "confidence": round(confidence, 2)}
+    
+    return None
+
+
+def _detect_hyperpigmentation_adaptive(img_lab: np.ndarray, metrics: Dict,
+                                       skin_mask: np.ndarray) -> Optional[Dict]:
+    """
+    Adaptive hyperpigmentation detection for all skin tones.
+    """
+    l_channel = metrics["l_channel"]
+    avg_l = metrics["avg_l"]
+    l_std = metrics["l_std"]
+    
+    # Get skin L values only
+    l_skin = l_channel[skin_mask > 0] if np.any(skin_mask) else l_channel.flatten()
+    
+    if len(l_skin) < 100:
+        return None
+    
+    # Use percentiles for adaptive thresholding
+    p10 = np.percentile(l_skin, 10)
+    p50 = np.percentile(l_skin, 50)
+    p90 = np.percentile(l_skin, 90)
+    
+    darkness_range = p50 - p10
+    lightness_range = p90 - p50
+    
+    # Adaptive threshold based on skin tone
+    if avg_l < 100:  # Darker skin
+        threshold_factor = 0.10
+        min_affected = 0.04
+    elif avg_l < 140:  # Medium skin
+        threshold_factor = 0.12
+        min_affected = 0.06
+    else:  # Lighter skin
+        threshold_factor = 0.15
+        min_affected = 0.08
+    
+    is_significant = darkness_range > (p50 * threshold_factor)
+    
+    # Calculate affected area
+    dark_threshold = p50 - (darkness_range * 0.5)
+    dark_pixels = np.sum(l_skin < dark_threshold)
+    dark_percentage = dark_pixels / len(l_skin)
+    
+    if is_significant and dark_percentage > min_affected:
+        confidence = min(0.68 + (dark_percentage * 2.5), 0.85)
+        return {"value": "hyperpigmentation", "confidence": round(confidence, 2)}
+    
+    return None
+
+
+def _detect_scarring_enhanced(img_gray: np.ndarray, metrics: Dict,
+                              skin_mask: np.ndarray) -> Optional[Dict]:
+    """
+    Enhanced scarring detection using multiple texture methods.
+    """
+    laplacian_var = metrics["laplacian_var"]
+    edge_density = metrics["edge_density"]
+    
+    # Directional texture analysis
+    kernel_h = np.array([[-1, -1, -1], [2, 2, 2], [-1, -1, -1]], dtype=np.float32)
+    kernel_v = np.array([[-1, 2, -1], [-1, 2, -1], [-1, 2, -1]], dtype=np.float32)
+    
+    lines_h = cv2.filter2D(img_gray, -1, kernel_h)
+    lines_v = cv2.filter2D(img_gray, -1, kernel_v)
+    
+    line_intensity_h = np.mean(np.abs(lines_h))
+    line_intensity_v = np.mean(np.abs(lines_v))
+    
+    # Crater/pit detection
     circles = cv2.HoughCircles(
         img_gray, cv2.HOUGH_GRADIENT, dp=1, minDist=8,
         param1=50, param2=12, minRadius=1, maxRadius=6
@@ -1847,413 +2011,392 @@ def _analyze_concerns_with_confidence(img_256: np.ndarray, img_hsv: np.ndarray,
     crater_count = 0 if circles is None else len(circles[0])
     crater_density = crater_count / (256 * 256) * 10000
     
-    if edge_density > 22 and crater_density > 2:
-        confidence = min(0.60 + crater_density / 30, 0.79)
-        concerns.append({"value": "enlarged_pores", "confidence": round(confidence, 2)})
+    # Scoring
+    scar_score = 0
     
-    # Default if no concerns
-    if not concerns:
-        concerns.append({"value": "none_detected", "confidence": 0.82})
+    if crater_density > 3 and laplacian_var > 160:
+        scar_score += 1
+    if max(line_intensity_h, line_intensity_v) > 15 and edge_density > 20:
+        scar_score += 1
+    if laplacian_var > 180 and crater_density > 4:
+        scar_score += 1
     
-    return concerns
+    if scar_score >= 2:
+        confidence = min(0.60 + scar_score * 0.08, 0.78)
+        return {"value": "scarring", "confidence": round(confidence, 2)}
+    
+    return None
 
 
-def _detect_scarring(img_gray: np.ndarray, laplacian_var: float) -> float:
+def _detect_fine_lines(img_gray: np.ndarray, metrics: Dict) -> Optional[Dict]:
     """
-    Advanced scarring detection using multiple texture analysis methods.
-    Returns confidence score (0 if no scarring detected).
-    """
-    try:
-        # Gabor filters for directional texture
-        def apply_gabor_filter(img, theta):
-            kernel = cv2.getGaborKernel((21, 21), 3, theta, 10, 0.5, 0, ktype=cv2.CV_32F)
-            return cv2.filter2D(img, cv2.CV_8UC3, kernel)
-        
-        gabor_responses = [apply_gabor_filter(img_gray, np.radians(a)) for a in [0, 45, 90, 135]]
-        gabor_magnitude = np.sqrt(sum(resp**2 for resp in gabor_responses))
-        gabor_variance = np.var(gabor_magnitude)
-        
-        # Local Binary Pattern
-        def local_binary_pattern(img, radius=1, n_points=8):
-            h, w = img.shape
-            lbp = np.zeros((h, w), dtype=np.uint8)
-            for i in range(radius, h - radius):
-                for j in range(radius, w - radius):
-                    center = img[i, j]
-                    code = 0
-                    for k in range(n_points):
-                        angle = 2 * np.pi * k / n_points
-                        x = int(np.round(i + radius * np.cos(angle)))
-                        y = int(np.round(j + radius * np.sin(angle)))
-                        if 0 <= x < h and 0 <= y < w:
-                            if img[x, y] >= center:
-                                code |= 1 << k
-                    lbp[i, j] = code
-            return lbp
-        
-        lbp = local_binary_pattern(img_gray)
-        lbp_variance = np.var(lbp)
-        
-        # Line detection
-        kernel_line_h = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 1))
-        kernel_line_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 15))
-        lines_h = cv2.morphologyEx(img_gray, cv2.MORPH_OPEN, kernel_line_h)
-        lines_v = cv2.morphologyEx(img_gray, cv2.MORPH_OPEN, kernel_line_v)
-        line_features = cv2.bitwise_or(lines_h, lines_v)
-        line_intensity = np.mean(line_features)
-        
-        # Crater detection
-        circles = cv2.HoughCircles(
-            img_gray, cv2.HOUGH_GRADIENT, dp=1, minDist=8,
-            param1=50, param2=12, minRadius=1, maxRadius=6
-        )
-        crater_count = 0 if circles is None else len(circles[0])
-        crater_density = crater_count / (256 * 256) * 10000
-        
-        # Gradient analysis
-        grad_x = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=5)
-        grad_y = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=5)
-        gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
-        gradient_consistency = np.std(gradient_magnitude)
-        
-        # Scoring system
-        scar_confidence_score = 0
-        
-        if crater_density > 3 and laplacian_var > 160:
-            scar_confidence_score += 1
-        if line_intensity > 35 and gradient_consistency > 50:
-            scar_confidence_score += 1
-        if gabor_variance > 2000 and lbp_variance > 180:
-            scar_confidence_score += 1
-        if (np.max(img_gray) - np.min(img_gray)) > 180 and line_intensity > 30:
-            scar_confidence_score += 1
-        
-        if scar_confidence_score >= 2:
-            return min(0.55 + scar_confidence_score * 0.08, 0.80)
-        
-        return 0.0
-    
-    except Exception:
-        return 0.0
-
-
-def _analyze_tone_and_undertone(img_256: np.ndarray, img_lab: np.ndarray,
-                               img_hsv: np.ndarray, metrics: Dict) -> Tuple[Dict, Dict]:
-    """
-    Analyze skin tone depth and undertone with confidence scores.
-    """
-    avg_l = metrics["avg_l"]
-    avg_a = metrics["avg_a"]
-    avg_b = metrics["avg_b"]
-    avg_r = metrics["avg_r"]
-    avg_g = metrics["avg_g"]
-    avg_b_rgb = metrics["avg_b_rgb"]
-    l_std = metrics["l_std"]
-    
-    # ==================== TONE (DEPTH) ANALYSIS ====================
-    # OpenCV LAB L* is 0-255
-    if avg_l < 80:
-        depth = "very_deep"
-        tone_confidence = 0.85
-    elif avg_l < 110:
-        depth = "deep"
-        tone_confidence = 0.87
-    elif avg_l < 140:
-        depth = "medium-deep"
-        tone_confidence = 0.89
-    elif avg_l < 170:
-        depth = "medium"
-        tone_confidence = 0.92
-    elif avg_l < 200:
-        depth = "light"
-        tone_confidence = 0.90
-    else:
-        depth = "very_light"
-        tone_confidence = 0.88
-    
-    # Reduce confidence if high variance (uneven lighting)
-    if l_std > 20:
-        tone_confidence = max(0.60, tone_confidence - 0.15)
-    
-    # ==================== UNDERTONE ANALYSIS ====================
-    # LAB neutral is 128
-    a_deviation = avg_a - 128  # Positive = red/warm, Negative = green/cool
-    b_deviation = avg_b - 128  # Positive = yellow/warm, Negative = blue/cool
-    
-    warm_score = 0
-    cool_score = 0
-    
-    # Yellow undertones
-    if b_deviation > 8:
-        warm_score += 2
-        if b_deviation > 15:
-            warm_score += 1
-    elif b_deviation < -5:
-        cool_score += 2
-    
-    # Red/Pink undertones
-    if a_deviation > 6:
-        if b_deviation > 0:  # Red + yellow = warm
-            warm_score += 1
-        else:  # Red + blue = cool pink
-            cool_score += 1
-    elif a_deviation < -4:
-        cool_score += 1
-    
-    # RGB ratio analysis
-    rg_ratio = avg_r / avg_g if avg_g > 0 else 1
-    yb_ratio = (avg_r + avg_g) / (2 * avg_b_rgb) if avg_b_rgb > 0 else 1
-    
-    if rg_ratio > 1.05 and yb_ratio > 1.1:
-        warm_score += 1
-    elif rg_ratio < 0.95 and yb_ratio < 0.9:
-        cool_score += 1
-    
-    # Determine undertone with detailed classification
-    if warm_score > cool_score + 1:
-        if b_deviation > 12:
-            undertone = "warm (golden/yellow)"
-        elif a_deviation > 8:
-            undertone = "warm (peachy/coral)"
-        else:
-            undertone = "warm"
-        undertone_confidence = min(0.75 + warm_score * 0.04, 0.90)
-    elif cool_score > warm_score + 1:
-        if a_deviation > 3:
-            undertone = "cool (pink)"
-        elif b_deviation < -3:
-            undertone = "cool (blue)"
-        else:
-            undertone = "cool"
-        undertone_confidence = min(0.73 + cool_score * 0.04, 0.88)
-    elif abs(warm_score - cool_score) <= 1:
-        if b_deviation > 5:
-            undertone = "neutral-warm"
-        elif b_deviation < -2:
-            undertone = "neutral-cool"
-        else:
-            undertone = "neutral"
-        undertone_confidence = 0.78
-    else:
-        undertone = "neutral"
-        undertone_confidence = 0.76
-    
-    # Compile tone description
-    tone_description = f"{undertone}, {depth} complexion"
-    
-    tone_result = {
-        "value": tone_description,
-        "confidence": round(tone_confidence, 2)
-    }
-    
-    undertone_result = {
-        "value": undertone,
-        "confidence": round(undertone_confidence, 2)
-    }
-    
-    return tone_result, undertone_result
-
-
-def _analyze_texture_with_confidence(metrics: Dict) -> Dict:
-    """
-    Analyze skin texture with confidence scoring.
+    Detect fine lines and wrinkles.
     """
     laplacian_var = metrics["laplacian_var"]
     edge_density = metrics["edge_density"]
     
-    # Combined texture score
-    texture_score = laplacian_var * 0.6 + edge_density * 0.4
+    # Subtle texture indicates fine lines
+    if 90 < laplacian_var < 160 and edge_density > 10:
+        confidence = min(0.62 + (laplacian_var - 90) / 200, 0.80)
+        return {"value": "fine_lines", "confidence": round(confidence, 2)}
     
-    if texture_score < 35:
+    return None
+
+
+def _detect_dullness(metrics: Dict, skin_mask: np.ndarray) -> Optional[Dict]:
+    """
+    Detect dull, lackluster skin.
+    """
+    saturation = metrics["saturation"]
+    brightness = metrics["brightness"]
+    overall_color_variation = metrics["overall_color_variation"]
+    
+    # Low saturation + low brightness = dull
+    if saturation < 35 and brightness < 125 and overall_color_variation < 32:
+        dullness_score = (35 - saturation) + (125 - brightness) / 2
+        confidence = min(0.65 + dullness_score / 100, 0.82)
+        return {"value": "dullness", "confidence": round(confidence, 2)}
+    
+    return None
+
+
+def _detect_enlarged_pores(img_gray: np.ndarray, metrics: Dict) -> Optional[Dict]:
+    """
+    Detect enlarged pores using circular pattern detection.
+    """
+    edge_density = metrics["edge_density"]
+    
+    # Detect circular patterns
+    circles = cv2.HoughCircles(
+        img_gray, cv2.HOUGH_GRADIENT, dp=1, minDist=8,
+        param1=50, param2=12, minRadius=1, maxRadius=6
+    )
+    
+    crater_count = 0 if circles is None else len(circles[0])
+    crater_density = crater_count / (256 * 256) * 10000
+    
+    if edge_density > 22 and crater_density > 2.5:
+        confidence = min(0.64 + crater_density / 25, 0.81)
+        return {"value": "enlarged_pores", "confidence": round(confidence, 2)}
+    
+    return None
+
+
+def _analyze_tone_and_undertone_enhanced(img_256: np.ndarray, img_lab: np.ndarray,
+                                        img_hsv: np.ndarray, metrics: Dict,
+                                        skin_mask: np.ndarray) -> Tuple[Dict, Dict]:
+    """
+    Enhanced tone and undertone analysis with better accuracy.
+    """
+    avg_l = metrics["avg_l"]
+    avg_a = metrics["avg_a"]
+    avg_b = metrics["avg_b"]
+    l_std = metrics["l_std"]
+    
+    # ==================== TONE DEPTH ANALYSIS ====================
+    # Adjust for undertone's effect on perceived lightness
+    warmth_factor = (avg_b - 128) * 0.02
+    adjusted_l = avg_l + warmth_factor
+    
+    if adjusted_l < 75:
+        depth = "very_deep"
+        tone_confidence = 0.87
+    elif adjusted_l < 105:
+        depth = "deep"
+        tone_confidence = 0.89
+    elif adjusted_l < 135:
+        depth = "medium-deep"
+        tone_confidence = 0.91
+    elif adjusted_l < 165:
+        depth = "medium"
+        tone_confidence = 0.93
+    elif adjusted_l < 195:
+        depth = "light"
+        tone_confidence = 0.91
+    else:
+        depth = "very_light"
+        tone_confidence = 0.89
+    
+    # Reduce confidence for uneven lighting
+    if l_std > 22:
+        tone_confidence = max(0.65, tone_confidence - 0.18)
+    
+    # ==================== UNDERTONE ANALYSIS ====================
+    a_deviation = avg_a - 128
+    b_deviation = avg_b - 128
+    
+    warm_score = 0
+    cool_score = 0
+    
+    # Yellow component (strongest indicator)
+    if b_deviation > 10:
+        warm_score += 2
+        if b_deviation > 16:
+            warm_score += 1
+    elif b_deviation < -6:
+        cool_score += 2
+    
+    # Red/pink component
+    if a_deviation > 8:
+        if b_deviation > 0:
+            warm_score += 1
+        else:
+            cool_score += 1
+    elif a_deviation < -4:
+        cool_score += 1
+    
+    # RGB ratios
+    avg_r = metrics["avg_r"]
+    avg_g = metrics["avg_g"]
+    avg_b_rgb = metrics["avg_b_rgb"]
+    
+    rg_ratio = avg_r / avg_g if avg_g > 0 else 1
+    yb_ratio = (avg_r + avg_g) / (2 * avg_b_rgb) if avg_b_rgb > 0 else 1
+    
+    if rg_ratio > 1.06 and yb_ratio > 1.12:
+        warm_score += 1
+    elif rg_ratio < 0.94 and yb_ratio < 0.88:
+        cool_score += 1
+    
+    # Determine undertone
+    if warm_score > cool_score + 1:
+        if b_deviation > 14:
+            undertone = "warm (golden)"
+        elif a_deviation > 9:
+            undertone = "warm (peachy)"
+        else:
+            undertone = "warm"
+        undertone_confidence = min(0.76 + warm_score * 0.04, 0.91)
+    
+    elif cool_score > warm_score + 1:
+        if a_deviation > 4:
+            undertone = "cool (pink)"
+        elif b_deviation < -4:
+            undertone = "cool (blue)"
+        else:
+            undertone = "cool"
+        undertone_confidence = min(0.74 + cool_score * 0.04, 0.89)
+    
+    else:
+        if abs(b_deviation) < 4 and abs(a_deviation) < 4:
+            undertone = "neutral"
+            undertone_confidence = 0.83
+        elif b_deviation > 0:
+            undertone = "neutral-warm"
+            undertone_confidence = 0.79
+        else:
+            undertone = "neutral-cool"
+            undertone_confidence = 0.79
+    
+    # Compile descriptions
+    tone_description = f"{depth} with {undertone} undertone"
+    
+    return (
+        {"value": tone_description, "confidence": round(tone_confidence, 2)},
+        {"value": undertone, "confidence": round(undertone_confidence, 2)}
+    )
+
+
+def _analyze_texture_enhanced(metrics: Dict, skin_mask: np.ndarray) -> Dict:
+    """
+    Enhanced texture analysis using multiple metrics.
+    """
+    laplacian_var = metrics["laplacian_var"]
+    edge_density = metrics["edge_density"]
+    l_std = metrics["l_std"]
+    
+    # Weighted texture score
+    texture_score = laplacian_var * 0.5 + edge_density * 0.3 + l_std * 0.2
+    
+    if texture_score < 40:
         texture = "very_smooth"
-        confidence = 0.82
-    elif texture_score < 60:
+        confidence = 0.84
+    elif texture_score < 65:
         texture = "smooth"
-        confidence = 0.85
-    elif texture_score < 90:
+        confidence = 0.87
+    elif texture_score < 95:
         texture = "slightly_textured"
-        confidence = 0.88
-    elif texture_score < 130:
+        confidence = 0.89
+    elif texture_score < 135:
         texture = "textured"
-        confidence = 0.83
+        confidence = 0.85
     else:
         texture = "very_textured"
-        confidence = 0.80
+        confidence = 0.82
     
     return {"value": texture, "confidence": round(confidence, 2)}
 
 
-def _analyze_under_eye_with_confidence(img_gray: np.ndarray, img_lab: np.ndarray,
-                                      metrics: Dict) -> Dict:
+def _analyze_under_eye_adaptive(img_gray: np.ndarray, img_lab: np.ndarray,
+                               metrics: Dict, skin_mask: np.ndarray) -> Dict:
     """
-    Analyze under-eye darkness with adaptive thresholds for different skin tones.
+    Adaptive under-eye analysis accounting for different skin tones.
     """
     height, width = img_gray.shape
     avg_l = metrics["avg_l"]
     
-    # Extract under-eye regions
-    left_eye_region = img_gray[
+    # Under-eye regions
+    left_eye = img_lab[
         int(height * 0.58):int(height * 0.72),
         int(width * 0.28):int(width * 0.42)
     ]
-    right_eye_region = img_gray[
+    right_eye = img_lab[
         int(height * 0.58):int(height * 0.72),
         int(width * 0.58):int(width * 0.72)
     ]
     
-    if left_eye_region.size == 0 or right_eye_region.size == 0:
-        return {"value": "unable_to_detect", "confidence": 0.20}
+    if left_eye.size == 0 or right_eye.size == 0:
+        return {"value": "unable_to_detect", "confidence": 0.25}
     
-    under_eye_avg = (np.mean(left_eye_region) + np.mean(right_eye_region)) / 2
+    under_eye_l = (np.mean(left_eye[:, :, 0]) + np.mean(right_eye[:, :, 0])) / 2
     
-    # Compare to nearby regions
-    nearby_regions = [
-        img_gray[
-            int(height * 0.45):int(height * 0.58),
-            int(width * 0.28):int(width * 0.72)
-        ],
-        img_gray[
-            int(height * 0.72):int(height * 0.85),
-            int(width * 0.28):int(width * 0.72)
-        ]
+    # Reference regions (cheeks, forehead)
+    cheek_region = img_lab[
+        int(height * 0.50):int(height * 0.70),
+        int(width * 0.15):int(width * 0.85)
     ]
     
-    nearby_avg = np.mean([np.mean(region) for region in nearby_regions if region.size > 0])
+    if cheek_region.size == 0:
+        return {"value": "unable_to_detect", "confidence": 0.25}
     
-    darkness_ratio = under_eye_avg / nearby_avg if nearby_avg > 0 else 1.0
+    reference_l = np.mean(cheek_region[:, :, 0])
     
-    # Adaptive thresholds based on skin tone
+    darkness_ratio = under_eye_l / reference_l if reference_l > 0 else 1.0
+    
+    # Adaptive thresholds
     if avg_l < 100:  # Darker skin
-        if darkness_ratio < 0.88:
-            under_eye = "severe"
-            confidence = 0.78
-        elif darkness_ratio < 0.94:
-            under_eye = "moderate"
-            confidence = 0.81
-        elif darkness_ratio < 0.97:
-            under_eye = "mild"
-            confidence = 0.83
-        else:
-            under_eye = "none"
-            confidence = 0.85
+        thresholds = {"severe": 0.87, "moderate": 0.93, "mild": 0.96}
+    elif avg_l < 140:  # Medium skin
+        thresholds = {"severe": 0.85, "moderate": 0.91, "mild": 0.95}
     else:  # Lighter skin
-        if darkness_ratio < 0.85:
-            under_eye = "severe"
-            confidence = 0.80
-        elif darkness_ratio < 0.91:
-            under_eye = "moderate"
-            confidence = 0.83
-        elif darkness_ratio < 0.96:
-            under_eye = "mild"
-            confidence = 0.85
-        else:
-            under_eye = "none"
-            confidence = 0.87
+        thresholds = {"severe": 0.83, "moderate": 0.89, "mild": 0.94}
     
-    return {"value": under_eye, "confidence": round(confidence, 2)}
+    if darkness_ratio < thresholds["severe"]:
+        return {"value": "severe", "confidence": 0.81}
+    elif darkness_ratio < thresholds["moderate"]:
+        return {"value": "moderate", "confidence": 0.84}
+    elif darkness_ratio < thresholds["mild"]:
+        return {"value": "mild", "confidence": 0.86}
+    else:
+        return {"value": "none", "confidence": 0.88}
 
 
-def _analyze_lip_color_with_confidence(img_256: np.ndarray, img_lab: np.ndarray) -> Dict:
+def _analyze_lip_color_enhanced(img_256: np.ndarray, img_lab: np.ndarray,
+                               img_hsv: np.ndarray, skin_mask: np.ndarray) -> Dict:
     """
-    Analyze lip color using K-means clustering and HSV/LAB analysis.
+    Enhanced lip color analysis.
     """
-    try:
-        height, width = img_256.shape[:2]
+    height, width = img_256.shape[:2]
+    
+    # Lip region
+    lip_region = img_256[
+        int(height * 0.65):int(height * 0.85),
+        int(width * 0.35):int(width * 0.65)
+    ]
+    
+    if lip_region.size == 0:
+        return {"value": "unable_to_detect", "confidence": 0.25}
+    
+    lip_lab = cv2.cvtColor(lip_region, cv2.COLOR_RGB2LAB)
+    lip_hsv = cv2.cvtColor(lip_region, cv2.COLOR_RGB2HSV)
+    
+    avg_l_lip = np.mean(lip_lab[:, :, 0])
+    avg_a_lip = np.mean(lip_lab[:, :, 1])
+    avg_b_lip = np.mean(lip_lab[:, :, 2])
+    
+    avg_h_lip = np.mean(lip_hsv[:, :, 0])
+    avg_s_lip = np.mean(lip_hsv[:, :, 1])
+    
+    avg_r_lip = np.mean(lip_region[:, :, 0])
+    avg_g_lip = np.mean(lip_region[:, :, 1])
+    avg_b_rgb_lip = np.mean(lip_region[:, :, 2])
+    
+    # Compare to surrounding skin
+    surrounding = img_lab[
+        int(height * 0.55):int(height * 0.65),
+        int(width * 0.35):int(width * 0.65)
+    ]
+    
+    if surrounding.size > 0:
+        surr_l = np.mean(surrounding[:, :, 0])
+        l_diff = avg_l_lip - surr_l
         
-        # Extract lip region
-        lip_region = img_256[
-            int(height * 0.65):int(height * 0.85),
-            int(width * 0.35):int(width * 0.65)
-        ]
+        # Classification
+        confidence = 0.76
         
-        if lip_region.size == 0:
-            return {"value": "unable_to_detect", "confidence": 0.20}
+        # Strong red/pink
+        if avg_a_lip > 135 and avg_s_lip > 70:
+            if avg_h_lip <= 15 or avg_h_lip >= 165:
+                return {"value": "red/pink", "confidence": 0.86}
+            elif 15 < avg_h_lip <= 30:
+                return {"value": "coral/orange", "confidence": 0.83}
         
-        # Convert to color spaces
-        lip_hsv = cv2.cvtColor(lip_region, cv2.COLOR_RGB2HSV)
-        lip_lab = cv2.cvtColor(lip_region, cv2.COLOR_RGB2LAB)
+        # Pink tones
+        elif avg_a_lip > 130 and 30 < avg_s_lip <= 70:
+            return {"value": "pink", "confidence": 0.80}
         
-        # Get average values
-        avg_r_lip = np.mean(lip_region[:, :, 0])
-        avg_g_lip = np.mean(lip_region[:, :, 1])
-        avg_b_lip = np.mean(lip_region[:, :, 2])
-        
-        avg_h_lip = np.mean(lip_hsv[:, :, 0])
-        avg_s_lip = np.mean(lip_hsv[:, :, 1])
-        avg_v_lip = np.mean(lip_hsv[:, :, 2])
-        
-        avg_l_lip = np.mean(lip_lab[:, :, 0])
-        avg_a_lip = np.mean(lip_lab[:, :, 1])
-        avg_b_lip_lab = np.mean(lip_lab[:, :, 2])
-        
-        # Compare to surrounding skin
-        surrounding_region = img_256[
-            int(height * 0.55):int(height * 0.65),
-            int(width * 0.35):int(width * 0.65)
-        ]
-        
-        if surrounding_region.size > 0:
-            surr_r = np.mean(surrounding_region[:, :, 0])
-            surr_g = np.mean(surrounding_region[:, :, 1])
-            surr_b = np.mean(surrounding_region[:, :, 2])
-            
-            r_diff = avg_r_lip - surr_r
-            g_diff = avg_g_lip - surr_g
-            b_diff = avg_b_lip - surr_b
-            
-            # Get average skin L value for comparison
-            avg_l_skin = np.mean(img_lab[:, :, 0])
-            
-            # Color classification
-            confidence = 0.75
-            
-            # Pink/Red tones
-            if avg_r_lip > avg_g_lip + 10 and avg_r_lip > avg_b_lip + 5 and r_diff > 8:
-                if avg_s_lip > 80:
-                    if avg_h_lip <= 15 or avg_h_lip >= 165:
-                        lip_color = "red/pink"
-                        confidence = 0.85
-                    elif 15 < avg_h_lip <= 25:
-                        lip_color = "coral/orange-red"
-                        confidence = 0.82
-                    else:
-                        lip_color = "pink"
-                        confidence = 0.80
-                else:
-                    lip_color = "pink"
-                    confidence = 0.78
-            
-            # Brown/nude tones
-            elif abs(avg_r_lip - avg_g_lip) < 15 and abs(avg_g_lip - avg_b_lip) < 15:
-                if avg_l_lip < avg_l_skin:
-                    lip_color = "brown/nude"
-                    confidence = 0.76
-                else:
-                    lip_color = "natural/nude"
-                    confidence = 0.78
-            
-            # Purple/mauve tones
-            elif avg_b_lip > avg_g_lip and (avg_r_lip + avg_b_lip) > 1.3 * avg_g_lip:
-                lip_color = "purple/mauve"
-                confidence = 0.74
-            
-            # Peach/coral tones
-            elif avg_r_lip > avg_b_lip and avg_g_lip > avg_b_lip and 20 < avg_h_lip < 40:
-                lip_color = "peach/coral"
-                confidence = 0.80
-            
-            # Natural with color
-            elif abs(r_diff) > 5 or abs(g_diff) > 5 or abs(b_diff) > 5:
-                lip_color = "natural_with_color"
-                confidence = 0.72
-            
+        # Brown/nude
+        elif abs(avg_r_lip - avg_g_lip) < 18 and abs(avg_g_lip - avg_b_rgb_lip) < 18:
+            if avg_l_lip < surr_l:
+                return {"value": "brown/nude", "confidence": 0.77}
             else:
-                lip_color = "natural"
-                confidence = 0.70
-            
-            return {"value": lip_color, "confidence": round(confidence, 2)}
+                return {"value": "natural", "confidence": 0.79}
         
-        return {"value": "natural", "confidence": 0.65}
+        # Purple/mauve
+        elif avg_b_rgb_lip > avg_g_lip and (avg_r_lip + avg_b_rgb_lip) > 1.35 * avg_g_lip:
+            return {"value": "purple/mauve", "confidence": 0.75}
+        
+        # Peach/coral
+        elif avg_r_lip > avg_b_rgb_lip and 20 < avg_h_lip < 40:
+            return {"value": "peach/coral", "confidence": 0.81}
+        
+        # Natural with some color
+        elif abs(l_diff) > 8 or avg_s_lip > 30:
+            return {"value": "natural_with_color", "confidence": 0.74}
+        
+        else:
+            return {"value": "natural", "confidence": 0.72}
     
-    except Exception as e:
-        return {"value": "natural", "confidence": 0.50}
+    return {"value": "natural", "confidence": 0.68}
+
+
+def _validate_analysis_results(result: Dict, metrics: Dict, 
+                              diagnostics: Dict) -> Dict:
+    """
+    Validate results for internal consistency and flag issues.
+    """
+    warnings = []
+    
+    # Check tone/brightness consistency
+    tone_value = result["tone"]["value"]
+    avg_l = metrics["avg_l"]
+    
+    if "very_deep" in tone_value and avg_l > 115:
+        warnings.append("Tone/brightness mismatch - image may be overexposed")
+    elif "very_light" in tone_value and avg_l < 180:
+        warnings.append("Tone/brightness mismatch - image may be underexposed")
+    
+    # Check undertone/color consistency
+    undertone_value = result["undertone"]["value"]
+    avg_b = metrics["avg_b"]
+    
+    if "warm" in undertone_value and avg_b < 125:
+        warnings.append("Warm undertone detected but low yellow values - verify color correction")
+    elif "cool" in undertone_value and avg_b > 133:
+        warnings.append("Cool undertone detected but high yellow values - verify color correction")
+    
+    # Check for cascading low confidence
+    low_conf_results = [
+        k for k, v in result.items()
+        if isinstance(v, dict) and v.get("confidence", 1) < 0.65
+    ]
+    
+    if len(low_conf_results) >= 3:
+        warnings.append(f"Multiple low-confidence predictions ({', '.join(low_conf_results)}) - image quality may be poor")
+    
+    # Check skin coverage
+    if diagnostics.get("skin_coverage_percentage", 100) < 25:
+        warnings.append("Low skin coverage detected - results may be less accurate")
+    
+    diagnostics["validation_warnings"] = warnings
+    return result

@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import AuthInitializer from "@/CustomComponents/AuthInitializer";
 import AuthChecker from "@/shared/utils/useHydration";
-import { AmplitudeProvider } from "./providers/amplitudeProvider";
+import { PostHogProvider } from "./providers/posthogProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -114,12 +114,12 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AmplitudeProvider>
+        <PostHogProvider>
           <Toaster />
           <AuthInitializer />
           <AuthChecker>{children}</AuthChecker>
           <Toaster />
-        </AmplitudeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

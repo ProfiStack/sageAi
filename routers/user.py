@@ -160,6 +160,7 @@ async def analyze_skin_photo(
         raise HTTPException(status_code=400, detail="Invalid image type")
     db = SessionLocal()
     image_bytes = await image.read()
+    print('hello world')
     # await update_user_profile(db, user_db.get("user_id"), {"free_scan": False})
     # await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:

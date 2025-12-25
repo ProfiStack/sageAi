@@ -15,8 +15,8 @@ import { useRouter } from "next/navigation";
 import useFormToast from "../FormToast/FormToast";
 import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
-import { useAmplitude } from "@/app/providers/amplitudeProvider";
-import { Eye, EyeOff, Lightbulb } from "lucide-react";
+import { usePostHog } from "@/app/providers/posthogProvider";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { comingSoonData, featuresData } from "@/mockData/loginMockData";
 import { jwtDecode } from "jwt-decode";
@@ -39,7 +39,7 @@ const formSchema = z.object({
 });
 export default function Login() {
   const router = useRouter();
-  const { logEvent } = useAmplitude();
+  const { logEvent } = usePostHog();
   const { primaryToast, destructiveToast } = useFormToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

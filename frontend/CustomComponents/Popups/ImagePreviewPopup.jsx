@@ -32,7 +32,7 @@ export default function ImagePreviewPopup({
       }
 
       const apiResponse = await Api.client.analyzeSkinPhoto(formData, authToken);
-      if (apiResponse?.detail?.toLowerCase().includes("no face")) {
+      if (apiResponse?.detail?.toLowerCase().includes("no face") || apiResponse?.status !== 200) {
         destructiveToast("Face not detected. Please upload a clearer photo.");
         return;
       }

@@ -14,7 +14,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm as useFormHook } from "react-hook-form";
 
-import { useAmplitude } from "@/app/providers/amplitudeProvider";
+import { usePostHog } from "@/app/providers/posthogProvider";
 import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
@@ -42,7 +42,7 @@ const formSchema = z.object({
 });
 
 export default function SignUpPopup() {
-  const { logEvent } = useAmplitude();
+  const { logEvent } = usePostHog();
   const form = useFormHook({
     resolver: zodResolver(formSchema),
     defaultValues: {
