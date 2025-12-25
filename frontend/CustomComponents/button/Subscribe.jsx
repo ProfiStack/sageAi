@@ -14,7 +14,7 @@ export default function SubscribeButton({ children, route }) {
   const [message, setMessage] = useState("");
   const { token, isSubscribed, skinAnalysis, shadeMatching, isFreeScan } =
     useAuthStore();
-  const { logEvent } = usePostHog();
+  // const { logEvent } = usePostHog();
 
   const handleSubscribe = async () => {
     setLoading(true);
@@ -32,10 +32,10 @@ export default function SubscribeButton({ children, route }) {
           price_id: process.env.NEXT_PUBLIC_PRICE_ID,
           type: route?.split("/")[1],
         });
-        logEvent("Subscription Clicked", {
-          click_location: route?.toUpperCase(),
-          click_value: "Essential",
-        });
+        // logEvent("Subscription Clicked", {
+        //   click_location: route?.toUpperCase(),
+        //   click_value: "Essential",
+        // });
         if (res.checkout_url) {
           await stripePromise;
           // Redirect user to Stripe checkout page

@@ -42,7 +42,7 @@ const formSchema = z.object({
 });
 
 export default function SignUpPopup() {
-  const { logEvent } = usePostHog();
+  // const { logEvent } = usePostHog();
   const form = useFormHook({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,10 +54,10 @@ export default function SignUpPopup() {
   const { destructiveToast, primaryToast } = useFormToast();
   async function onSubmit(values) {
     try {
-      logEvent("Onboard Option Clicked", {
-        click_value: "Sign Up",
-        click_location: "Onboarding",
-      });
+      // logEvent("Onboard Option Clicked", {
+      //   click_value: "Sign Up",
+      //   click_location: "Onboarding",
+      // });
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
@@ -79,7 +79,7 @@ export default function SignUpPopup() {
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
         resetGuestMessageCount();
-        logEvent("Onboard Sucessful");
+        // logEvent("Onboard Sucessful");
         await transferGuestQuizResults(data.token);
         router.push("/");
         primaryToast({ description: "Login successful" });
