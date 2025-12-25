@@ -4,7 +4,7 @@ import { Api } from "@/shared/api/api";
 import { Camera } from "lucide-react";
 import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import { logEvent } from "@amplitude/analytics-browser";
+import { usePostHog } from "@/app/providers/posthogProvider";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_PUBLISHABLE_KEY);
 
@@ -14,6 +14,7 @@ export default function SubscribeButton({ children, route }) {
   const [message, setMessage] = useState("");
   const { token, isSubscribed, skinAnalysis, shadeMatching, isFreeScan } =
     useAuthStore();
+  const { logEvent } = usePostHog();
 
   const handleSubscribe = async () => {
     setLoading(true);
