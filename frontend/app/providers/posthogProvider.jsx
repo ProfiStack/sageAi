@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import posthog from 'posthog-js';
-import PostHogPageView from './PostHogPageView';
+import PostHogPageView from './postHogPageView';
 
 const PostHogContext = createContext(undefined);
 
