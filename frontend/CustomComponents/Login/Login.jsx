@@ -39,7 +39,7 @@ const formSchema = z.object({
 });
 export default function Login() {
   const router = useRouter();
-  const { logEvent } = usePostHog();
+  // const { logEvent } = usePostHog();
   const { primaryToast, destructiveToast } = useFormToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,10 +54,10 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      logEvent("Onboard Option Clicked", {
-        click_value: "Sign Up",
-        click_location: "Onboarding",
-      });
+      // logEvent("Onboard Option Clicked", {
+      //   click_value: "Sign Up",
+      //   click_location: "Onboarding",
+      // });
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
@@ -78,7 +78,7 @@ export default function Login() {
         store.setToken(data.token);
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
-        logEvent("Onboard Sucessful");
+        // logEvent("Onboard Sucessful");
         await transferGuestQuizResults(data.token);
         router.push("/");
         primaryToast({ description: "Login successful" });

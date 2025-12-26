@@ -9,7 +9,12 @@ export default function PostHogPageView() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    posthog.capture("$pageview");
+    if (typeof window === "undefined") return;
+    if (!posthog.__loaded) return;
+
+    posthog.capture("$pageview", {
+      $current_url: `${pathname}?${searchParams.toString()}`,
+    });
   }, [pathname, searchParams]);
 
   return null;

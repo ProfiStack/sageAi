@@ -1,53 +1,50 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import posthog from "posthog-js";
-import PostHogPageView from "./posthogPageView";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import posthog from 'posthog-js';
+import PostHogPageView from './posthogPageView';
 
 const PostHogContext = createContext(undefined);
 
-export const PostHogProvider = ({ children }) => {
+export function PostHogProvider({ children }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!initialized && typeof window !== "undefined") {
-      const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-      const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    if (typeof window === 'undefined' || initialized) return;
 
-      if (!apiKey) {
-        console.error("PostHog API key missing");
-        return;
-      }
+    const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
-      posthog.init(apiKey, {
-        api_host: apiHost,
-        capture_pageview: false,
-      });
-
-      setInitialized(true);
+    if (!apiKey) {
+      console.error('PostHog API key missing');
+      return;
     }
+
+    posthog.init(apiKey, {
+      api_host: apiHost,
+      capture_pageview: false, // manual page tracking
+    });
+
+    setInitialized(true);
   }, [initialized]);
 
   const logEvent = (eventName, eventProperties) => {
-    if (initialized) {
-      posthog.capture(eventName, eventProperties);
-    } else {
-      console.warn("PostHog not initialized yet");
-    }
+    if (!initialized) return;
+    posthog.capture(eventName, eventProperties);
   };
 
   return (
     <PostHogContext.Provider value={{ logEvent, initialized }}>
-      <PostHogPageView />
+      {initialized && <PostHogPageView />}
       {children}
     </PostHogContext.Provider>
   );
-};
+}
 
-export const usePostHog = () => {
+export function usePostHog() {
   const context = useContext(PostHogContext);
   if (!context) {
-    throw new Error("usePostHog must be used within PostHogProvider");
+    throw new Error('usePostHog must be used within PostHogProvider');
   }
   return context;
-};
+}

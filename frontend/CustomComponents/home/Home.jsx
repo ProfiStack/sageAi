@@ -38,7 +38,7 @@ export default function HomePage() {
     isAuthenticated,
   } = useAuthStore();
 
-  const { logEvent } = usePostHog();
+  // const { logEvent } = usePostHog();
   useEffect(() => {
     const getProfile = async () => {
       const res = await Api.client.getProfile(token);
@@ -61,9 +61,9 @@ export default function HomePage() {
   };
 
   const handleCategoryClick = (item, categoryTitle) => {
-    logEvent("Home Section Clicked", {
-      click_value: item.title,
-    });
+      // logEvent("Home Section Clicked", {
+      //   click_value: item.title,
+      // });
 
     // Check if this category should show popup
     if (shouldShowPopup(categoryTitle)) {
@@ -75,11 +75,11 @@ export default function HomePage() {
       // Direct navigation for other categories (Nutrition, Styling, Hair Care, Wellness)
       router.push(item.route);
 
-      logEvent("Direct Navigation", {
-        item_title: item.title,
-        category: categoryTitle,
-        route: item.route,
-      });
+      // logEvent("Direct Navigation", {
+      //   item_title: item.title,
+      //   category: categoryTitle,
+      //   route: item.route,
+      // });
     }
   };
 
@@ -88,19 +88,19 @@ export default function HomePage() {
     router.push(routes.chat);
     setShowOptionPopup(false);
 
-    logEvent("Chat Option Selected", {
-      item_title: item.title,
-      route: routes.chat,
-    });
+    // logEvent("Chat Option Selected", {
+    //   item_title: item.title,
+    //   route: routes.chat,
+    // });
   };
 
   const handleScanClick = (item) => {
     const routes = getRoutesForItem(item.route);
 
-    logEvent("Scan Option Selected", {
-      item_title: item.title,
-      route: routes.scan,
-    });
+    // logEvent("Scan Option Selected", {
+    //   item_title: item.title,
+    //   route: routes.scan,
+    // });
   };
 
   const handleClosePopup = () => {

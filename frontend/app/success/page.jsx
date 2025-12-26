@@ -14,7 +14,7 @@ import useAuthStore from "@/store/authStore";
 import { usePostHog } from "@/app/providers/posthogProvider";
 
 export default function StripeSuccessPage() {
-  const { logEvent } = usePostHog();
+  // const { logEvent } = usePostHog();
   const [showAnimation, setShowAnimation] = useState(false);
   const router = useRouter();
   const { token, setIsSubscribed } = useAuthStore();
@@ -29,9 +29,9 @@ export default function StripeSuccessPage() {
       }
     };
     fetchProfile();
-    logEvent("Subscription Clicked", {
-      click_value: "Essential",
-    });
+    // logEvent("Subscription Clicked", {
+    //   click_value: "Essential",
+    // });
   }, [token]);
 
   return (
