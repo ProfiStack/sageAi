@@ -14,7 +14,7 @@ export function PostHogProvider({ children }) {
 
     const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
-
+    console.log('hello');
     if (!apiKey) {
       console.error('PostHog API key missing');
       return;
