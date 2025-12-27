@@ -1,21 +1,16 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import "@tensorflow/tfjs-core";
-import "@tensorflow/tfjs-backend-webgl";
-import { motion, AnimatePresence } from "framer-motion"; // Import AnimatePresence for exit animations
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Camera,
   ChevronsDown,
   ChevronsLeft,
   ChevronsRight,
   ChevronsUp,
-  ScanFace,
-  X, // Import the X icon for closing
+  X,
 } from "lucide-react";
-import { useRouter } from "next/navigation"; // Import useRouter
 import useFormToast from "../FormToast/FormToast";
-import { Loader2 } from "lucide-react";
 import CameraPermissionModal from "../Popups/CameraPermission";
 
 export default function PictureAnalysisPopup({
@@ -26,21 +21,21 @@ export default function PictureAnalysisPopup({
 }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const croppedRef = useRef(null); // Keep the ref for internal use
+  const croppedRef = useRef(null);
   const faceLandmarkerRef = useRef(null);
-  const router = useRouter(); // Initialize useRouter
   const { destructiveToast } = useFormToast();
 
   const [isReady, setIsReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false); // Controls the main detection loop (active analysis)
-  const [countdown, setCountdown] = useState(0); // 0 means no countdown, 1-3 active
-  const countdownTimeoutRef = useRef(null); // To store the timeout ID for clearing
-  const [isImageCaptured, setIsImageCaptured] = useState(false); // State to show/hide cropped image
+  const [countdown, setCountdown] = useState(0);
+  const countdownTimeoutRef = useRef(null);
+  const [isImageCaptured, setIsImageCaptured] = useState(false);
   const [faceUp, setFaceUp] = useState(false);
   const [faceDown, setFaceDown] = useState(false);
   const [faceRight, setFaceRight] = useState(false);
   const [faceLeft, setFaceLeft] = useState(false);
-  const [brightnessMessage, setBrightnessMessage] = useState(""); // New state for brightness feedback
+  const [brightnessMessage, setBrightnessMessage] = useState("");
+  const [distanceMessage, setDistanceMessage] = useState("");
 
   const [allCurrentChecksPass, setAllCurrentChecksPass] = useState(false);
   const [isYawOff, setIsYawOff] = useState(false);
@@ -346,6 +341,22 @@ export default function PictureAnalysisPopup({
       }
 
       // Perform checks
+      if (faceBoundingBox) {
+        const faceArea = faceBoundingBox.width * faceBoundingBox.height;
+        const radiusX = Math.min(canvas.width, canvas.height) * 0.2;
+        const radiusY = Math.min(canvas.width, canvas.height) * 0.25;
+        const circleArea = Math.PI * radiusX * radiusY;
+        const fillRatio = faceArea / circleArea;
+
+        if (fillRatio < 0.99) {
+          // tweak this number to make stricter
+          setDistanceMessage("Move closer to fill the circle");
+          allChecksPassForFrame = false; // prevent picture capture
+        } else {
+          setDistanceMessage(""); // face is big enough
+        }
+      }
+
       if (!faceBoundingBox) {
         reasonsForFailure.push("No face detected.");
         allChecksPassForFrame = false;
@@ -682,11 +693,19 @@ export default function PictureAnalysisPopup({
             maxX = Math.max(maxX, p.x * video.videoWidth);
             maxY = Math.max(maxY, p.y * video.videoHeight);
           });
+          const PADDING = 0.2;
+
           const faceBoundingBox = {
-            originX: minX,
-            originY: minY,
-            width: maxX - minX,
-            height: maxY - minY,
+            originX: Math.max(0, minX - (maxX - minX) * PADDING),
+            originY: Math.max(0, minY - (maxY - minY) * PADDING),
+            width: Math.min(
+              canvas.width - minX,
+              (maxX - minX) * (1 + 2 * PADDING)
+            ),
+            height: Math.min(
+              canvas.height - minY,
+              (maxY - minY) * (1 + 2 * PADDING)
+            ),
           };
 
           const ctx = canvas.getContext("2d");
@@ -743,7 +762,6 @@ export default function PictureAnalysisPopup({
             setIsImageCaptured(true);
             setCountdown(0);
 
-            // Log image data to console
             const imageData = croppedCanvas.toDataURL("image/jpeg");
             if (imageData) {
               onCapture(imageData); // send image back to main page
@@ -784,10 +802,14 @@ export default function PictureAnalysisPopup({
     checkFaceCentering,
     checkFaceBrightness,
     checkFaceVisibility,
-    router, // Add router to dependencies
   ]);
 
   const handleClose = () => {
+    //  Turn off the camera automatically after capture
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
     setOpen(false);
     // Reset all states when the popup is closed
     setIsReady(false);
@@ -807,25 +829,40 @@ export default function PictureAnalysisPopup({
     <div className="fixed inset-0 flex items-center justify-center bg-white/80 z-50">
       <div className="flex flex-col items-center">
         <svg
-          className="animate-spin h-10 w-10 text-[#D4B038]"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
           viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+          width={60}
+          height={60}
         >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
+          <defs>
+            <linearGradient
+              id="greenYellowGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              <stop offset="0%" stop-color="#D4B038" />
+              <stop offset="50%" stop-color="#D4B038" />
+              <stop offset="50%" stop-color="#02331E" />
+              <stop offset="100%" stop-color="#02331E" />
+            </linearGradient>
+          </defs>
+
           <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          ></path>
+            fill="url(#greenYellowGradient)"
+            d="M20.27,4.74a4.93,4.93,0,0,1,1.52,4.61,5.32,5.32,0,0,1-4.1,4.51,5.12,5.12,0,0,1-5.2-1.5,5.53,5.53,0,0,0,6.13-1.48A5.66,5.66,0,0,0,20.27,4.74ZM12.32,11.53a5.49,5.49,0,0,0-1.47-6.2A5.57,5.57,0,0,0,4.71,3.72,5.17,5.17,0,0,1,9.53,2.2,5.52,5.52,0,0,1,13.9,6.45,5.28,5.28,0,0,1,12.32,11.53ZM19.2,20.29a4.92,4.92,0,0,1-4.72,1.49,5.32,5.32,0,0,1-4.34-4.05A5.2,5.2,0,0,1,11.6,12.5a5.6,5.6,0,0,0,1.51,6.13A5.63,5.63,0,0,0,19.2,20.29ZM3.79,19.38A5.18,5.18,0,0,1,2.32,14a5.3,5.3,0,0,1,4.59-4,5,5,0,0,1,4.58,1.61,5.55,5.55,0,0,0-6.32,1.69A5.46,5.46,0,0,0,3.79,19.38ZM12.23,12a5.11,5.11,0,0,0,3.66-5,5.75,5.75,0,0,0-3.18-6,5,5,0,0,1,4.42,2.3,5.21,5.21,0,0,1,.24,5.92A5.4,5.4,0,0,1,12.23,12ZM11.76,12a5.18,5.18,0,0,0-3.68,5.09,5.58,5.58,0,0,0,3.19,5.79c-1,.35-2.9-.46-4-1.68A5.51,5.51,0,0,1,11.76,12ZM23,12.63a5.07,5.07,0,0,1-2.35,4.52,5.23,5.23,0,0,1-5.91.2,5.24,5.24,0,0,1-2.67-4.77,5.51,5.51,0,0,0,5.45,3.33A5.52,5.52,0,0,0,23,12.63ZM1,11.23a5,5,0,0,1,2.49-4.5,5.23,5.23,0,0,1,5.81-.06,5.3,5.3,0,0,1,2.61,4.74A5.56,5.56,0,0,0,6.56,8.06,5.71,5.71,0,0,0,1,11.23Z"
+          >
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              dur="1.5s"
+              values="0 12 12;360 12 12"
+              repeatCount="indefinite"
+            />
+          </path>
         </svg>
+
         <p className="font-medium text-[#02331E]">
           {" "}
           Almost there,we’ll have your personalised tips in a sec
@@ -921,7 +958,7 @@ export default function PictureAnalysisPopup({
                 </p>
               ) : (
                 <p className="absolute font-semibold text-[17px] top-10 text-white [text-shadow:_0_0_3px_#000,_0_0_5px_#000]">
-                  {brightnessMessage}
+                  {brightnessMessage || distanceMessage}
                 </p>
               )}
               {isCapturing &&
@@ -930,6 +967,7 @@ export default function PictureAnalysisPopup({
                 !faceRight &&
                 !faceLeft &&
                 !brightnessMessage &&
+                !distanceMessage &&
                 countdown === 0 && (
                   <p className="absolute font-semibold text-[17px] top-10 text-white [text-shadow:_0_0_3px_#000,_0_0_5px_#000]">
                     Face is not centered
