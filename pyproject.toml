@@ -39,6 +39,9 @@ dependencies = [
     "opencv-python-headless>=4.8.0",
     "pillow>=11.2.1",
     "stripe>=12.4.0",
+    "deepface>=0.0.96",
+    "mediapipe>=0.10.31",
+    "tf-keras>=2.20.1",
 ]
 
 [dependency-groups]

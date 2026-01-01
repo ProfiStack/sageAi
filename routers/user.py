@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 from prompts.image_analysis import clean_and_parse_json, get_image_analysis_prompt
 from prompts.shade_matching import get_shade_matching_prompt
 from routers.auth import get_current_user
-from services.ai import analyze_skin_features
 from sqlalchemy.orm import Session
 from models.db_models import (
     ChatMessage,
@@ -19,6 +18,7 @@ from models.db_models import (
     TreatmentMessage,
 )
 from db import SessionLocal
+from services.ai import EnhancedSkinAnalyzer
 from services.db_service import (
     get_user_chat_data,
     update_user_payment,
@@ -42,9 +42,15 @@ import os
 router = APIRouter()
 load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+analyzer: EnhancedSkinAnalyzer | None = None
 
 user_dependency = Annotated[Session, Depends(get_current_user)]
-
+def get_analyzer():
+    global analyzer
+    if analyzer is None:
+        analyzer = EnhancedSkinAnalyzer()
+    return analyzer
+analyzer = get_analyzer()
 system_prompt = result_prompt
 router = APIRouter()
 executor = ThreadPoolExecutor()
@@ -164,7 +170,7 @@ async def analyze_skin_photo(
     # await update_user_profile(db, user_db.get("user_id"), {"free_scan": False})
     # await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:
-        result = await analyze_skin_features(image_bytes)
+        result = await analyzer.analyze_skin_features(image_bytes)
         message = get_image_analysis_prompt(result)
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
@@ -195,7 +201,7 @@ async def analyze_skin_photo(
     # await update_user_profile(db, user_db.get("user_id"), {"free_scan": False})
     # await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:
-        result = await analyze_skin_features(image_bytes)
+        result = await analyzer.analyze_skin_features(image_bytes)
         message = get_shade_matching_prompt(result)
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
