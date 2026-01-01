@@ -2401,6 +2401,7 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
 #     diagnostics["validation_warnings"] = warnings
 #     return result
 
+# DeepFace integration
 try:
     from deepface import DeepFace
     DEEPFACE_AVAILABLE = True
@@ -2408,31 +2409,42 @@ except ImportError:
     DEEPFACE_AVAILABLE = False
     print("DeepFace not available. Install with: pip install deepface")
 
-# MediaPipe for face landmarks (install: pip install mediapipe)
+# MediaPipe Tasks API (0.10+)
 try:
-    import mediapipe as mp
+    from mediapipe.tasks import python
+    from mediapipe.tasks.python.vision import face_landmarker
+    from mediapipe.tasks.python.vision import vision_utils
     MEDIAPIPE_AVAILABLE = True
 except ImportError:
     MEDIAPIPE_AVAILABLE = False
-    print("MediaPipe not available. Install with: pip install mediapipe")
+    print("MediaPipe Tasks API not available. Install with: pip install mediapipe<0.11")
 
 
 class EnhancedSkinAnalyzer:
-    """Complete skin analysis system with high accuracy"""
+    """Complete skin analysis system with high accuracy using new MediaPipe Tasks API"""
     
     def __init__(self):
-        self.face_mesh = None
-
-    def _init_mediapipe(self):
-        if self.face_mesh is None:
-            import mediapipe as mp
-            self.face_mesh = mp.solutions.face_mesh.FaceMesh(
-                static_image_mode=True,
-                max_num_faces=1,
-                refine_landmarks=True,
-                min_detection_confidence=0.5
-            )
+        self.face_landmarker = None
+        self._init_mediapipe()
     
+    # ==================== INIT MEDIAPIPE ====================
+    
+    def _init_mediapipe(self):
+        """Initialize MediaPipe Tasks API face landmarker"""
+        if self.face_landmarker is None and MEDIAPIPE_AVAILABLE:
+            base_options = face_landmarker.BaseOptions(
+                model_asset_path="mediapipe_face_landmarker_full.task"
+            )
+            options = face_landmarker.FaceLandmarkerOptions(
+                base_options=base_options,
+                num_faces=1,
+                min_detection_confidence=0.5,
+                min_tracking_confidence=0.5
+            )
+            self.face_landmarker = face_landmarker.FaceLandmarker.create_from_options(options)
+
+    # ==================== MAIN ANALYSIS ====================
+
     async def analyze_skin_features(self, image_bytes: bytes) -> Dict:
         """
         Main analysis function - replaces your existing function
@@ -2443,33 +2455,30 @@ class EnhancedSkinAnalyzer:
         Returns:
             Dictionary with all skin features and confidence scores
         """
-        self._init_mediapipe()
         try:
             # Load image
             img = Image.open(BytesIO(image_bytes)).convert("RGB")
             img_np = np.array(img)
-            
+
             print("Starting skin analysis...")
-            
+
             # Step 1: Preprocess image
             img_processed = self._preprocess_image(img_np)
-            
+
             # Step 2: Detect face and get landmarks
-            landmarks = None
-            if self.face_mesh:
-                landmarks = self._get_face_landmarks(img_processed)
-            
+            landmarks = self._get_face_landmarks(img_processed)
+
             # Step 3: Extract skin regions
             skin_mask = self._create_skin_mask(img_processed, landmarks)
-            
+
             # Step 4: Get baseline analysis from DeepFace (optional)
             deepface_results = None
             if DEEPFACE_AVAILABLE:
                 deepface_results = self._analyze_with_deepface(image_bytes)
-            
+
             # Step 5: Extract comprehensive metrics
             metrics = self._extract_metrics(img_processed, skin_mask, landmarks)
-            
+
             # Step 6: Analyze all features
             results = {
                 "skin_types": self._analyze_skin_type(metrics, img_processed, skin_mask),
@@ -2480,89 +2489,76 @@ class EnhancedSkinAnalyzer:
                 "under_eye": self._analyze_under_eye(metrics, img_processed, landmarks),
                 "lip_color": self._analyze_lip_color(metrics, img_processed, landmarks)
             }
-            
+
             print("Analysis complete:", results)
-            
+
             # Step 7: Format response
             return self._format_response(results)
-            
+
         except Exception as e:
             print(f"Analysis error: {str(e)}")
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to analyze image: {str(e)}"
             )
-    
+
+    # ==================== MEDIAPIPE LANDMARKS ====================
+
+    def _get_face_landmarks(self, img: np.ndarray) -> Optional[object]:
+        """Get facial landmarks using new MediaPipe Tasks API"""
+        if not self.face_landmarker:
+            return None
+        mp_image = vision_utils.convert_to_mp_image(img)
+        detection_result = self.face_landmarker.detect(mp_image)
+        if detection_result.face_landmarks and len(detection_result.face_landmarks) > 0:
+            return detection_result
+        return None
+
     # ==================== PREPROCESSING ====================
     
     def _preprocess_image(self, img: np.ndarray) -> np.ndarray:
         """Apply color correction and enhancement"""
-        # Resize to standard size
         img = cv2.resize(img, (512, 512))
-        
-        # Color constancy using Gray World algorithm
         img_float = img.astype(np.float32)
         avg_r = np.mean(img_float[:, :, 0])
         avg_g = np.mean(img_float[:, :, 1])
         avg_b = np.mean(img_float[:, :, 2])
-        
         gray_mean = (avg_r + avg_g + avg_b) / 3.0
-        
         if avg_r > 0 and avg_g > 0 and avg_b > 0:
-            img_float[:, :, 0] *= (gray_mean / avg_r)
-            img_float[:, :, 1] *= (gray_mean / avg_g)
-            img_float[:, :, 2] *= (gray_mean / avg_b)
-        
+            img_float[:, :, 0] *= gray_mean / avg_r
+            img_float[:, :, 1] *= gray_mean / avg_g
+            img_float[:, :, 2] *= gray_mean / avg_b
         img_corrected = np.clip(img_float, 0, 255).astype(np.uint8)
-        
+
         # Apply CLAHE for better contrast
         img_lab = cv2.cvtColor(img_corrected, cv2.COLOR_RGB2LAB)
         l, a, b = cv2.split(img_lab)
-        
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         l_enhanced = clahe.apply(l)
-        
         img_lab_enhanced = cv2.merge([l_enhanced, a, b])
         img_enhanced = cv2.cvtColor(img_lab_enhanced, cv2.COLOR_LAB2RGB)
-        
         return img_enhanced
-    
-    def _get_face_landmarks(self, img: np.ndarray) -> Optional[object]:
-        """Get facial landmarks using MediaPipe"""
-        if not self.face_mesh:
-            return None
-        
-        try:
-            results = self.face_mesh.process(img)
-            if results.multi_face_landmarks:
-                return results.multi_face_landmarks[0]
-        except:
-            pass
-        
-        return None
-    
+
+    # ==================== SKIN MASK ====================
+
     def _create_skin_mask(self, img: np.ndarray, landmarks: Optional[object]) -> np.ndarray:
         """Create mask for skin regions"""
         h, w = img.shape[:2]
-        
+
         if landmarks:
             # Use landmarks to define face region
             mask = np.zeros((h, w), dtype=np.uint8)
-            
-            # Face contour indices in MediaPipe
             face_oval = [
                 10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
                 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
                 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109
             ]
-            
             points = []
             for idx in face_oval:
-                landmark = landmarks.landmark[idx]
-                x = int(landmark.x * w)
-                y = int(landmark.y * h)
+                lm = landmarks.face_landmarks[0][idx]
+                x = int(lm.x * w)
+                y = int(lm.y * h)
                 points.append([x, y])
-            
             cv2.fillConvexPoly(mask, np.array(points), 255)
         else:
             # Fallback to color-based skin detection
@@ -2570,40 +2566,36 @@ class EnhancedSkinAnalyzer:
             lower = np.array([0, 133, 77], dtype=np.uint8)
             upper = np.array([255, 173, 127], dtype=np.uint8)
             mask = cv2.inRange(img_ycrcb, lower, upper)
-            
-            # Clean up mask
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
             mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        
+
         return mask
-    
+
+    # ==================== DEEPFACE ====================
+
     def _analyze_with_deepface(self, image_bytes: bytes) -> Optional[Dict]:
         """Get baseline analysis from DeepFace"""
         try:
-            # Save temporarily
             import tempfile
             with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp:
                 tmp.write(image_bytes)
                 tmp_path = tmp.name
-            
             result = DeepFace.analyze(
                 img_path=tmp_path,
                 actions=['age', 'gender', 'race'],
                 enforce_detection=False,
                 silent=True
             )
-            
             import os
             os.unlink(tmp_path)
-            
             if result and len(result) > 0:
                 return result[0]
         except:
             pass
-        
         return None
-    
+
+    # ==================== METRICS EXTRACTION ====================
     # ==================== METRICS EXTRACTION ====================
     
     def _extract_metrics(self, img: np.ndarray, mask: np.ndarray, 
