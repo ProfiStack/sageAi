@@ -44,8 +44,9 @@ export default function PictureAnalysisPopup({
         console.error(err);
         if (err.name === "NotAllowedError") {
           setCameraPermission(true);
+        } else {
+          setOpen(false);
         }
-        setOpen(false);
       }
     }
 
