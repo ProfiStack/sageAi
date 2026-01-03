@@ -20,7 +20,6 @@ from prompts.skin_care import get_skincare_prompt
 from prompts.trend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
 import numpy as np
-import cv2
 from PIL import Image
 from io import BytesIO
 # from sklearn.cluster import KMeans
