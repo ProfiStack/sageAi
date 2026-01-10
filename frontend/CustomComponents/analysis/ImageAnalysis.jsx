@@ -10,8 +10,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import Cookies from "js-cookie";
+import useFormToast from "../FormToast/FormToast";
 
 export default function SkinAnalysis() {
+  const { destructiveToast } = useFormToast();
   const [isOpen, SetIsOpen] = useState(false);
   const fileInputRef = useRef(null);
   const authToken = Cookies.get("authToken");
@@ -37,8 +39,10 @@ export default function SkinAnalysis() {
     try {
       setIsLoading(true);
       const response = await Api.client.analyzeSkinPhoto(formData, authToken);
-      if (response?.detail?.toLowerCase().includes("no face")) {
-        destructiveToast("Face not detected. Please upload a clearer photo.");
+      if (response?.detail?.toLowerCase().includes("no face") || response?.detail?.toLowerCase().includes("500")  || response?.detail?.toLowerCase().includes("400")) {
+        SetIsOpen(false);
+        setIsLoading(false);
+        destructiveToast(response?.detail);
         return;
       }
       const { setHtml } = useSkinResultStore.getState();
@@ -48,6 +52,7 @@ export default function SkinAnalysis() {
       setIsLoading(false);
     } catch (error) {
       console.error("Error sending image to backend:", error);
+      SetIsOpen(true);
       setIsLoading(false);
     }
   };
