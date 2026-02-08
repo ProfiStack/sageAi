@@ -3,10 +3,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Scan, X } from "lucide-react";
+import { Api } from "@/shared/api/api";
 
 export default function ProductCameraPopup({ open, setOpen }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
 
   useEffect(() => {
@@ -14,7 +16,8 @@ export default function ProductCameraPopup({ open, setOpen }) {
 
     if (open && navigator.mediaDevices?.getUserMedia) {
       navigator.mediaDevices
-        .getUserMedia({ video: { facingMode: { exact: "environment" } } }) // back camera
+        .getUserMedia({ video: { facingMode: { exact: "user" }, width: { ideal: 1920 },
+          height: { ideal: 1080 }, } }) // back camera
         .then((_stream) => {
           stream = _stream;
           if (videoRef.current) {
@@ -35,28 +38,73 @@ export default function ProductCameraPopup({ open, setOpen }) {
   }, [open]);
 
   const handleCapture = () => {
-    if (!canvasRef.current || !videoRef.current) return;
-
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    ctx.drawImage(video, 0, 0, width, height);
-
-    const dataUrl = canvas.toDataURL("image/png");
-    setCapturedImage(dataUrl);
+  
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+  
+    // Crop center 80%
+    const cropWidth = Math.floor(vw * 0.8);
+    const cropHeight = Math.floor(vh * 0.8);
+    const sx = Math.floor((vw - cropWidth) / 2);
+    const sy = Math.floor((vh - cropHeight) / 2);
+  
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
+  
+    // ✅ ONLY supported filters
+    ctx.filter = "contrast(1.25) brightness(1.1)";
+    ctx.drawImage(
+      video,
+      sx,
+      sy,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      cropWidth,
+      cropHeight
+    );
+  
+    canvas.toBlob(
+      (blob) => {
+        setCapturedImage(blob);
+        setPreviewUrl(URL.createObjectURL(blob));
+      },
+      "image/jpeg",
+      0.95
+    );
   };
+  
 
   const handleClose = () => {
     setOpen(false);
     setCapturedImage(null);
+    setPreviewUrl(null);
   };
+
+  const uploadImage = async () => {
+    const formData = new FormData();
+    formData.append("image", capturedImage);
+  
+    const res = await Api.client.analyzeProduct(formData);
+    console.log(res);
+
+    
+  };
+
+  useEffect(()=>{
+    return ()=>{
+      if(previewUrl){
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
+
+  console.log(capturedImage);
+
 
   return (
     <AnimatePresence>
@@ -109,7 +157,7 @@ export default function ProductCameraPopup({ open, setOpen }) {
                 </>
               ) : (
                 <img
-                  src={capturedImage}
+                  src={previewUrl}
                   alt="Captured"
                   className="w-full h-full object-cover"
                 />
@@ -135,6 +183,7 @@ export default function ProductCameraPopup({ open, setOpen }) {
                 </button>
                 <button
                   onClick={() => {
+                    uploadImage();
                     setOpen(false);
                   }}
                   className="w-1/2 text-center rounded-2xl text-white font-semibold py-2 bg-[#02331E]"
