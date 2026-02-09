@@ -9,7 +9,7 @@ dependencies = [
     "autogen-ext[grpc,mcp,ollama,openai]>=0.4.9.2",
     "bs4>=0.0.2",
     "fastapi",
-    "uvicorn",
+    "uvicorn[standard]",
     "websockets",
     "pydantic[email]",
     "httpx>=0.28.1",
@@ -39,6 +39,10 @@ dependencies = [
     "opencv-python-headless>=4.8.0",
     "pillow>=11.2.1",
     "stripe>=12.4.0",
+    "tf-keras>=2.20.1",
+    "scikit-image>=0.26.0",
+    "gunicorn>=23.0.0",
+    "mediapipe>=0.10.14",
 ]
 
 [dependency-groups]

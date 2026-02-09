@@ -10,8 +10,11 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ShadePreviewPopup from "../Popups/ShadeImagePreview";
 import Cookies from "js-cookie";
+import useFormToast from "../FormToast/FormToast";
 
 export default function ShadeAnalysis() {
+  const { destructiveToast } = useFormToast();
+
   const [isOpen, SetIsOpen] = useState(false);
   const fileInputRef = useRef(null);
   const authToken = Cookies.get("authToken");
@@ -40,8 +43,14 @@ export default function ShadeAnalysis() {
         formData,
         authToken
       );
-      if (response?.detail?.toLowerCase().includes("no face")) {
-        destructiveToast("Face not detected. Please upload a clearer photo.");
+      if (
+        response?.detail?.toLowerCase().includes("insufficient skin visible") ||
+        response?.detail?.toLowerCase().includes("no face")
+      ) {
+        destructiveToast("Please upload a clearer photo.");
+        setIsLoading(false);
+        SetIsOpen(false);
+
         return;
       }
       const { setShadeResult } = useShadeMatchStore.getState();

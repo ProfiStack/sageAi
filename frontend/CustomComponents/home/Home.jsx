@@ -261,7 +261,7 @@ export default function HomePage() {
       <Footer />
 
       {/* Popups */}
-      {selectedItem?.scanRoute === "/product-analysis" ||
+      {
       selectedItem?.scanRoute === "/none" ? (
         <OptionPopup
           isOpen={showOptionPopup}

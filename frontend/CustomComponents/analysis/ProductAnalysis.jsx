@@ -1,6 +1,5 @@
 "use client";
 
-import MoleCameraPopup from "@/CustomComponents/cameraPopups/MoleAnalysis";
 import ProductCameraPopup from "@/CustomComponents/cameraPopups/ProductAnalysis";
 import Footer from "@/CustomComponents/Footer/Footer";
 import ImagePreviewPopup from "@/CustomComponents/Popups/ImagePreviewPopup";
@@ -28,7 +27,7 @@ export default function ProductAnalysis() {
 
   return (
     <div className="h-screen flex flex-col">
-      <SettingsHeader title={"Mole Analysis"} />
+      <SettingsHeader title={"Product Analysis"} />
 
       <div
         className="flex-1 px-4 flex flex-col"
