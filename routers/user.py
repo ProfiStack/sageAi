@@ -210,7 +210,9 @@ async def analyze_skin_photo(
     # await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:
         skin_analyzer = get_analyzer()
-        result = await skin_analyzer.analyze_skin_features(image_bytes)
+        result = result = await asyncio.get_event_loop().run_in_executor(
+            executor, skin_analyzer.analyze, image_bytes
+        )
         message = get_shade_matching_prompt(result)
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(

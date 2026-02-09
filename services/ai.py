@@ -4,6 +4,7 @@ import os
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from db import SessionLocal
 import asyncio
 from prompts.alternative import get_alternate
@@ -19,7 +20,6 @@ from services.db_service import (
     update_user_profile,
 )
 from io import BytesIO  # Added
-from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 from prompts.ingredients import get_ingredient_checker_prompt
 from prompts.skin_care import get_skincare_prompt
@@ -34,6 +34,10 @@ from io import BytesIO
 from typing import Dict, List, Tuple, Optional, Union
 import json
 import warnings
+from mediapipe.tasks.python import vision
+from mediapipe.tasks.python.core import base_options
+from mediapipe.tasks.python.vision import RunningMode
+from mediapipe import Image as MPImage, ImageFormat
 
 warnings.filterwarnings('ignore')
 
@@ -2414,42 +2418,42 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
 # DeepFace integration
 
 
-class SkinAnalysisResult:
-    """Structured output for skin analysis"""
-
+class SkinAnalysisResult(BaseModel):
     skin_type: str
-    skin_type_confidence: float
-    concerns: List[
-        Dict[str, float]
-    ]  # [{concern: str, severity: str, confidence: float}]
+    concerns: List[Dict[str, float]]
     tone: str
-    tone_confidence: float
     undertone: str
-    undertone_confidence: float
     texture: str
-    texture_confidence: float
     under_eye: str
-    under_eye_confidence: float
     lip_color: str
-    lip_color_confidence: float
-    metadata: Dict
-
 
 class EnhancedFacialSkinAnalyzer:
     """Enhanced deterministic skin analysis pipeline with expanded features"""
 
-    def __init__(self, min_detection_confidence: float = 0.7):
-        """Initialize with fixed parameters for consistency"""
-        # MediaPipe face mesh for landmarks (deterministic)
-        self.mp_face_mesh = mp.solutions.face_mesh.FaceMesh(
-            static_image_mode=True,
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=min_detection_confidence,
-        )
+    def __init__(
+        self,
+        model_path: str = "models/face_landmarker.task",
+        min_detection_confidence: float = 0.7,
+    ):
+        self._init_landmarker(model_path, min_detection_confidence)
 
-        # Fixed random seed for any stochastic operations
+        # Determinism
         np.random.seed(42)
+
+    # -------------------------------------------------------------------------
+    # MediaPipe initialization (thread-safe)
+    # -------------------------------------------------------------------------
+
+    def _init_landmarker(self, model_path: str, min_detection_confidence: float):
+        options = vision.FaceLandmarkerOptions(
+            base_options=base_options.BaseOptions(model_asset_path=model_path),
+            running_mode=RunningMode.IMAGE,
+            num_faces=1,
+            # refine_landmarks=True,
+            min_face_detection_confidence=min_detection_confidence,
+            min_face_presence_confidence=min_detection_confidence,
+        )
+        self.face_landmarker = vision.FaceLandmarker.create_from_options(options)
 
     def analyze(self, image_input: Union[str, bytes]) -> SkinAnalysisResult:
         """
@@ -2463,9 +2467,8 @@ class EnhancedFacialSkinAnalyzer:
         """
         # Load and validate image
       
-        pil_image = Image.open(BytesIO(image_input))
-        img_rgb = np.array(pil_image.convert('RGB'))
-        
+        pil_image = self._load_image(image_input)
+        img_rgb = np.asarray(pil_image)
 
         # Convert to RGB for MediaPipe
         # img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -2523,50 +2526,56 @@ class EnhancedFacialSkinAnalyzer:
         lip_color, lip_conf = self._analyze_lip_color_expanded(
             normalized_regions["lips"], lighting_quality
         )
+        print(skin_type, skin_type_conf, concerns, tone, tone_conf, undertone, undertone_conf, texture, texture_conf, under_eye, under_eye_conf, lip_color, lip_conf)
+        severe_concerns = [c["concern"] for c in concerns if c["severity"] == "severe"]
 
-        return SkinAnalysisResult(
-            skin_type=skin_type,
-            skin_type_confidence=skin_type_conf,
-            concerns=concerns,
-            tone=tone,
-            tone_confidence=tone_conf,
-            undertone=undertone,
-            undertone_confidence=undertone_conf,
-            texture=texture,
-            texture_confidence=texture_conf,
-            under_eye=under_eye,
-            under_eye_confidence=under_eye_conf,
-            lip_color=lip_color,
-            lip_color_confidence=lip_conf,
-            metadata={
-                "lighting_quality": lighting_quality,
-                "bbox": face_bbox,
-            },
-        )
+        # Build final result
+        result = {
+            "skin_type": skin_type,
+            "concerns": severe_concerns,
+            "tone": tone,
+            "undertone": undertone,
+            "texture": texture,
+            "under_eye": under_eye,
+            "lip_color": lip_color,
+        }
 
+        print(result)
+        return result
+
+    def _load_image(self, image_input: Union[str, bytes]) -> Image:
+       if isinstance(image_input, bytes):
+           return Image.open(BytesIO(image_input)).convert("RGB")
+       return Image.open(image_input).convert("RGB")
+    
     def _detect_face(
         self, img_rgb: np.ndarray
-    ) -> Tuple[Optional[List], Optional[List]]:
-        """Detect face and extract 468 landmarks using MediaPipe"""
-        results = self.mp_face_mesh.process(img_rgb)
+    ) -> Tuple[Optional[List[List[int]]], Optional[List[int]]]:
 
-        if not results.multi_face_landmarks:
+        mp_image = MPImage(
+            image_format=ImageFormat.SRGB,
+            data=img_rgb,
+        )
+
+        result = self.face_landmarker.detect(mp_image)
+
+        if not result.face_landmarks:
             return None, None
 
         h, w = img_rgb.shape[:2]
-        landmarks = results.multi_face_landmarks[0]
+        landmarks = result.face_landmarks[0]
 
-        # Convert normalized landmarks to pixel coordinates
-        points = []
-        for lm in landmarks.landmark:
-            points.append([int(lm.x * w), int(lm.y * h)])
+        points = [
+            [int(lm.x * w), int(lm.y * h)]
+            for lm in landmarks
+        ]
 
-        # Calculate bounding box
-        points_arr = np.array(points)
-        x_min, y_min = points_arr.min(axis=0)
-        x_max, y_max = points_arr.max(axis=0)
+        pts = np.array(points)
+        x_min, y_min = pts.min(axis=0)
+        x_max, y_max = pts.max(axis=0)
 
-        return points, [x_min, y_min, x_max, y_max]
+        return points, [int(x_min), int(y_min), int(x_max), int(y_max)]
+
 
     def _segment_regions(
         self, img_rgb: np.ndarray, landmarks: List
