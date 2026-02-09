@@ -18,7 +18,7 @@ from models.db_models import (
     TreatmentMessage,
 )
 from db import SessionLocal
-from services.ai import EnhancedSkinAnalyzer
+from services.ai import EnhancedFacialSkinAnalyzer
 from services.db_service import (
     get_user_chat_data,
     update_user_payment,
@@ -42,15 +42,20 @@ import os
 router = APIRouter()
 load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-analyzer: EnhancedSkinAnalyzer | None = None
+analyzer = None
 
-user_dependency = Annotated[Session, Depends(get_current_user)]
+
 def get_analyzer():
     global analyzer
     if analyzer is None:
-        analyzer = EnhancedSkinAnalyzer()
+        from services.ai import EnhancedFacialSkinAnalyzer
+
+        analyzer = EnhancedFacialSkinAnalyzer()
     return analyzer
-analyzer = get_analyzer()
+
+
+# In your endpoint:
+user_dependency = Annotated[Session, Depends(get_current_user)]
 system_prompt = result_prompt
 router = APIRouter()
 executor = ThreadPoolExecutor()
@@ -166,11 +171,14 @@ async def analyze_skin_photo(
         raise HTTPException(status_code=400, detail="Invalid image type")
     db = SessionLocal()
     image_bytes = await image.read()
-    print('hello world')
     # await update_user_profile(db, user_db.get("user_id"), {"free_scan": False})
     # await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:
-        result = await analyzer.analyze_skin_features(image_bytes)
+        skin_analyzer = get_analyzer()
+        result = result = await asyncio.get_event_loop().run_in_executor(
+            executor, skin_analyzer.analyze, image_bytes
+        )
+        print(result)
         message = get_image_analysis_prompt(result)
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
@@ -201,7 +209,8 @@ async def analyze_skin_photo(
     # await update_user_profile(db, user_db.get("user_id"), {"free_scan": False})
     # await update_user_payment(db, user_db.get("user_id"), {"status": False})
     try:
-        result = await analyzer.analyze_skin_features(image_bytes)
+        skin_analyzer = get_analyzer()
+        result = await skin_analyzer.analyze_skin_features(image_bytes)
         message = get_shade_matching_prompt(result)
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
