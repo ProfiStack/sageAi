@@ -82,7 +82,7 @@ export default function SignUpPopup() {
         // logEvent("Onboard Sucessful");
         await transferGuestQuizResults(data.token);
         router.push("/");
-        primaryToast({ description: "Login successful" });
+        primaryToast({ description: "Sign-Up successful" });
       } else if (data.detail) {
         destructiveToast(data.detail);
       }
@@ -145,7 +145,7 @@ export default function SignUpPopup() {
 
               <button
                 className={cn(
-                  "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
+                  "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#D4B038] text-white rounded-[24px] hover:bg-[#D4B038]"
                 )}
                 type="submit"
               >

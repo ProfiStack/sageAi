@@ -96,8 +96,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
             {/* Grid of options */}
             <div className="grid grid-cols-2 gap-3">
               {ImageAnalysisData.map((item, index) =>
-                item.title === "Skin Analysis" ||
-                item.title === "Shade Matching" ? (
+                item.title !== "Mole Analysis" ? (
                   <SubscribeButton route={item.route}>
                     <div
                       key={index}
@@ -115,7 +114,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                           {getScanLabel(item)}
                         </div>
                       </div>
-                      <p className="font-semibold text-gray-900 text-sm mt-1">
+                      <p className="font-semibold text-[#02331e] text-sm mt-1">
                         {item.title}
                       </p>
                     </div>
@@ -142,11 +141,11 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
                           : "Coming Soon"}
                       </div>
                     </div>
-                    <p className="font-semibold text-gray-900 text-sm mt-1">
+                    <p className="font-semibold text-[#02331e] text-sm mt-1">
                       {item.title}
                     </p>
                   </div>
-                )
+                ),
               )}
             </div>
           </motion.div>

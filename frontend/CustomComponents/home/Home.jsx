@@ -20,6 +20,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CircleUserRound } from "lucide-react";
+import { LogIn } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 export default function HomePage() {
   const [messages, setMessages] = useState([]);
@@ -61,9 +63,9 @@ export default function HomePage() {
   };
 
   const handleCategoryClick = (item, categoryTitle) => {
-      // logEvent("Home Section Clicked", {
-      //   click_value: item.title,
-      // });
+    // logEvent("Home Section Clicked", {
+    //   click_value: item.title,
+    // });
 
     // Check if this category should show popup
     if (shouldShowPopup(categoryTitle)) {
@@ -130,10 +132,10 @@ export default function HomePage() {
   }, [messages]);
 
   return (
-    <div className="h-screen bg-[#F5F5F5] max-w-md mx-auto flex flex-col justify-between">
-      <div className="max-w-md mx-auto bg-white mb-4">
+    <div className="h-screen bg-[#fafafa] max-w-md mx-auto flex flex-col justify-between">
+      <div className="max-w-md mx-auto bg-[#fafafa] mb-4">
         <div>
-          <div className="bg-white rounded-[16px] shadow-lg p-4 my-4 ">
+          <div className="bg-[#fafafa] rounded-[16px] shadow-lg p-4 my-4 ">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[20px] font-semibold">
@@ -160,15 +162,21 @@ export default function HomePage() {
                   <DropdownMenuTrigger>
                     <CircleUserRound />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white">
+                  <DropdownMenuContent className="bg-white mr-4">
                     <DropdownMenuLabel>
-                      <button onClick={() => router.push("/login")}>
-                        Login
+                      <button
+                        className="flex items-center gap-2 bg-[#02331E] rounded-xl  text-white w-full p-2"
+                        onClick={() => router.push("/login")}
+                      >
+                        <LogIn size={20} /> Login
                       </button>
                     </DropdownMenuLabel>
                     <DropdownMenuLabel>
-                      <button onClick={() => router.push("/signup")}>
-                        Signup
+                      <button
+                        className="flex items-center gap-2 bg-[#D4B038] rounded-xl  text-white w-full p-2"
+                        onClick={() => router.push("/signup")}
+                      >
+                        <UserPlus size={20} /> Signup
                       </button>
                     </DropdownMenuLabel>
                   </DropdownMenuContent>
@@ -261,8 +269,7 @@ export default function HomePage() {
       <Footer />
 
       {/* Popups */}
-      {
-      selectedItem?.scanRoute === "/none" ? (
+      {selectedItem?.scanRoute === "/none" ? (
         <OptionPopup
           isOpen={showOptionPopup}
           onClose={handleClosePopup}

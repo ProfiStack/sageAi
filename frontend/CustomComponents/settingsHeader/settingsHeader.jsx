@@ -9,11 +9,11 @@ export default function SettingsHeader({ title }) {
     router.back();
   };
   return (
-    <div className="bg-white sticky top-0 z-10 px-2 py-1 flex items-center justify-between shadow-sm">
+    <div className="bg-[#fafafa] sticky top-0 z-10 px-2 py-1 flex items-center justify-between shadow-sm">
       <button onClick={handleBack} className="p-1">
         <ArrowLeft size={24} className="text-gray-700" />
       </button>
-      <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+      <h1 className="text-xl font-semibold text-[#02331e]">{title}</h1>
       <Image src="/images/sagelogo2.png" alt="SageeAi" width={58} height={58} />
     </div>
   );

@@ -293,11 +293,11 @@ export const Api = {
         console.log(error);
       }
     },
-    analyzeProduct: async (image) => {
+    analyzeProduct: async (formData) => {
       try{
         const response = await baseFetch('/api/analyze-product',{
           method: "POST",
-          body: image,
+          body: formData,
         });
         return response;
       } catch (error) {
