@@ -2,50 +2,39 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import datetime
 import os
-from typing import Annotated
-import uuid
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from openai import OpenAI
 from sqlalchemy.orm import Session
-from db import SessionLocal
+
+from core.database import SessionLocal
 from models.b2b_models import B2BFaceScan, B2BUser
 from models.b2b_schemas import CreateB2BUserRequest
-from prompts.image_analysis import get_image_analysis_prompt
-from routers.auth import get_current_user
-from routers.b2b.auth import verify_b2b_bearer
-from services.ai import analyze_skin_features
-from typing import Annotated
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import JSONResponse
 from prompts.image_analysis import clean_and_parse_json, get_image_analysis_prompt
-from prompts.shade_matching import get_shade_matching_prompt
-from routers.auth import get_current_user
-from services.ai import analyze_skin_features
-from sqlalchemy.orm import Session
+from routers.b2b.auth import get_db, verify_b2b_bearer
+from services.skin_analyzer import EnhancedFacialSkinAnalyzer
 
-router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
+router = APIRouter(tags=["B2B"])
 
 executor = ThreadPoolExecutor()
 load_dotenv()
 chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-user_dependency = Annotated[Session, Depends(get_current_user)]
+_analyzer = None
 
 
-@router.post("/b2b/users")
+def get_analyzer() -> EnhancedFacialSkinAnalyzer:
+    global _analyzer
+    if _analyzer is None:
+        _analyzer = EnhancedFacialSkinAnalyzer()
+    return _analyzer
+
+
+@router.post("/users")
 def create_b2b_user(
     payload: CreateB2BUserRequest,
-    client_id=Depends(verify_b2b_bearer),
+    client_id: str = Depends(verify_b2b_bearer),
     db: Session = Depends(get_db),
 ):
     user = (
@@ -67,50 +56,117 @@ def create_b2b_user(
         db.commit()
         db.refresh(user)
 
-    return user
+    return {
+        "id": user.id,
+        "external_user_id": user.external_user_id,
+        "email": user.email,
+        "client_id": user.client_id,
+        "source": user.source,
+        "consent": user.consent,
+        "created_at": user.created_at,
+    }
 
 
-@router.post("/b2b/users/{user_id}/scan")
+@router.get("/users")
+def list_b2b_users(
+    client_id: str = Depends(verify_b2b_bearer),
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 50,
+):
+    users = (
+        db.query(B2BUser)
+        .filter_by(client_id=client_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": u.id,
+            "external_user_id": u.external_user_id,
+            "email": u.email,
+            "source": u.source,
+            "consent": u.consent,
+            "created_at": u.created_at,
+        }
+        for u in users
+    ]
+
+
+@router.get("/users/{user_id}")
+def get_b2b_user(
+    user_id: str,
+    client_id: str = Depends(verify_b2b_bearer),
+    db: Session = Depends(get_db),
+):
+    user = (
+        db.query(B2BUser)
+        .filter_by(id=user_id, client_id=client_id)
+        .first()
+    )
+    if not user:
+        raise HTTPException(404, "User not found")
+    return {
+        "id": user.id,
+        "external_user_id": user.external_user_id,
+        "email": user.email,
+        "source": user.source,
+        "consent": user.consent,
+        "created_at": user.created_at,
+    }
+
+
+@router.post("/users/{user_id}/scan")
 async def create_face_scan(
     user_id: str,
-    client_id=Depends(verify_b2b_bearer),
+    client_id: str = Depends(verify_b2b_bearer),
     db: Session = Depends(get_db),
     image: UploadFile = File(..., description="The image to analyze"),
 ):
     if not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid image type")
-    db = SessionLocal()
-    image_bytes = await image.read()
-    try:
-        result = await analyze_skin_features(image_bytes)
-        user = (
-            db.query(B2BUser)
-            .filter_by(id=user_id, client_id=client_id)
-            .first()
-        )
 
-        if not user:
-            raise HTTPException(404, "User not found")
+    user = (
+        db.query(B2BUser)
+        .filter_by(id=user_id, client_id=client_id)
+        .first()
+    )
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    image_bytes = await image.read()
+
+    try:
+        analyzer = get_analyzer()
+        # analyze() returns: {skin_type, concerns (list[str]), tone, undertone, texture, under_eye, lip_color}
+        result = await asyncio.get_event_loop().run_in_executor(
+            executor, analyzer.analyze, image_bytes
+        )
 
         scan = B2BFaceScan(
             b2b_user_id=user.id,
-            skin_type=result["skin_types"]["value"],
-            skin_type_confidence=result["skin_types"]["confidence"],
-            concerns=[c["value"] for c in result["concerns"]],
-            concerns_confidence=[c["confidence"] for c in result["concerns"]],
-            tone=result["tone"]["value"],
-            tone_confidence=result["tone"]["confidence"],
-            undertone=result["undertone"]["value"],
-            undertone_confidence=result["undertone"]["confidence"],
-            texture=result["texture"]["value"],
-            texture_confidence=result["texture"]["confidence"],
-            under_eye=result["under_eye"]["value"],
-            under_eye_confidence=result["under_eye"]["confidence"],
-            lip_color=result["lip_color"]["value"],
-            lip_color_confidence=result["lip_color"]["confidence"],
+            skin_type=result.get("skin_type"),
+            skin_type_confidence=None,
+            concerns=result.get("concerns", []),
+            concerns_confidence=None,
+            tone=result.get("tone"),
+            tone_confidence=None,
+            undertone=result.get("undertone"),
+            undertone_confidence=None,
+            texture=result.get("texture"),
+            texture_confidence=None,
+            under_eye=result.get("under_eye"),
+            under_eye_confidence=None,
+            lip_color=result.get("lip_color"),
+            lip_color_confidence=None,
             scan_version="v1",
             created_at=datetime.datetime.now(datetime.timezone.utc),
         )
+        db.add(scan)
+        db.commit()
+        db.refresh(scan)
+
         message = get_image_analysis_prompt(result)
         messages = [{"role": "system", "content": message}]
         response = await asyncio.get_event_loop().run_in_executor(
@@ -121,11 +177,11 @@ async def create_face_scan(
                 temperature=0.7,
             ),
         )
-        db.add(scan)
-        db.commit()
-        db.refresh(scan)
-        json_result = response.choices[0].message.content
-        json_result = clean_and_parse_json(json_result)
-        return {"results": json_result}
+
+        json_result = clean_and_parse_json(response.choices[0].message.content)
+        return {"scan_id": scan.id, "results": json_result}
+
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})

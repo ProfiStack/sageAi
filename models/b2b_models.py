@@ -9,22 +9,26 @@ from sqlalchemy import (
     JSON,
     DateTime,
 )
-from db import Base
+from core.database import Base
 
 
 class B2BClient(Base):
     __tablename__ = "b2b_clients"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String)
+    email = Column(String, unique=True, nullable=False)
     status = Column(String, default="active")
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class B2BApiKey(Base):
     __tablename__ = "b2b_api_keys"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     client_id = Column(String, ForeignKey("b2b_clients.id"), index=True, nullable=False)
+    label = Column(String, nullable=True)
     api_key_hash = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
     last_used_at = Column(DateTime)
 
 
@@ -46,13 +50,14 @@ class B2BFaceScan(Base):
     skin_type = Column(String)
     skin_type_confidence = Column(Float)
     concerns = Column(JSON)
+    concerns_confidence = Column(JSON)
     tone = Column(String)
-    skin_type_confidence = Column(Float)
+    tone_confidence = Column(Float)
     undertone = Column(String)
-    skin_type_confidence = Column(Float)
+    undertone_confidence = Column(Float)
     texture = Column(String)
     texture_confidence = Column(Float)
-    under_eye = Column(Float)
+    under_eye = Column(String)
     under_eye_confidence = Column(Float)
     lip_color = Column(String)
     lip_color_confidence = Column(Float)

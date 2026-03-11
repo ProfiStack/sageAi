@@ -1,0 +1,276 @@
+{
+  "info": {
+    "name": "SageAI B2B API",
+    "description": "Complete B2B API collection for SageAI. \n\n**Setup:**\n1. Set `base_url` variable to your server (default: http://localhost:8000)\n2. Run 'Create Client' first to get an API key\n3. Copy the returned `api_key` into the `b2b_api_key` variable\n4. Set `admin_secret` to your ADMIN_SECRET env value",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",     "value": "http://localhost:8000", "type": "string" },
+    { "key": "admin_secret", "value": "YOUR_ADMIN_SECRET",     "type": "string" },
+    { "key": "b2b_api_key",  "value": "",                      "type": "string" },
+    { "key": "client_id",    "value": "",                      "type": "string" },
+    { "key": "key_id",       "value": "",                      "type": "string" },
+    { "key": "user_id",      "value": "",                      "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Admin — Onboarding",
+      "description": "Internal endpoints for onboarding businesses. Requires X-Admin-Secret header.",
+      "item": [
+        {
+          "name": "Create Client (onboard a business)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.client_id)  pm.collectionVariables.set('client_id',   json.client_id);",
+                  "if (json.api_key)    pm.collectionVariables.set('b2b_api_key', json.api_key);",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Beauty Co.\",\n  \"email\": \"admin@acmebeauty.com\",\n  \"first_key_label\": \"production\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/b2b/admin/clients", "host": ["{{base_url}}"], "path": ["api","b2b","admin","clients"] },
+            "description": "Onboards a new business. Returns a raw API key (shown once — store it). Auto-sets `client_id` and `b2b_api_key` variables."
+          }
+        },
+        {
+          "name": "List Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/admin/clients?skip=0&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","admin","clients"],
+              "query": [
+                { "key": "skip",  "value": "0" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Client Status (activate / deactivate)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/admin/clients/{{client_id}}/status?status=inactive",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","admin","clients","{{client_id}}","status"],
+              "query": [
+                { "key": "status", "value": "inactive", "description": "active | inactive" }
+              ]
+            },
+            "description": "Pass `status=active` or `status=inactive`."
+          }
+        },
+        {
+          "name": "Generate New API Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.api_key_id) pm.collectionVariables.set('key_id', json.api_key_id);",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"staging\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/b2b/admin/clients/{{client_id}}/keys",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","admin","clients","{{client_id}}","keys"]
+            },
+            "description": "Generate an additional API key for a client (e.g. staging vs production)."
+          }
+        },
+        {
+          "name": "List API Keys for Client",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/admin/clients/{{client_id}}/keys",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","admin","clients","{{client_id}}","keys"]
+            }
+          }
+        },
+        {
+          "name": "Revoke API Key",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/admin/clients/{{client_id}}/keys/{{key_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","admin","clients","{{client_id}}","keys","{{key_id}}"]
+            },
+            "description": "Sets is_active=false on the key. The key immediately stops working for authentication."
+          }
+        }
+      ]
+    },
+    {
+      "name": "B2B — Users",
+      "description": "Business-facing endpoints. Require `Authorization: Bearer <api_key>` header.",
+      "item": [
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('user_id', json.id);",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{b2b_api_key}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"external_user_id\": \"usr_abc123\",\n  \"email\": \"jane@example.com\",\n  \"consent\": true,\n  \"source\": \"web\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/b2b/users",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","users"]
+            },
+            "description": "Creates a B2B user linked to your business account. Idempotent — returns existing user if `external_user_id` already exists. Auto-sets `user_id` variable."
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{b2b_api_key}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/users?skip=0&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","users"],
+              "query": [
+                { "key": "skip",  "value": "0" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Returns all users belonging to the authenticated client. Scoped by API key — cannot see other clients' users."
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{b2b_api_key}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","users","{{user_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "B2B — Scan",
+      "description": "Upload a face image to run skin analysis and store the scan results.",
+      "item": [
+        {
+          "name": "Create Face Scan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{b2b_api_key}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "JPEG or PNG face image"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/b2b/users/{{user_id}}/scan",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","users","{{user_id}}","scan"]
+            },
+            "description": "Upload a face image (multipart/form-data, key=`image`). Runs the skin analyzer, stores results, then calls GPT-4o-mini to generate insights.\n\nReturns:\n- `scan_id` — store this if you want to reference the scan later\n- `results` — AI-generated skincare insights JSON"
+          }
+        }
+      ]
+    },
+    {
+      "name": "B2B — Recommendations",
+      "description": "Get product recommendations based on the latest scan for a user.",
+      "item": [
+        {
+          "name": "Get Product Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{b2b_api_key}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/users/{{user_id}}/recommendations?limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api","b2b","users","{{user_id}}","recommendations"],
+              "query": [
+                { "key": "limit", "value": "5", "description": "Max number of products to return (default 5)" }
+              ]
+            },
+            "description": "Returns the top-N products scored against the user's latest scan. Requires a scan to exist first.\n\nEach product includes:\n- `score` — relevance score (confidence × benefit weight)\n- `matched_on` — list of skin attributes that matched"
+          }
+        }
+      ]
+    }
+  ]
+}
