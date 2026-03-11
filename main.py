@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers.b2b import recommendation
 from routers import chat, favourites, profile, user, health, ws, auth, static, payments, analysis
 
 app = FastAPI(
@@ -25,9 +26,9 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(static.router, prefix="/api")
 app.include_router(payments.router, prefix="/api/payments")
 app.include_router(favourites.router, prefix="/api")
+app.include_router(recommendation.router, prefix="/api/b2b")
 app.include_router(analysis.router, prefix="/api")
 app.include_router(ws.router)
-
 
 @app.get("/")
 async def root():

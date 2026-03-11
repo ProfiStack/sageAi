@@ -9,7 +9,6 @@ from core.database import Base
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
-
     user_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String, unique=True, nullable=True)
     phone_number = Column(String, unique=True, nullable=True)

@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from core.database import Base
 from alembic import context
-from models import db_models  # import all models
+from models import db_models, b2b_models   # import all models
 from dotenv import load_dotenv
 import os
 load_dotenv(override=True)
