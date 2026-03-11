@@ -1,0 +1,423 @@
+{
+  "info": {
+    "name": "SageAI Reviews API",
+    "description": "Full CRUD collection for the SageAI Reviews system.\n\n**Setup:**\n1. Set `base_url` to your server (default: http://localhost:8000)\n2. Run **Login** under Auth to auto-populate `jwt_token`\n3. Set `admin_secret` to the value of ADMIN_SECRET in your .env\n4. After creating a review, copy its `id` into the `review_id` variable\n\n**Feature tags allowed:** `skin_analysis`, `shade_matching`, `general`, `recommendation`, `onboarding`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",     "value": "http://localhost:8000", "type": "string" },
+    { "key": "jwt_token",    "value": "",                      "type": "string" },
+    { "key": "admin_secret", "value": "change-me-before-production", "type": "string" },
+    { "key": "review_id",    "value": "",                      "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (get JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('jwt_token', json.token);",
+                  "    pm.test('JWT token saved', () => pm.expect(json.token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"your@email.com\",\n  \"password\": \"yourpassword\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Public — No Auth Required",
+      "item": [
+        {
+          "name": "List All Published Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"]
+            }
+          },
+          "_description": "Returns all published reviews with average rating and total count."
+        },
+        {
+          "name": "List Reviews — Filter by skin_analysis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews?feature_tag=skin_analysis",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"],
+              "query": [
+                { "key": "feature_tag", "value": "skin_analysis" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Reviews — Filter by shade_matching",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews?feature_tag=shade_matching",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"],
+              "query": [
+                { "key": "feature_tag", "value": "shade_matching" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Reviews — 5 Stars Only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews?min_rating=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"],
+              "query": [
+                { "key": "min_rating", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Reviews — Paginated (limit + offset)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews?limit=5&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"],
+              "query": [
+                { "key": "limit",  "value": "5" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Review by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews", "{{review_id}}"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Authenticated — JWT Required",
+      "item": [
+        {
+          "name": "Submit a Review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.collectionVariables.set('review_id', json.id);",
+                  "    pm.test('review_id saved', () => pm.expect(json.id).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewer_name\": \"Fatima Al-Hassan\",\n  \"reviewer_country\": \"Saudi Arabia\",\n  \"rating\": 5,\n  \"title\": \"Best skin analysis I have tried\",\n  \"body\": \"Sage's skin analysis accurately identified my hyperpigmentation and shade matching gave me an exact foundation match for my warm deep skin tone. I am beyond impressed with how personalised everything feels.\",\n  \"feature_tag\": \"skin_analysis\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Submit a Review — shade_matching",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewer_name\": \"Mei Lin\",\n  \"reviewer_country\": \"China\",\n  \"rating\": 5,\n  \"title\": \"Shade matching is next level\",\n  \"body\": \"I have very neutral cool undertones which are hard to match. Sage identified them perfectly and the suggested shades were all accurate. Finally found my perfect concealer shade after years of trial and error.\",\n  \"feature_tag\": \"shade_matching\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Own Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews", "{{review_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"title\": \"Updated: Still the best skin analysis tool\",\n  \"body\": \"After three months of using the recommended products from Sage, my skin has improved dramatically. The initial skin analysis was completely accurate and the shade matching saved me so much money on wrong purchases.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Own Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews", "{{review_id}}"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — X-Admin-Secret Required",
+      "item": [
+        {
+          "name": "List ALL Reviews (incl. unpublished)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "List Admin Reviews — Unpublished Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reviews?published_only=false",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reviews"],
+              "query": [
+                { "key": "published_only", "value": "false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Admin Reviews — Filter by feature_tag",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reviews?feature_tag=skin_analysis&published_only=false",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reviews"],
+              "query": [
+                { "key": "feature_tag",   "value": "skin_analysis" },
+                { "key": "published_only", "value": "false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle Publish / Unpublish Review",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reviews/{{review_id}}/publish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reviews", "{{review_id}}", "publish"]
+            }
+          }
+        },
+        {
+          "name": "Admin Delete Any Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "{{admin_secret}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reviews/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reviews", "{{review_id}}"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Validation Edge Cases",
+      "item": [
+        {
+          "name": "FAIL — Rating out of range (6)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewer_name\": \"Test User\",\n  \"reviewer_country\": \"UK\",\n  \"rating\": 6,\n  \"body\": \"This should fail because rating is above 5.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "FAIL — Invalid feature_tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewer_name\": \"Test User\",\n  \"reviewer_country\": \"UK\",\n  \"rating\": 4,\n  \"body\": \"This should fail because the feature tag does not exist.\",\n  \"feature_tag\": \"invalid_tag\"\n}"
+            }
+          }
+        },
+        {
+          "name": "FAIL — Body too short",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewer_name\": \"Test User\",\n  \"reviewer_country\": \"UK\",\n  \"rating\": 4,\n  \"body\": \"Too short\"\n}"
+            }
+          }
+        },
+        {
+          "name": "FAIL — No token on protected route",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewer_name\": \"Test User\",\n  \"reviewer_country\": \"UK\",\n  \"rating\": 4,\n  \"body\": \"This should fail with 401 because no Bearer token is sent.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "FAIL — Wrong admin secret",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Secret", "value": "wrong-secret" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "FAIL — Review not found (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/00000000-0000-0000-0000-000000000000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews", "00000000-0000-0000-0000-000000000000"]
+            }
+          }
+        }
+      ]
+    }
+
+  ]
+}
