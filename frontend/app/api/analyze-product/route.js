@@ -4,12 +4,25 @@ import vision from "@google-cloud/vision";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
-const client = new vision.ImageAnnotatorClient({
-  credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS),
-});
+// Lazy-initialised so the env var is read at request time (runtime),
+// not at module evaluation time during the Next.js build where it is undefined.
+let _visionClient = null;
+function getVisionClient() {
+  if (_visionClient) return _visionClient;
+  const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (!raw) {
+    throw new Error("GOOGLE_APPLICATION_CREDENTIALS env var is not set.");
+  }
+  _visionClient = new vision.ImageAnnotatorClient({
+    credentials: JSON.parse(raw),
+  });
+  return _visionClient;
+}
 
 export async function POST(req) {
   try {
+    const client = getVisionClient();
+
     const formData = await req.formData();
     const image = formData.get("image");
     const clientBarcode = formData.get("barcode");
@@ -21,7 +34,6 @@ export async function POST(req) {
 
     let buffer = Buffer.from(await image.arrayBuffer());
 
-    // ✅  Less aggressive preprocessing to preserve QR code quality
     // Only resize if image is huge, otherwise keep original quality
     const metadata = await sharp(buffer).metadata();
     const needsResize = metadata.width > 3000 || metadata.height > 3000;
@@ -32,16 +44,16 @@ export async function POST(req) {
         .toBuffer();
     }
 
-    // ✅ Create two versions: one for barcode detection, one for analysis
+    // Create two versions: one for barcode detection, one for analysis
     const barcodeBuffer = await sharp(buffer)
-      .greyscale() // QR codes work better in greyscale
-      .normalise() // Improve contrast
-      .sharpen({ sigma: 1 }) // Slight sharpening
+      .greyscale()
+      .normalise()
+      .sharpen({ sigma: 1 })
       .toBuffer();
 
     const analysisBuffer = await sharp(buffer).normalize().toBuffer();
 
-    // ✅ Try barcode detection with both buffers
+    // Try barcode detection with both buffers
     const [barcodeResult] = await client.annotateImage({
       image: { content: barcodeBuffer },
       features: [{ type: "BARCODE_DETECTION", maxResults: 10 }],
