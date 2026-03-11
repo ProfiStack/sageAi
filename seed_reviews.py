@@ -13,23 +13,23 @@ from models.db_models import Review
 
 SEED_REVIEWS = [
     {
-        "reviewer_name": "Amara Osei",
-        "reviewer_country": "Ghana",
+        "reviewer_name": "Wafa",
+        "reviewer_country": "Pakistan",
         "rating": 5,
         "title": "Finally matched my shade perfectly",
         "body": "Sage's shade matching got my deep brown skin tone right on the first try — something no app has ever done. The skin analysis also caught my T-zone oiliness and recommended exactly the right products.",
         "feature_tag": "shade_matching",
     },
     {
-        "reviewer_name": "Priya Nair",
-        "reviewer_country": "India",
+        "reviewer_name": "Mashal",
+        "reviewer_country": "Pakistan",
         "rating": 5,
         "title": "Knows my undertone better than I do",
         "body": "I've always struggled with warm olive undertones online. Sage read them correctly and suggested shades I'd never have picked myself — every single one worked. The skin analysis flagging was spot on too.",
         "feature_tag": "shade_matching",
     },
     {
-        "reviewer_name": "Elif Yilmaz",
+        "reviewer_name": "Aqsa",
         "reviewer_country": "Turkey",
         "rating": 5,
         "title": "Caught what my dermatologist missed",
@@ -37,7 +37,7 @@ SEED_REVIEWS = [
         "feature_tag": "skin_analysis",
     },
     {
-        "reviewer_name": "James Okafor",
+        "reviewer_name": "Aisha",
         "reviewer_country": "Nigeria",
         "rating": 5,
         "title": "Built for deeper skin tones",
@@ -45,7 +45,7 @@ SEED_REVIEWS = [
         "feature_tag": "skin_analysis",
     },
     {
-        "reviewer_name": "Yuki Tanaka",
+        "reviewer_name": "Farah Deif",
         "reviewer_country": "Japan",
         "rating": 5,
         "title": "Texture analysis is impressively accurate",
@@ -61,7 +61,7 @@ SEED_REVIEWS = [
         "feature_tag": "shade_matching",
     },
     {
-        "reviewer_name": "Sofia Andersen",
+        "reviewer_name": "Faizan",
         "reviewer_country": "Denmark",
         "rating": 5,
         "title": "Finally gentle recommendations for sensitive skin",
@@ -69,7 +69,7 @@ SEED_REVIEWS = [
         "feature_tag": "skin_analysis",
     },
     {
-        "reviewer_name": "Carlos Mendez",
+        "reviewer_name": "Sarahh",
         "reviewer_country": "Mexico",
         "rating": 5,
         "title": "Detailed analysis I didn't expect",
@@ -77,7 +77,7 @@ SEED_REVIEWS = [
         "feature_tag": "skin_analysis",
     },
     {
-        "reviewer_name": "Chloe Bernard",
+        "reviewer_name": "Samiya",
         "reviewer_country": "France",
         "rating": 5,
         "title": "Impressed from a beauty industry perspective",
@@ -85,7 +85,7 @@ SEED_REVIEWS = [
         "feature_tag": "skin_analysis",
     },
     {
-        "reviewer_name": "Isabella Rossi",
+        "reviewer_name": "Naira",
         "reviewer_country": "Italy",
         "rating": 5,
         "title": "Understood my combination skin instantly",
