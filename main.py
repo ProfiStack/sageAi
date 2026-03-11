@@ -1,12 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-<<<<<<< HEAD
-from routers import chat, favourites, profile, user, health, ws, auth, static, payments
 from routers.b2b import recommendation
-=======
 from routers import chat, favourites, profile, user, health, ws, auth, static, payments, analysis
->>>>>>> main
 
 app = FastAPI(
     title="SAGEE Skincare AI API",
