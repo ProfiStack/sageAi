@@ -2,7 +2,7 @@
 from pickle import FALSE
 import uuid
 from datetime import datetime
-from sqlalchemy import Boolean, Column, ForeignKey, String, JSON, DateTime, TEXT, UniqueConstraint
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, JSON, DateTime, TEXT, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 from core.database import Base
@@ -157,3 +157,21 @@ class UserFavourite(Base):
     user_favourites = Column(JSON, nullable=False, server_default='{}')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Review(Base):
+    __tablename__ = 'reviews'
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    # Optional: link to a registered user (null for seeded / guest reviews)
+    user_id = Column(String, ForeignKey('user_profiles.user_id'), nullable=True, index=True)
+    reviewer_name = Column(String, nullable=False)
+    reviewer_country = Column(String, nullable=False)
+    rating = Column(Integer, nullable=False)          # 1–5
+    title = Column(String, nullable=True)
+    body = Column(TEXT, nullable=False)
+    feature_tag = Column(String, nullable=True)       # e.g. "skin_analysis", "shade_matching"
+    is_published = Column(Boolean, default=True, server_default=expression.true())
+    is_seeded = Column(Boolean, default=False, server_default=expression.false())
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+    user_profile = relationship("UserProfile", foreign_keys=[user_id])
