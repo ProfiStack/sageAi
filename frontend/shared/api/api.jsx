@@ -294,15 +294,20 @@ export const Api = {
       }
     },
     analyzeProduct: async (formData) => {
-      try{
-        const response = await baseFetch('/api/analyze-product',{
-          method: "POST",
-          body: formData,
-        });
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/favourites/${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         return response;
       } catch (error) {
         console.log(error);
       }
-    },
+    }
   },
 };
