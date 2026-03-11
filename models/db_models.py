@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, ForeignKey, String, JSON, DateTime, TEXT, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
-from db import Base
+from core.database import Base
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"

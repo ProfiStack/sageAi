@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import useFormToast from "../FormToast/FormToast";
 import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import useAuthStore from "@/store/authStore";
-import { useAmplitude } from "@/app/providers/amplitudeProvider";
+import { usePostHog } from "@/app/providers/posthogProvider";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -40,7 +40,7 @@ const formSchema = z.object({
 });
 export default function Signup() {
   const router = useRouter();
-  const { logEvent } = useAmplitude();
+  // const { logEvent } = usePostHog();
   const { primaryToast, destructiveToast } = useFormToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,10 +57,10 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      logEvent("Onboard Option Clicked", {
-        click_value: "Sign Up",
-        click_location: "Onboarding",
-      });
+      // logEvent("Onboard Option Clicked", {
+      //   click_value: "Sign Up",
+      //   click_location: "Onboarding",
+      // });
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
@@ -81,7 +81,7 @@ export default function Signup() {
         store.setToken(data.token);
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
-        logEvent("Onboard Sucessful");
+        // logEvent("Onboard Sucessful");
         await transferGuestQuizResults(data.token);
         primaryToast({ description: "Signup successful" });
         setIsLoading(false);

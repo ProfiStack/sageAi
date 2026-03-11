@@ -14,7 +14,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm as useFormHook } from "react-hook-form";
 
-import { useAmplitude } from "@/app/providers/amplitudeProvider";
+import { usePostHog } from "@/app/providers/posthogProvider";
 import { setAuthToken, setLoginTimestamp } from "@/shared/utils/utils";
 import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
@@ -42,7 +42,7 @@ const formSchema = z.object({
 });
 
 export default function SignUpPopup() {
-  const { logEvent } = useAmplitude();
+  // const { logEvent } = usePostHog();
   const form = useFormHook({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,10 +54,10 @@ export default function SignUpPopup() {
   const { destructiveToast, primaryToast } = useFormToast();
   async function onSubmit(values) {
     try {
-      logEvent("Onboard Option Clicked", {
-        click_value: "Sign Up",
-        click_location: "Onboarding",
-      });
+      // logEvent("Onboard Option Clicked", {
+      //   click_value: "Sign Up",
+      //   click_location: "Onboarding",
+      // });
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email);
       const transformedValues = {
         name: values.name,
@@ -79,10 +79,10 @@ export default function SignUpPopup() {
         store.setIsAuthenticated(true);
         store.setIsSubscribed(data.subscription);
         resetGuestMessageCount();
-        logEvent("Onboard Sucessful");
+        // logEvent("Onboard Sucessful");
         await transferGuestQuizResults(data.token);
         router.push("/");
-        primaryToast({ description: "Login successful" });
+        primaryToast({ description: "Sign-Up successful" });
       } else if (data.detail) {
         destructiveToast(data.detail);
       }
@@ -145,7 +145,7 @@ export default function SignUpPopup() {
 
               <button
                 className={cn(
-                  "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#02331E] text-white rounded-[24px] hover:bg-[#02331E]"
+                  "flex justify-center text-[16px] w-full py-5 font-semibold bg-[#D4B038] text-white rounded-[24px] hover:bg-[#D4B038]"
                 )}
                 type="submit"
               >

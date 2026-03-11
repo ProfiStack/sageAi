@@ -293,5 +293,16 @@ export const Api = {
         console.log(error);
       }
     },
+    analyzeProduct: async (formData) => {
+      try{
+        const response = await baseFetch('/api/analyze-product',{
+          method: "POST",
+          body: formData,
+        });
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 };

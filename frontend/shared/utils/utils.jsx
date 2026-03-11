@@ -546,7 +546,6 @@ export const transformToFilters = (obj) =>
   }, {});
 
 export function hydrateMobileNumber(number, length = 9) {
-  console.log(number);
   if (number) {
     return {
       watchMobileNumber: number?.replace(/\s/g, ""),

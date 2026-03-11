@@ -1,26 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import {
-  Info,
-  User,
-  LogOut,
-  LogIn,
-  Wallet,
-  SquarePen,
-  CircleUser,
-} from "lucide-react";
+import { Info, LogOut, LogIn, SquarePen, CircleUser } from "lucide-react";
 import Footer from "@/CustomComponents/Footer/Footer";
-import Image from "next/image";
-import Link from "next/link";
+
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { cn, isUserLoggedIn } from "@/lib/utils";
 import { Api } from "@/shared/api/api";
 import LogoutPopup from "../Popups/LogoutPopup";
-import { profile } from "@tensorflow/tfjs";
-import { Sun } from "lucide-react";
-import { Moon } from "lucide-react";
 import ScanPopup from "../Popups/ScanPopup";
 import FavouritesPopup from "../Popups/Favourites";
 

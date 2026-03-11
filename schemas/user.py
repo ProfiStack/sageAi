@@ -1,26 +1,6 @@
-# models/schemas.py
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
-
-from sqlalchemy import JSON
-
-class ChatRequest(BaseModel):
-    message: str
-    user_id: Optional[str] = None
-
-class ChatResponse(BaseModel):
-    response: str
-    user_id: str
-    timestamp: str
-
-class ChatResultResponse(BaseModel):
-    response: str
-    timestamp: str
-
-class SubscriptionRequest(BaseModel):
-    price_id: str
-    type: str
 
 
 class UserProfileRequest(BaseModel):
@@ -40,7 +20,8 @@ class UserProfileRequest(BaseModel):
     style_preference: Optional[str] = None
     styling_goal: Optional[str] = None
     free_scan: Optional[bool] = None
-    
+
+
 class UserProfileResponse(UserProfileRequest):
     name: Optional[str] = None
     age: Optional[str] = None
@@ -66,26 +47,10 @@ class UserProfileResponse(UserProfileRequest):
     payment_types: List[str]
 
 
-class AccessTokenResponse(BaseModel):
-    access: str
-    token: str
-    subscription: bool
-
-class LoginRequest(BaseModel):
-    email: Optional[EmailStr] = None
-    phone_number: Optional[str] = None
-    password: str
-    name: Optional[str] = None
-
-class LoginResponse(BaseModel):
-    user_id: str
-    message: str
-
 class UserProfileUpdateRequest(BaseModel):
     name: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[str] = None
-    gender: Optional[str] = None
     skin_type: Optional[str] = None
     concern: Optional[str] = None
     lifestyle: Optional[str] = None
@@ -99,12 +64,3 @@ class UserProfileUpdateRequest(BaseModel):
     hair_concern: Optional[str] = None
     style_preference: Optional[str] = None
     styling_goal: Optional[str] = None
-
-
-class UserFavouriteRequest(BaseModel):
-    user_favourites: Optional[dict] = None  # Use dict, not JSON
-
-class UserFavouriteResponse(BaseModel):
-    user_favourites: dict
-    created_at: datetime
-    updated_at: datetime

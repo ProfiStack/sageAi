@@ -4,9 +4,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Scan, X } from "lucide-react";
 
-export default function ProductCameraPopup({ open, setOpen }) {
+export default function ProductCameraPopup({ open, setOpen, onCapture }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
 
   useEffect(() => {
@@ -14,7 +15,13 @@ export default function ProductCameraPopup({ open, setOpen }) {
 
     if (open && navigator.mediaDevices?.getUserMedia) {
       navigator.mediaDevices
-        .getUserMedia({ video: { facingMode: { exact: "environment" } } }) // back camera
+        .getUserMedia({
+          video: {
+            facingMode: { exact: "environment" },
+            width: { ideal: 3840 },
+            height: { ideal: 2160 },
+          },
+        })
         .then((_stream) => {
           stream = _stream;
           if (videoRef.current) {
@@ -24,6 +31,23 @@ export default function ProductCameraPopup({ open, setOpen }) {
         })
         .catch((err) => {
           console.error("Camera error:", err);
+          // Fallback to front camera
+          navigator.mediaDevices
+            .getUserMedia({
+              video: {
+                facingMode: "user",
+                width: { ideal: 3840 },
+                height: { ideal: 2160 },
+              },
+            })
+            .then((_stream) => {
+              stream = _stream;
+              if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.play();
+              }
+            })
+            .catch((err2) => console.error("Fallback camera error:", err2));
         });
     }
 
@@ -35,28 +59,56 @@ export default function ProductCameraPopup({ open, setOpen }) {
   }, [open]);
 
   const handleCapture = () => {
-    if (!canvasRef.current || !videoRef.current) return;
-
     const video = videoRef.current;
     const canvas = canvasRef.current;
+
+    if (!video || !canvas) {
+      console.error("Video or canvas not available");
+      return;
+    }
+
     const ctx = canvas.getContext("2d");
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
 
-    const width = video.videoWidth;
-    const height = video.videoHeight;
+    canvas.width = vw;
+    canvas.height = vh;
+    ctx.drawImage(video, 0, 0, vw, vh);
 
-    canvas.width = width;
-    canvas.height = height;
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        console.error("Failed to create blob");
+        return;
+      }
 
-    ctx.drawImage(video, 0, 0, width, height);
+      setCapturedImage(blob);
+      setPreviewUrl(URL.createObjectURL(blob));
+    }, "image/jpeg", 0.95);
+  };
 
-    const dataUrl = canvas.toDataURL("image/png");
-    setCapturedImage(dataUrl);
+  const handleConfirm = () => {
+    if (capturedImage && onCapture) {
+      onCapture(capturedImage);
+    }
+    handleClose();
   };
 
   const handleClose = () => {
     setOpen(false);
     setCapturedImage(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
   };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return (
     <AnimatePresence>
@@ -109,7 +161,7 @@ export default function ProductCameraPopup({ open, setOpen }) {
                 </>
               ) : (
                 <img
-                  src={capturedImage}
+                  src={previewUrl}
                   alt="Captured"
                   className="w-full h-full object-cover"
                 />
@@ -134,9 +186,7 @@ export default function ProductCameraPopup({ open, setOpen }) {
                   Cancel Upload
                 </button>
                 <button
-                  onClick={() => {
-                    setOpen(false);
-                  }}
+                  onClick={handleConfirm}
                   className="w-1/2 text-center rounded-2xl text-white font-semibold py-2 bg-[#02331E]"
                 >
                   Confirm Upload

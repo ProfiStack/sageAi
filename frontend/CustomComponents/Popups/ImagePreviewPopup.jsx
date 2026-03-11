@@ -1,51 +1,16 @@
 "use client";
-
-import { Api } from "@/shared/api/api";
-import { useSkinResultStore } from "@/store/skinResult";
-import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import useFormToast from "../FormToast/FormToast";
-import Cookies from "js-cookie";
-
+import React from "react";
 export default function ImagePreviewPopup({
   open,
   setOpen,
   image,
   imageFile,
   setPreviewImage,
+  onConfirm,
   onClose,
 }) {
-  const { destructiveToast } = useFormToast();
-  const authToken = Cookies.get("authToken");
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const handleConfirm = async (imageUrlOrFile) => {
-    try {
-      setIsLoading(true);
-
-      const formData = new FormData();
-
-      if (imageUrlOrFile instanceof File) {
-        formData.append("image", imageUrlOrFile, "skin.jpg");
-      } else {
-        throw new Error("Expected File object, got: " + typeof imageUrlOrFile);
-      }
-
-      const apiResponse = await Api.client.analyzeSkinPhoto(formData, authToken);
-      if (apiResponse?.detail?.toLowerCase().includes("no face") || apiResponse?.status !== 200) {
-        destructiveToast("Face not detected. Please upload a clearer photo.");
-        return;
-      }
-
-      const { setHtml } = useSkinResultStore.getState();
-      setHtml(apiResponse.results);
-      setPreviewImage(null);
-      router.push("/analysis-result");
-    } catch (err) {
-      console.error("Request details:", err.request);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleConfirm = async () => {
+    await onConfirm(imageFile);
   };
   if (!open) return null;
 
@@ -58,36 +23,6 @@ export default function ImagePreviewPopup({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
       <div className="relative mx-5 max-w-full w-full rounded-2xl  overflow-hidden">
-        {isLoading && (
-          <div className="fixed inset-0 flex items-center justify-center bg-white/80 z-50">
-            <div className="flex flex-col items-center">
-              <svg
-                className="animate-spin h-10 w-10 text-[#D4B038]"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                ></path>
-              </svg>
-              <p className="font-medium text-[#02331E]">
-                {" "}
-                Loading your analysis... Please sit tight!
-              </p>
-            </div>
-          </div>
-        )}
         <div className="absolute bottom-0 -translate-y-5 left-0 w-full px-4 rounded-2xl z-10 flex justify-between gap-4  ">
           <button
             onClick={handleCancel}
@@ -96,7 +31,7 @@ export default function ImagePreviewPopup({
             Cancel Upload
           </button>
           <button
-            onClick={() => handleConfirm(imageFile)}
+            onClick={handleConfirm}
             className="w-1/2 text-center  rounded-2xl text-white font-semibold py-2 bg-[#02331E]"
           >
             Confirm Upload

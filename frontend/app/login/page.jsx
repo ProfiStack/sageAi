@@ -11,11 +11,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      router.replace("/"); // redirect logged-in users to home (or dashboard)
+      router.replace("/");
     }
   }, [token]);
 
-  if (token) return null; // avoid flicker while redirecting
+  if (token) return null;
 
   return <Login />;
 }

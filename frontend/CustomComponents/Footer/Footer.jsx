@@ -26,7 +26,7 @@ export default function Footer() {
   };
 
   return (
-    <div className="py-2 sticky inset-0  bg-white border-t border-gray-200">
+    <div className="py-2 sticky inset-0  bg-[#fafafa] border-t border-gray-200">
       <div className="flex justify-around">
         {footerData.map((data, index) => {
           const isActive = pathName === data.route;
