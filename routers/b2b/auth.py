@@ -3,7 +3,7 @@ from fastapi import Header, HTTPException, Depends
 from sqlalchemy.orm import Session
 import hashlib
 
-from db import SessionLocal
+from core.database import SessionLocal
 from models.b2b_models import B2BApiKey
 
 
@@ -15,7 +15,7 @@ def get_db():
         db.close()
 
 
-def verify_b2b_bearer(authorization: str = Header(...), db: Session = Depends(get_db)):
+def verify_b2b_bearer(authorization: str = Header(...), db: Session = Depends(get_db)) -> str:
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid auth header")
 
@@ -31,7 +31,7 @@ def verify_b2b_bearer(authorization: str = Header(...), db: Session = Depends(ge
     if not api_key:
         raise HTTPException(status_code=403, detail="Invalid API key")
 
-    api_key.last_used_at = datetime.utcnow()
+    api_key.last_used_at = datetime.datetime.utcnow()
     db.commit()
 
-    return {"client_id": api_key.client_id}
+    return api_key.client_id

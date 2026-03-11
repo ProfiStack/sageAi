@@ -4,8 +4,8 @@ from typing import List, Optional
 
 
 class CreateB2BUserRequest(BaseModel):
-    client_id: str
     external_user_id: str
+    email: Optional[str] = None
     consent: bool
     source: str
 
