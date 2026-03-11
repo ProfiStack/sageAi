@@ -1,36 +1,24 @@
-# services/payments.py
-import email
 import os
-from typing import Annotated, Optional
-from fastapi import Depends
 import stripe
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy.orm import Session
-from db import SessionLocal
-from models.db_models import Payment, UserProfile
 from dotenv import load_dotenv
 
-from routers.auth import get_current_user
+from models.db_models import Payment, UserProfile
+from repositories.payment_repository import (
+    update_payment_status,
+    update_subscription_record,
+    update_subscriptions_for_new_payment,
+)
 
 load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-user_dependency = Annotated[Session, Depends(get_current_user)]
-
-
 def create_payment_intent(
     amount_cents: int,
-    user_db: user_dependency,
-    db: Session = Depends(get_db),
+    user_db: dict,
+    db: Session,
     currency: str = "usd",
     description: str = None,
 ):
@@ -57,12 +45,9 @@ def create_payment_intent(
 
 
 async def create_subscription_checkout(
-    price_id: str, success_url: str, cancel_url: str, user_db, db
+    price_id: str, success_url: str, cancel_url: str, user_db: dict, db: Session
 ):
-    """
-    Create a Stripe Checkout Session for a recurring subscription.
-    price_id is the Stripe Price (recurring) ID configured in Stripe dashboard.
-    """
+    """Create a Stripe Checkout Session for a recurring subscription."""
     user_id = user_db.get("user_id")
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
@@ -72,8 +57,6 @@ async def create_subscription_checkout(
         cancel_url=cancel_url,
         metadata={"user_id": user_id},
     )
-
-    # create a placeholder Payment record (we'll update it on webhook)
     payment = Payment(
         user_id=user_id,
         amount="0",
@@ -91,57 +74,61 @@ async def create_subscription_checkout(
     return {"checkout_url": session.url, "session_id": session.id}
 
 
-def update_payment_status(payment_intent_id: str, status: str, db: Session):
-    payment = (
-        db.query(Payment).filter_by(stripe_payment_intent_id=payment_intent_id).first()
-    )
-    if payment:
-        payment.status = status
-        payment.updated_at = datetime.now()
-        db.commit()
-    return payment
-
-
-async def update_subscription_record(
-    db,
-    user_id,
-    subscription_id: str,
-    customer_id: str,
-    email: str,
-    name: str,
-    status: str,
-    current_period_end: int = None,
+async def create_one_time_checkout(
+    *,
+    price_id: str,
+    type: str,
+    success_url: str,
+    cancel_url: str,
+    user_db: dict,
+    db: Session,
 ):
-    payment = (
-        db.query(Payment).filter_by(stripe_subscription_id=subscription_id).first()
+    """Create a one-time Checkout Session using a Stripe Price (non-recurring)."""
+    price = stripe.Price.retrieve(price_id, expand=["currency_options", "product"])
+
+    if price.get("recurring"):
+        raise ValueError("Provided price_id is recurring. Use the subscription endpoint.")
+
+    user_id = user_db.get("user_id")
+
+    payment = Payment(
+        user_id=user_id,
+        amount="0",
+        currency="usd",
+        status="pending",
+        description="subscription_checkout",
+        stripe_subscription_id=None,
+        email="pending",
+        name="pending",
+        type=type,
+        stripe_customer_id="pending",
     )
-    if payment:
-        payment.status = status
-        payment.stripe_customer_id = customer_id
-        payment.email = email
-        payment.name = name
-        payment.updated_at = datetime.now()
-
-    # update user profile subscription status
-    user = db.query(UserProfile).filter_by(user_id=user_id).first()
-    if user:
-        user.subscription_status = "active" if status == "active" else status
-        if current_period_end:
-            try:
-                user.subscription_end = datetime.fromtimestamp(current_period_end)
-            except Exception:
-                user.subscription_end = None
-        db.commit()
-    return payment
-
-
-async def update_subscriptions_for_new_payment(db, user_id, new_sub_id):
-    db.query(Payment).filter(
-        Payment.user_id == user_id, Payment.stripe_subscription_id != new_sub_id
-    ).update({"status": "inactive"}, synchronize_session=False)
-    # Commit the transaction
+    db.add(payment)
     db.commit()
-    return
+    db.refresh(payment)
+
+    session = stripe.checkout.Session.create(
+        mode="payment",
+        line_items=[{"price": price_id, "quantity": 1}],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata={
+            "user_id": str(user_id),
+            "payment_id": str(payment.id),
+            "kind": "one_time_price",
+            "price_id": price_id,
+        },
+        customer_creation="always",
+        allow_promotion_codes=False,
+        automatic_tax={"enabled": False},
+    )
+
+    return {
+        "checkout_url": session.url,
+        "session_id": session.id,
+        "payment_id": payment.id,
+    }
+
 
 async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
     try:
@@ -149,16 +136,12 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
         if not endpoint_secret:
             raise ValueError("STRIPE_WEBHOOK_SECRET not configured")
 
-        # Verify signature & parse event
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
 
         typ = event.get("type")
         obj = event.get("data", {}).get("object", {})
-        user_id = None  # will be filled when available
+        user_id = None
 
-        # -------------------------------
-        # PaymentIntent (Payment Element)
-        # -------------------------------
         if typ == "payment_intent.succeeded":
             update_payment_status(obj["id"], "succeeded", db)
             return {"status": "ok"}
@@ -167,18 +150,15 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
             update_payment_status(obj["id"], "failed", db)
             return {"status": "ok"}
 
-        # --------------------------------------
-        # Checkout completion (one-time & subs)
-        # --------------------------------------
         elif typ == "checkout.session.completed":
             s = obj
             mode = s.get("mode")
             md = s.get("metadata") or {}
-            user_id = md.get("user_id")           # UUID/string — DO NOT cast
-            payment_id = md.get("payment_id")     # UUID/string — DO NOT cast
-            kind = md.get("kind")                 # "one_time" or "one_time_price" (custom)
-            amount_total = s.get("amount_total")  # cents in session currency
-            currency = s.get("currency")          # session currency (may be localized)
+            user_id = md.get("user_id")
+            payment_id = md.get("payment_id")
+            kind = md.get("kind")
+            amount_total = s.get("amount_total")
+            currency = s.get("currency")
             payment_intent_id = s.get("payment_intent")
             sub_id = s.get("subscription")
             customer_id = s.get("customer")
@@ -186,30 +166,28 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
             cust_email = cust.get("email")
             cust_name = cust.get("name")
 
-            # -------- ONE-TIME (pay-as-you-go) --------
             if mode == "payment" and kind in ("one_time", "one_time_price"):
-                # Prefer exact row via metadata.payment_id; fallback to latest pending for user
                 p = db.query(Payment).filter(Payment.id == payment_id).first() if payment_id else None
                 if not p and user_id:
-                    p = (db.query(Payment)
-                            .filter(Payment.user_id == user_id, Payment.status == "pending")
-                            .order_by(Payment.created_at.desc())
-                            .first())
+                    p = (
+                        db.query(Payment)
+                        .filter(Payment.user_id == user_id, Payment.status == "pending")
+                        .order_by(Payment.created_at.desc())
+                        .first()
+                    )
                 if p:
                     p.status = "succeeded" if s.get("payment_status") == "paid" else "pending"
                     p.stripe_payment_intent_id = payment_intent_id
                     if amount_total is not None:
-                        p.amount = str(amount_total)    # keep cents as string to match your model
+                        p.amount = str(amount_total)
                     if currency:
                         p.currency = currency
                     if customer_id:
                         p.stripe_customer_id = customer_id
-                    # Fill placeholders if you used "pending"
                     if cust_email and (not p.email or p.email == "pending"):
                         p.email = cust_email
                     if cust_name and (not p.name or p.name == "pending"):
                         p.name = cust_name
-                    # Optional: presentment_details (requires columns if you added them)
                     presentment = s.get("presentment_details") or {}
                     try:
                         pres_amt = presentment.get("presentment_amount")
@@ -224,13 +202,13 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
                     db.commit()
                 return {"status": "ok"}
 
-            # -------- SUBSCRIPTION linking --------
-            # (Don’t set active here; wait for invoice.payment_succeeded)
             elif sub_id:
-                p = (db.query(Payment)
-                        .filter(Payment.user_id == user_id, Payment.status == "pending")
-                        .order_by(Payment.created_at.desc())
-                        .first())
+                p = (
+                    db.query(Payment)
+                    .filter(Payment.user_id == user_id, Payment.status == "pending")
+                    .order_by(Payment.created_at.desc())
+                    .first()
+                )
                 if p:
                     p.stripe_subscription_id = sub_id
                     if customer_id:
@@ -249,9 +227,6 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
                     db.commit()
                 return {"status": "ok"}
 
-        # ---------------------------------------------------
-        # Subscription lifecycle (invoices + sub state sync)
-        # ---------------------------------------------------
         elif typ in (
             "customer.subscription.created",
             "customer.subscription.updated",
@@ -259,11 +234,9 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
             "invoice.payment_succeeded",
             "invoice.payment_failed",
         ):
-            # Recurring charge captured => flip to active & update UserProfile
             if typ == "invoice.payment_succeeded":
                 inv = obj
                 sub_id = inv.get("subscription")
-                # Pull current period end if present
                 current_period_end = None
                 try:
                     line = (inv.get("lines", {}).get("data") or [])[0]
@@ -273,16 +246,17 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
 
                 email = inv.get("customer_email")
                 name = inv.get("customer_name")
-                amount_paid = inv.get("amount_paid")   # cents
+                amount_paid = inv.get("amount_paid")
                 currency = inv.get("currency")
 
-                payment = (db.query(Payment)
-                           .filter_by(stripe_subscription_id=sub_id)
-                           .order_by(Payment.created_at.desc())
-                           .first())
+                payment = (
+                    db.query(Payment)
+                    .filter_by(stripe_subscription_id=sub_id)
+                    .order_by(Payment.created_at.desc())
+                    .first()
+                )
                 user_id = payment.user_id if payment else None
 
-                # Only one active sub per user (your helper handles inactivation)
                 if user_id:
                     await update_subscriptions_for_new_payment(db, user_id, sub_id)
                 if payment:
@@ -310,14 +284,15 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
                 )
                 return {"status": "ok"}
 
-            # Invoice failed => mark past_due & sync profile
             elif typ == "invoice.payment_failed":
                 inv = obj
                 sub_id = inv.get("subscription")
-                payment = (db.query(Payment)
-                           .filter_by(stripe_subscription_id=sub_id)
-                           .order_by(Payment.created_at.desc())
-                           .first())
+                payment = (
+                    db.query(Payment)
+                    .filter_by(stripe_subscription_id=sub_id)
+                    .order_by(Payment.created_at.desc())
+                    .first()
+                )
                 user_id = payment.user_id if payment else None
 
                 if payment:
@@ -337,18 +312,19 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
                 )
                 return {"status": "ok"}
 
-            # Direct subscription object changes (status sync)
             else:
                 sub = obj
                 sub_id = sub.get("id")
-                status = sub.get("status")  # trialing, active, past_due, canceled, etc.
+                status = sub.get("status")
                 customer_id = sub.get("customer")
                 current_period_end = sub.get("current_period_end")
 
-                payment = (db.query(Payment)
-                           .filter_by(stripe_subscription_id=sub_id)
-                           .order_by(Payment.created_at.desc())
-                           .first())
+                payment = (
+                    db.query(Payment)
+                    .filter_by(stripe_subscription_id=sub_id)
+                    .order_by(Payment.created_at.desc())
+                    .first()
+                )
                 user_id = payment.user_id if payment else None
 
                 if payment:
@@ -369,17 +345,13 @@ async def handle_stripe_webhook(payload: bytes, sig_header: str, db: Session):
                 )
                 return {"status": "ok"}
 
-        # Unknown/unused event types
         return {"status": "ignored"}
 
     except Exception as e:
-        # In production, log event.id and payload for idempotency/debugging
         raise e
 
 
-
-async def cancel_user_subscription(user_id: int, db: Session):
-    # Find the user's active subscription payment record
+async def cancel_user_subscription(user_id: str, db: Session):
     payment = (
         db.query(Payment)
         .filter(Payment.user_id == user_id, Payment.status == "active")
@@ -391,14 +363,11 @@ async def cancel_user_subscription(user_id: int, db: Session):
     subscription_id = payment.stripe_subscription_id
 
     try:
-        # Cancel subscription immediately (or use cancel_at_period_end=True for delayed)
         stripe.Subscription.delete(subscription_id)
 
-        # Update payment record status
         payment.status = "canceled"
         db.commit()
 
-        # Update user profile subscription status
         user = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
         if user:
             user.subscription_status = "canceled"
@@ -408,73 +377,3 @@ async def cancel_user_subscription(user_id: int, db: Session):
 
     except Exception as e:
         return {"error": str(e)}
-
-
-async def create_one_time_checkout(
-    *,
-    price_id: str,
-    type: str,
-    success_url: str,
-    cancel_url: str,
-    user_db,
-    db: Session,
-):
-    """
-    Create a one-time Checkout Session using a Stripe Price (non-recurring).
-    Supports multi-currency via Price.currency or currency_options.
-    """
-    # 1) Retrieve price for sanity checks / logging
-    price = stripe.Price.retrieve(price_id, expand=["currency_options", "product"])
-
-    # Ensure it's a one-time price (not recurring)
-    if price.get("recurring"):
-        raise ValueError(
-            "Provided price_id is recurring. Use the subscription endpoint."
-        )
-
-    # Extract a display currency (base currency of the price)
-    # Note: If you've added currency_options, Checkout may present a localized currency.
-    base_currency = price.get("currency") or "usd"
-
-    user_id = user_db.get("user_id")
-
-    # 2) Create a local Payment row (amount unknown until checkout completes)
-    payment = Payment(
-        user_id=user_id,
-        amount="0",
-        currency="usd",
-        status="pending",
-        description="subscription_checkout",
-        stripe_subscription_id=None,
-        email="pending",
-        name="pending",
-        type=type,
-        stripe_customer_id="pending",
-    )
-    db.add(payment)
-    db.commit()
-    db.refresh(payment)
-
-    # 3) Create Checkout Session with the Price
-    session = stripe.checkout.Session.create(
-        mode="payment",
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={
-            "user_id": str(user_id),
-            "payment_id": str(payment.id),
-            "kind": "one_time_price",  # <- distinguish in webhook
-            "price_id": price_id,
-        },
-        customer_creation="always",        # <-- IMPORTANT
-        allow_promotion_codes=False,
-        automatic_tax={"enabled": False},
-        # If you've enabled Adaptive Pricing for Checkout, Stripe may localize presentment currency/amount.
-    )
-
-    return {
-        "checkout_url": session.url,
-        "session_id": session.id,
-        "payment_id": payment.id,
-    }
