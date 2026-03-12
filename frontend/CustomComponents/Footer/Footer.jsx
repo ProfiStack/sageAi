@@ -26,7 +26,7 @@ export default function Footer() {
   };
 
   return (
-    <div className="py-2 sticky inset-0  bg-[#fafafa] border-t border-gray-200">
+    <div className="py-2 sticky inset-0  bg-[#02331E] border-t border-gray-200 rounded-t-2xl">
       <div className="flex justify-around">
         {footerData.map((data, index) => {
           const isActive = pathName === data.route;
@@ -38,14 +38,14 @@ export default function Footer() {
               onClick={() => handleOnClick(data.route)}
               className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? "text-[#5C8A63]"
-                  : "text-[#121712] hover:text-[#121712]"
+                  ? "text-[#D4B038]"
+                  : "text-white hover:text-[#D4B038]"
               }`}
             >
               <div className={` rounded-full transition-all duration-200 `}>
                 <IconComponent
                   size={24}
-                  color={isActive ? "#5C8A63" : "#121712"}
+                  color={isActive ? "#D4B038" : "#f6f6f6"}
                 />
               </div>
               <p

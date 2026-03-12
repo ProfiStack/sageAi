@@ -1,3 +1,5 @@
+import { Atom } from "lucide-react";
+import { ScanFace } from "lucide-react";
 import {
   Calendar,
   Heart,
@@ -32,7 +34,32 @@ import {
   AlarmClock,
 } from "lucide-react";
 
-export const categoryItemsData = [
+export const categories = [
+  {
+    id: 1,
+    title: "Med-Tech",
+    description: "Skin Analysis, Mole Analysis",
+    image: "/images/medtech.png",
+    route: "/med-tech",
+  },
+  {
+    id: 2,
+    title: "Cosmetics",
+    description: "Makeup, Hair Care, Styling,",
+    image: "/images/cosmetics.png",
+    route: "/cosmetics",
+  },
+
+  {
+    id: 3,
+    title: "Health & Wellness",
+    description: "Skin Care, Nutrition, Wellness",
+    image: "/images/health.png",
+    route: "/health",
+  },
+];
+
+export const healthItemsData = [
   {
     title: "Skincare",
     icon: Droplets,
@@ -55,12 +82,12 @@ export const categoryItemsData = [
         description: "Skincare trends",
       },
       {
-        title: "Formula Finder",
+        title: "Product Analysis",
         icon: TestTube,
         bg: "bg-[linear-gradient(45deg,#99F6E4_0%,#22D3EE_100%)]",
         new: true,
         route: "/skincare/check-ingredients",
-        scanRoute: "/product-analysis",
+        scanRoute: "/none",
         description: "Ingredient checker",
       },
       {
@@ -73,6 +100,118 @@ export const categoryItemsData = [
       },
     ],
   },
+
+  {
+    title: "Nutrition",
+    icon: Heart,
+    items: [
+      {
+        title: "Nutri Guide",
+        icon: Salad,
+        route: "/nutrition/nutri-guide",
+        bg: "bg-[linear-gradient(45deg,#FBCFE8_0%,#FB7185_100%)]",
+        description: "Eating guide",
+      },
+      {
+        title: "Meal Muse",
+        icon: Apple,
+        route: "/nutrition/meal-muse",
+        bg: "bg-[linear-gradient(45deg,#BFDBFE_0%,#60A5FA_100%)]",
+        description: "Meal inspiration",
+      },
+      {
+        title: "Supp Smart",
+        icon: Pill,
+        route: "/nutrition/supp-smart",
+        bg: "bg-[linear-gradient(45deg,#FBCFE8_0%,#C084FC_100%)]",
+        description: "Supplement guidance",
+      },
+    ],
+  },
+
+  {
+    title: "Wellness",
+    icon: Heart,
+    items: [
+      {
+        title: "Wellness Whisper",
+        icon: Heart,
+        route: "/wellness/wellness-whisper",
+        bg: "bg-[linear-gradient(45deg,#C7D2FE_0%,#60A5FA_100%)]",
+        description: "Lifestyle tips",
+      },
+      {
+        title: "Fit Flow",
+        icon: Dumbbell,
+        route: "/wellness/fit-flow",
+        bg: "bg-[linear-gradient(45deg,#FEF08A_0%,#FBBF24_100%)]",
+        description: "Fitness routines",
+      },
+      {
+        title: "Zen Zone",
+        icon: Brain,
+        route: "/wellness/zen-zone",
+        bg: "bg-[linear-gradient(45deg,#FECDD3_0%,#FB7185_100%)]",
+        description: "Mindfulness",
+      },
+      {
+        title: "Positivity Pulse",
+        icon: Sun,
+        route: "/wellness/positivity-pulse",
+        bg: "bg-[linear-gradient(45deg,#E9D5FF_0%,#C084FC_100%)]",
+        description: "Daily positivity",
+      },
+      {
+        title: "Stress Reset",
+        icon: AlarmClock,
+        route: "/wellness/stress-reset",
+        bg: "bg-[linear-gradient(45deg,#FBCFE8_0%,#F472B6_100%)]",
+        description: "Stress management",
+      },
+      {
+        title: "Self Spark",
+        icon: Target,
+        route: "/wellness/self-spark",
+        bg: "bg-[linear-gradient(45deg,#FEF08A_0%,#FBBF24_100%)]",
+        description: "Personal growth",
+      },
+      {
+        title: "Manifest Mode",
+        icon: Lightbulb,
+        route: "/wellness/manifest-mode",
+        bg: "bg-[linear-gradient(45deg,#FDE68A_0%,#FACC15_100%)]",
+        description: "Goal manifestation",
+      },
+    ],
+  },
+];
+
+export const medtechData = [
+  {
+    title: "MedTech",
+    icon: Heart,
+    items: [
+      {
+        title: "Skin Analysis",
+        icon: ScanFace,
+        route: "/skincare/chat",
+        scanRoute: "/skin-analysis",
+        bg: "bg-[linear-gradient(45deg,#FBCFE8_0%,#FB7185_100%)]",
+        description: "Eating guide",
+      },
+      {
+        title: "Mole Analysis",
+        icon: Atom,
+        route: "/none",
+        scanRoute: "/none",
+        bg: "bg-[linear-gradient(45deg,#BFDBFE_0%,#60A5FA_100%)]",
+        description: "Meal inspiration",
+      },
+    ],
+  },
+];
+
+export const cosmeticsItemsData = [
   {
     title: "Makeup",
     icon: Palette,
@@ -129,33 +268,35 @@ export const categoryItemsData = [
       },
     ],
   },
+
   {
-    title: "Nutrition",
-    icon: Heart,
+    title: "Styling",
+    icon: Shirt,
     items: [
       {
-        title: "Nutri Guide",
-        icon: Salad,
-        route: "/nutrition/nutri-guide",
-        bg: "bg-[linear-gradient(45deg,#FBCFE8_0%,#FB7185_100%)]",
-        description: "Eating guide",
+        title: "Fashion Fix",
+        icon: Zap,
+        route: "/styling/fashion-fix",
+        bg: "bg-[linear-gradient(45deg,#FECACA_0%,#FB7185_100%)]",
+        description: "Style refresh",
       },
       {
-        title: "Meal Muse",
-        icon: Apple,
-        route: "/nutrition/meal-muse",
-        bg: "bg-[linear-gradient(45deg,#BFDBFE_0%,#60A5FA_100%)]",
-        description: "Meal inspiration",
+        title: "Shop Smart",
+        icon: CreditCard,
+        route: "/styling/shop-smart",
+        bg: "bg-[linear-gradient(45deg,#FECACA_0%,#F87171_100%)]",
+        description: "Shopping tips",
       },
       {
-        title: "Supp Smart",
-        icon: Pill,
-        route: "/nutrition/supp-smart",
-        bg: "bg-[linear-gradient(45deg,#FBCFE8_0%,#C084FC_100%)]",
-        description: "Supplement guidance",
+        title: "Event Edit",
+        icon: Sparkles,
+        route: "/styling/event-edit",
+        bg: "bg-[linear-gradient(45deg,#BBF7D0_0%,#4ADE80_100%)]",
+        description: "Occasion outfits",
       },
     ],
   },
+
   {
     title: "Hair Care",
     icon: Waves,
@@ -187,88 +328,6 @@ export const categoryItemsData = [
         route: "/hair-care/style-spark",
         bg: "bg-[linear-gradient(45deg,#FED7AA_0%,#FBBF24_100%)]",
         description: "Styling tips",
-      },
-    ],
-  },
-  {
-    title: "Styling",
-    icon: Shirt,
-    items: [
-      {
-        title: "Fashion Fix",
-        icon: Zap,
-        route: "/styling/fashion-fix",
-        bg: "bg-[linear-gradient(45deg,#FECACA_0%,#FB7185_100%)]",
-        description: "Style refresh",
-      },
-      {
-        title: "Shop Smart",
-        icon: CreditCard,
-        route: "/styling/shop-smart",
-        bg: "bg-[linear-gradient(45deg,#FECACA_0%,#F87171_100%)]",
-        description: "Shopping tips",
-      },
-      {
-        title: "Event Edit",
-        icon: Sparkles,
-        route: "/styling/event-edit",
-        bg: "bg-[linear-gradient(45deg,#BBF7D0_0%,#4ADE80_100%)]",
-        description: "Occasion outfits",
-      },
-    ],
-  },
-  {
-    title: "Wellness",
-    icon: Heart,
-    items: [
-      {
-        title: "Wellness Whisper",
-        icon: Heart,
-        route: "/wellness/wellness-whisper",
-        bg: "bg-[linear-gradient(45deg,#C7D2FE_0%,#60A5FA_100%)]",
-        description: "Lifestyle tips",
-      },
-      {
-        title: "Fit Flow",
-        icon: Dumbbell,
-        route: "/wellness/fit-flow",
-        bg: "bg-[linear-gradient(45deg,#FEF08A_0%,#FBBF24_100%)]",
-        description: "Fitness routines",
-      },
-      {
-        title: "Zen Zone",
-        icon: Brain,
-        route: "/wellness/zen-zone",
-        bg: "bg-[linear-gradient(45deg,#FECDD3_0%,#FB7185_100%)]",
-        description: "Mindfulness",
-      },
-      {
-        title: "Positivity Pulse",
-        icon: Sun,
-        route: "/wellness/positivity-pulse",
-        bg: "bg-[linear-gradient(45deg,#E9D5FF_0%,#C084FC_100%)]",
-        description: "Daily positivity",
-      },
-      {
-        title: "Stress Reset",
-        icon: AlarmClock,
-        route: "/wellness/stress-reset",
-        bg: "bg-[linear-gradient(45deg,#FBCFE8_0%,#F472B6_100%)]",
-        description: "Stress management",
-      },
-      {
-        title: "Self Spark",
-        icon: Target,
-        route: "/wellness/self-spark",
-        bg: "bg-[linear-gradient(45deg,#FEF08A_0%,#FBBF24_100%)]",
-        description: "Personal growth",
-      },
-      {
-        title: "Manifest Mode",
-        icon: Lightbulb,
-        route: "/wellness/manifest-mode",
-        bg: "bg-[linear-gradient(45deg,#FDE68A_0%,#FACC15_100%)]",
-        description: "Goal manifestation",
       },
     ],
   },

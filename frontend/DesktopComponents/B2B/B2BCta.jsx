@@ -50,9 +50,16 @@ export function B2BCTA() {
             </p>
             <Button
               size="lg"
-              onClick={() => {
-                setIsPopupOpen(true);
-              }}
+              onClick={() =>
+                window.open(
+                  "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+                    "&text=Call with SageeAI" +
+                    "&details=Scheduled call via SageeAi website" +
+                    "&location=Google Meet" +
+                    "&add=sageeai@sageeai.com",
+                  "_blank"
+                )
+              }
               className="w-full bg-[#02331E] hover:bg-[#02331E]/90 text-white rounded-full group"
             >
               Schedule Demo

@@ -178,7 +178,7 @@ export default function SkinAnalysis() {
             <div className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-2xl shadow-primary/10 mb-8 border border-white/20 z-0">
               {/* Main Image */}
               <Image
-                src={"/images/imageAnalysis.png"}
+                src={"/images/imageanalysis.png"}
                 fill
                 alt="Woman's face for skin analysis"
                 className="w-full h-full object-cover"

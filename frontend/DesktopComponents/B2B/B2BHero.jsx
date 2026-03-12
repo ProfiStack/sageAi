@@ -101,9 +101,16 @@ export function B2BHero() {
             >
               <Button
                 size="lg"
-                onClick={() => {
-                  setIsPopupOpen(true);
-                }}
+                onClick={() =>
+                  window.open(
+                    "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+                      "&text=Call with SageeAI" +
+                      "&details=Scheduled call via SageeAi website" +
+                      "&location=Google Meet" +
+                      "&add=sageeai@sageeai.com",
+                    "_blank"
+                  )
+                }
                 className="bg-[#D4B038] hover:bg-[#D4B038]/90 text-[#02331E] px-8 py-6 rounded-full group shadow-[0_10px_40px_rgba(212,176,56,0.4)] hover:shadow-[0_15px_50px_rgba(212,176,56,0.6)] transition-all"
               >
                 Book a Demo

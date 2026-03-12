@@ -1,12 +1,12 @@
 export const ImageAnalysisData = [
   {
-    image: "/images/imageAnalysis.png",
+    image: "/images/imageanalysis.png",
     route: "/skin-analysis",
     title: "Skin Analysis",
   },
   {
     image: "/images/productAnalysis.png",
-    route: "/product-analysis",
+    route: "/",
     title: "Product Analysis",
   },
   {
