@@ -308,7 +308,39 @@ export const Api = {
       } catch (error) {
         console.log(error);
       }
-    }
+    },
+
+    // ── Reviews ──────────────────────────────────────────────────────────
+    getReviewPromptStatus: async (token, feature_tag) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) =>
+            `${globalBaseUrl}/api/user/review-prompt?feature_tag=${feature_tag}`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    submitReview: async (token, data) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/reviews`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: validatePayload(data),
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 
   // ── B2B Portal ──────────────────────────────────────────────────────────

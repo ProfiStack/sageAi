@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -49,6 +49,14 @@ const tagColor = (r) => {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 export default function B2BScanPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-[#02331E]/30 border-t-[#02331E] animate-spin" /></div>}>
+      <B2BScanPageContent />
+    </Suspense>
+  );
+}
+
+function B2BScanPageContent() {
   const router = useRouter();
   const params = useSearchParams();
   const { apiKey, isAuthenticated } = useB2BStore();

@@ -32,10 +32,14 @@ import Footer from "@/CustomComponents/Footer/Footer";
 import { Api } from "@/shared/api/api";
 import useAuthStore from "@/store/authStore";
 import useFormToast from "@/CustomComponents/FormToast/FormToast";
+import ReviewModal from "@/CustomComponents/Popups/ReviewModal";
+import { useReviewPrompt } from "@/hooks/useReviewPrompt";
 
 export default function ResultsPage() {
   const [favorites, setFavorites] = useState([]);
   const { token, userId } = useAuthStore();
+  const { shouldShow: showReview, dismiss: dismissReview, markSubmitted: reviewSubmitted } =
+    useReviewPrompt("skin_analysis");
   const { primaryToast, destructiveToast } = useFormToast();
 
   const router = useRouter();
@@ -487,6 +491,14 @@ export default function ResultsPage() {
         </div>
       </div>
       <Footer />
+
+      {showReview && (
+        <ReviewModal
+          featureTag="skin_analysis"
+          onClose={dismissReview}
+          onSubmitted={reviewSubmitted}
+        />
+      )}
     </div>
   );
 }

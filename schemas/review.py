@@ -5,10 +5,10 @@ from datetime import datetime
 
 class ReviewCreate(BaseModel):
     reviewer_name: str = Field(..., min_length=2, max_length=100)
-    reviewer_country: str = Field(..., min_length=2, max_length=100)
+    reviewer_country: Optional[str] = Field(None, min_length=2, max_length=100)
     rating: int = Field(..., ge=1, le=5)
     title: Optional[str] = Field(None, max_length=200)
-    body: str = Field(..., min_length=10)
+    body: Optional[str] = Field(None, min_length=10)
     feature_tag: Optional[str] = Field(None, max_length=50)
 
     @field_validator("feature_tag")
@@ -34,7 +34,7 @@ class ReviewResponse(BaseModel):
     id: str
     user_id: Optional[str] = None
     reviewer_name: str
-    reviewer_country: str
+    reviewer_country: Optional[str] = None
     rating: int
     title: Optional[str] = None
     body: str

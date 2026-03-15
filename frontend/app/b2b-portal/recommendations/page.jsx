@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -11,6 +11,14 @@ import { Api } from "@/shared/api/api";
 import useB2BStore from "@/store/b2bStore";
 
 export default function B2BRecommendationsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-[#02331E]/30 border-t-[#02331E] animate-spin" /></div>}>
+      <B2BRecommendationsPageContent />
+    </Suspense>
+  );
+}
+
+function B2BRecommendationsPageContent() {
   const router = useRouter();
   const params = useSearchParams();
   const { apiKey, isAuthenticated } = useB2BStore();

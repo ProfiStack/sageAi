@@ -8,6 +8,17 @@ from models.db_models import Review
 from schemas.review import ReviewCreate, ReviewListResponse, ReviewResponse, ReviewUpdate
 
 
+# ── Per-feature cooldown config (days between prompts) ───────────────────────
+# 0  = always prompt after every use (no cooldown)
+# N  = wait N days after the last submitted review before prompting again
+REVIEW_PROMPT_COOLDOWNS: dict[str, int] = {
+    "skin_analysis":  0,   # prompt every time — high-value scan
+    "shade_matching": 20,  # prompt once per 20 days
+    "recommendation": 30,
+    "onboarding":     90,
+    "general":        30,
+}
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 def _get_or_404(review_id: str, db: Session) -> Review:
@@ -38,7 +49,7 @@ async def create_review(
         title=data.title,
         body=data.body,
         feature_tag=data.feature_tag,
-        is_published=True,
+        is_published=False,
         is_seeded=False,
     )
     db.add(review)
@@ -124,3 +135,51 @@ async def publish_review(review_id: str, db: Session) -> ReviewResponse:
     db.commit()
     db.refresh(review)
     return ReviewResponse.model_validate(review)
+
+
+async def get_review_prompt_status(
+    user_id: str,
+    feature_tag: str,
+    db: Session,
+) -> dict:
+    """
+    Decide whether to show the review prompt for a given user + feature.
+
+    Rules (controlled entirely server-side):
+    - If the user has never reviewed this feature → prompt.
+    - cooldown_days == 0  → always prompt (e.g. skin_analysis).
+    - cooldown_days >  0  → prompt only after cooldown_days have passed
+                            since their last review for this feature.
+    """
+    cooldown_days = REVIEW_PROMPT_COOLDOWNS.get(feature_tag, 30)
+
+    # Find the most-recent review this user submitted for this feature
+    last_review = (
+        db.query(Review)
+        .filter(Review.user_id == user_id, Review.feature_tag == feature_tag)
+        .order_by(Review.created_at.desc())
+        .first()
+    )
+
+    if not last_review:
+        return {"should_prompt": True, "cooldown_days": cooldown_days, "days_remaining": 0}
+
+    if cooldown_days == 0:
+        # No cooldown — always prompt even after a previous review
+        return {"should_prompt": True, "cooldown_days": 0, "days_remaining": 0}
+
+    # Normalise to UTC-aware datetime for safe arithmetic
+    created = last_review.created_at
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+
+    days_since = (datetime.now(timezone.utc) - created).days
+
+    if days_since >= cooldown_days:
+        return {"should_prompt": True, "cooldown_days": cooldown_days, "days_remaining": 0}
+
+    return {
+        "should_prompt": False,
+        "cooldown_days": cooldown_days,
+        "days_remaining": cooldown_days - days_since,
+    }
