@@ -7,7 +7,6 @@ import {
   ScanFace, ArrowLeft, CheckCircle2, AlertCircle,
   Camera, X, Sparkles, Sun, Moon, ThumbsUp, ThumbsDown,
   Leaf, Activity, Package, ExternalLink, RefreshCw,
-  ChevronRight, ShoppingBag,
 } from "lucide-react";
 import { Api } from "@/shared/api/api";
 import useB2BStore from "@/store/b2bStore";
@@ -389,55 +388,8 @@ export default function B2BScanPage() {
                 </div>
               )}
 
-              {/* ── Products — two sources side by side ── */}
-              <div className="grid lg:grid-cols-2 gap-5">
-
-                {/* AI-suggested products (from scan result) */}
-                {r.products_section?.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <ShoppingBag size={16} className="text-[#02331E]" />
-                      <h3 className="font-semibold text-[#02331E] text-sm">AI-Suggested Products</h3>
-                      <span className="text-xs text-gray-400 ml-auto">{r.products_section.length} items</span>
-                    </div>
-                    <div className="space-y-3">
-                      {r.products_section.map((p, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.06 }}
-                          className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition"
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <div>
-                              <p className="text-xs text-gray-400">{p.brand}</p>
-                              <p className="font-semibold text-[#02331E] text-sm leading-tight">{p.name}</p>
-                            </div>
-                            {p.price && (
-                              <span className="text-xs font-bold text-[#02331E] bg-[#02331E]/8 px-2 py-0.5 rounded-full flex-shrink-0">
-                                {p.price}
-                              </span>
-                            )}
-                          </div>
-                          {p.description && (
-                            <p className="text-xs text-gray-500 leading-relaxed mb-2">{p.description}</p>
-                          )}
-                          {p.perfect_for && (
-                            <div className="flex flex-wrap gap-1">
-                              {p.perfect_for.split(",").map((t, j) => (
-                                <span key={j} className={`text-xs px-2 py-0.5 rounded-full capitalize ${tagColor(t.trim().toLowerCase().replace(/ /g, "_"))}`}>
-                                  {t.trim()}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
+              {/* ── Catalogue Recommendations ── */}
+              <div>
                 {/* B2B DB recommendations */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
@@ -468,7 +420,7 @@ export default function B2BScanPage() {
                   )}
 
                   {!recsLoading && recs?.length > 0 && (
-                    <div className="space-y-3">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {recs.map((rec, i) => (
                         <motion.div
                           key={rec.product_id}
