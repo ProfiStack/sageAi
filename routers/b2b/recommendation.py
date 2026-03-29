@@ -18,19 +18,59 @@ def get_latest_scan(db: Session, user_id: str):
     )
 
 
+# Map raw scanner output values → canonical skin_attribute keys in the DB.
+# The analyzer sometimes returns shorthand (e.g. "dry" instead of "dry_skin").
+_ALIAS: dict[str, str] = {
+    # skin types
+    "dry":           "dry_skin",
+    "oily":          "oily_skin",
+    "combination":   "combination_skin",
+    "sensitive":     "sensitive_skin",
+    "normal":        "normal_skin",
+    # textures
+    "rough":         "rough_texture",
+    "uneven":        "uneven_texture",
+    "smooth":        "smooth_texture",
+    # concerns
+    "enlarged_pores": "large_pores",
+    "large pores":    "large_pores",
+    "dark_circles":   "dark_circles",
+    "fine_lines":     "wrinkles",
+    "fine lines":     "wrinkles",
+    "sun_damage":     "hyperpigmentation",
+}
+
+
+def _normalise(raw: str) -> str:
+    """Lowercase, underscore-space, then apply alias map."""
+    key = raw.strip().lower().replace(" ", "_")
+    return _ALIAS.get(key, key)
+
+
 def build_needs_from_scan(scan: B2BFaceScan) -> dict:
-    """Build {concern_key: confidence} dict from a stored scan record."""
+    """Build {concern_key: confidence} dict from a stored scan record.
+
+    Confidence values default to 1.0 when not stored (the analyzer
+    currently saves None for all confidence fields).
+    """
     needs = {}
 
-    if scan.concerns and scan.concerns_confidence:
-        for value, conf in zip(scan.concerns, scan.concerns_confidence):
-            needs[value] = conf
+    if scan.concerns:
+        confs = scan.concerns_confidence or []
+        for i, value in enumerate(scan.concerns):
+            if not value:
+                continue
+            key = _normalise(value)
+            conf = confs[i] if i < len(confs) else 1.0
+            needs[key] = conf if conf is not None else 1.0
 
-    if scan.texture and scan.texture_confidence:
-        needs[scan.texture] = scan.texture_confidence
+    if scan.texture:
+        key = _normalise(scan.texture)
+        needs[key] = scan.texture_confidence if scan.texture_confidence is not None else 1.0
 
-    if scan.skin_type and scan.skin_type_confidence:
-        needs[scan.skin_type] = scan.skin_type_confidence
+    if scan.skin_type:
+        key = _normalise(scan.skin_type)
+        needs[key] = scan.skin_type_confidence if scan.skin_type_confidence is not None else 1.0
 
     return needs
 

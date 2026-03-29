@@ -165,10 +165,10 @@ class Review(Base):
     # Optional: link to a registered user (null for seeded / guest reviews)
     user_id = Column(String, ForeignKey('user_profiles.user_id'), nullable=True, index=True)
     reviewer_name = Column(String, nullable=False)
-    reviewer_country = Column(String, nullable=False)
+    reviewer_country = Column(String, nullable=True)
     rating = Column(Integer, nullable=False)          # 1–5
     title = Column(String, nullable=True)
-    body = Column(TEXT, nullable=False)
+    body = Column(TEXT, nullable=True)
     feature_tag = Column(String, nullable=True)       # e.g. "skin_analysis", "shade_matching"
     is_published = Column(Boolean, default=True, server_default=expression.true())
     is_seeded = Column(Boolean, default=False, server_default=expression.false())

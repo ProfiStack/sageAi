@@ -8,6 +8,7 @@ from controllers.review_controller import (
     create_review,
     delete_review,
     get_review,
+    get_review_prompt_status,
     list_reviews,
     publish_review,
     update_review,
@@ -60,6 +61,23 @@ async def get_single_review(review_id: str, db: Session = Depends(get_db)):
 # ══════════════════════════════════════════════════════════════════════════════
 #  AUTHENTICATED — any logged-in user
 # ══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/user/review-prompt")
+async def review_prompt_status(
+    feature_tag: str = Query(..., description="Feature to check: skin_analysis, shade_matching, etc."),
+    current_user: UserDep = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Returns whether the review modal should be shown for the current user + feature.
+    Cooldown rules are defined server-side per feature tag.
+    """
+    return await get_review_prompt_status(
+        user_id=current_user["user_id"],
+        feature_tag=feature_tag,
+        db=db,
+    )
+
 
 @router.post("/reviews", response_model=ReviewResponse, status_code=201)
 async def submit_review(

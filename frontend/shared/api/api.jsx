@@ -308,6 +308,113 @@ export const Api = {
       } catch (error) {
         console.log(error);
       }
-    }
+    },
+
+    // ── Reviews ──────────────────────────────────────────────────────────
+    getReviewPromptStatus: async (token, feature_tag) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) =>
+            `${globalBaseUrl}/api/user/review-prompt?feature_tag=${feature_tag}`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    submitReview: async (token, data) => {
+      try {
+        const response = await baseFetch(
+          ({ globalBaseUrl }) => `${globalBaseUrl}/api/reviews`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: validatePayload(data),
+          }
+        );
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+  },
+
+  // ── B2B Portal ──────────────────────────────────────────────────────────
+  b2b: {
+    // Verify an API key by listing users (lightweight auth check)
+    verifyKey: async (apiKey) => {
+      const response = await baseFetch(
+        ({ globalBaseUrl }) => `${globalBaseUrl}/api/b2b/users`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }
+      );
+      return response;
+    },
+
+    // Users
+    createUser: async (apiKey, data) => {
+      return baseFetch(
+        ({ globalBaseUrl }) => `${globalBaseUrl}/api/b2b/users`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}` },
+          body: data,
+        }
+      );
+    },
+
+    listUsers: async (apiKey, skip = 0, limit = 50) => {
+      return baseFetch(
+        ({ globalBaseUrl }) =>
+          `${globalBaseUrl}/api/b2b/users?skip=${skip}&limit=${limit}`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }
+      );
+    },
+
+    getUser: async (apiKey, userId) => {
+      return baseFetch(
+        ({ globalBaseUrl }) => `${globalBaseUrl}/api/b2b/users/${userId}`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }
+      );
+    },
+
+    // Scan — multipart form (image file)
+    scanUser: async (apiKey, userId, imageFile) => {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+      return baseFetch(
+        ({ globalBaseUrl }) =>
+          `${globalBaseUrl}/api/b2b/users/${userId}/scan`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}` },
+          body: formData,
+        }
+      );
+    },
+
+    // Recommendations
+    getRecommendations: async (apiKey, userId, limit = 5) => {
+      return baseFetch(
+        ({ globalBaseUrl }) =>
+          `${globalBaseUrl}/api/b2b/users/${userId}/recommendations?limit=${limit}`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }
+      );
+    },
   },
 };

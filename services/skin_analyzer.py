@@ -84,7 +84,9 @@ class EnhancedFacialSkinAnalyzer:
 
         # Step 6: Attribute extraction
         skin_type, skin_type_conf = self._classify_skin_type(
-            normalized_regions["cheek"], lighting_quality
+            normalized_regions["cheek"],
+            lighting_quality,
+            forehead_data=normalized_regions.get("forehead"),
         )
 
         concerns = self._detect_concerns_comprehensive(
@@ -116,7 +118,6 @@ class EnhancedFacialSkinAnalyzer:
         lip_color, lip_conf = self._analyze_lip_color_expanded(
             normalized_regions["lips"], lighting_quality
         )
-        print(skin_type, skin_type_conf, concerns, tone, tone_conf, undertone, undertone_conf, texture, texture_conf, under_eye, under_eye_conf, lip_color, lip_conf)
         severe_concerns = [c["concern"] for c in concerns if c["severity"] == "severe"]
 
         # Build final result
@@ -130,7 +131,6 @@ class EnhancedFacialSkinAnalyzer:
             "lip_color": lip_color,
         }
 
-        print(result)
         return result
 
     def _load_image(self, image_input: Union[str, bytes]) -> Image:
@@ -355,9 +355,44 @@ class EnhancedFacialSkinAnalyzer:
                 region_features[region_name] = None
                 continue
 
-            # Extract gray values for texture
+            # ----------------------------------------------------------------
+            # SKIN PIXEL FILTERING
+            # Facial region masks (especially cheek, forehead) can inadvertently
+            # include non-skin pixels: beard/stubble (very dark), specular
+            # highlights (very bright), eyelashes, clothing edges, etc.
+            # We filter to pixels whose L-channel falls in a plausible skin range
+            # (L 30–240 in OpenCV 0–255 scale) and HSV saturation > 10 to exclude
+            # near-grey/near-black artefacts.
+            # Under-eye and lips are allowed a wider L range since they can be
+            # naturally darker.
+            # ----------------------------------------------------------------
+            l_values = lab_pixels[:, 0].astype(np.float32)
+            s_values = hsv_pixels[:, 1].astype(np.float32)
+
+            if region_name in ("under_eye", "under_eye_left", "under_eye_right", "lips"):
+                # Lips can be deeply pigmented; under-eye is naturally darker
+                skin_mask = (l_values > 20) & (l_values < 245)
+            else:
+                # Skin regions: reject very dark (beard/shadow/hair) and blown-out pixels
+                skin_mask = (l_values > 35) & (l_values < 242) & (s_values > 8)
+
+            if np.sum(skin_mask) < 20:
+                # Not enough clean skin pixels — fall back to raw (better than None)
+                skin_mask = np.ones(len(rgb_pixels), dtype=bool)
+
+            rgb_pixels = rgb_pixels[skin_mask]
+            lab_pixels = lab_pixels[skin_mask]
+            hsv_pixels = hsv_pixels[skin_mask]
+
+            # Extract gray values for texture (from original non-normalised image)
             gray_region = img_gray * (mask > 0).astype(np.uint8)
-            gray_pixels = gray_region[mask > 0]
+            gray_pixels_all = gray_region[mask > 0]
+            gray_pixels = gray_pixels_all[skin_mask]
+
+            # Build a refined mask image for downstream use
+            refined_mask = np.zeros_like(mask)
+            mask_coords = np.column_stack(np.where(mask > 0))
+            refined_mask[mask_coords[skin_mask, 0], mask_coords[skin_mask, 1]] = 255
 
             region_features[region_name] = {
                 # RGB statistics
@@ -376,7 +411,7 @@ class EnhancedFacialSkinAnalyzer:
                 "gray_range": np.ptp(gray_pixels),  # Peak-to-peak
                 # Pixel data
                 "pixel_count": len(rgb_pixels),
-                "mask": mask,
+                "mask": refined_mask,
                 "rgb_pixels": rgb_pixels,
                 "lab_pixels": lab_pixels,
                 "gray_pixels": gray_pixels,
@@ -413,39 +448,61 @@ class EnhancedFacialSkinAnalyzer:
         return quality
 
     def _classify_skin_type(
-        self, cheek_data: Dict, lighting_quality: float
+        self,
+        cheek_data: Dict,
+        lighting_quality: float,
+        forehead_data: Dict = None,
     ) -> Tuple[str, float]:
         """
-        Classify skin type based on texture proxies and color variance
+        Classify skin type based on texture proxies and colour variance.
         Types: oily, dry, combination, normal, sensitive
+
+        NOTE: OpenCV HSV saturation is scaled 0–255 (not 0–100).
+        Calibrated thresholds:
+            oily skin:       saturation > 105  (~41 %)
+            dry skin:        saturation <  70  (~27 %)
+            combination:     forehead significantly oilier than cheeks (diff > 25)
+            sensitive:       high redness variance in a-channel
+            normal:          everything else
+
+        T-zone detection: compare forehead saturation vs cheek saturation.
+        A meaningful difference (forehead oilier) indicates combination skin.
         """
         if cheek_data is None:
             return "unknown", 0.0
 
-        # Use RGB std as texture/oiliness proxy
-        rgb_std = cheek_data["rgb_std"]
-        texture_score = np.mean(rgb_std)
+        # Texture proxy: mean of per-channel RGB std
+        texture_score = float(np.mean(cheek_data["rgb_std"]))
 
-        # Lightness variance (L channel in LAB)
-        l_std = cheek_data["lab_std"][0]
+        # Lightness variance in LAB L channel
+        l_std = float(cheek_data["lab_std"][0])
 
-        # HSV saturation (dry skin has lower saturation)
-        saturation = cheek_data["hsv_mean"][1]
+        # OpenCV HSV saturation: 0–255
+        saturation = float(cheek_data["hsv_mean"][1])
+        brightness = float(cheek_data["hsv_mean"][2])
 
-        # Classification rules (calibrated thresholds)
-        if texture_score > 15 and l_std > 12 and saturation > 40:
+        # T-zone vs cheek comparison (key for combination detection)
+        t_zone_sat_diff = 0.0
+        if forehead_data is not None:
+            t_zone_sat_diff = float(forehead_data["hsv_mean"][1]) - saturation
+
+        # ---- Classification ----
+        if texture_score > 18 and saturation > 105 and l_std > 10:
+            # Uniformly high saturation + texture → oily
             skin_type = "oily"
-        elif saturation < 35 and l_std > 10:
+        elif saturation < 70 and brightness > 80:
+            # Low colour saturation, not too dark → dry
             skin_type = "dry"
-        elif texture_score > 10 and l_std < 15:
+        elif t_zone_sat_diff > 25:
+            # Forehead notably oilier than cheeks → combination
             skin_type = "combination"
-        elif l_std > 15 or cheek_data["lab_std"][1] > 8:  # High variance in redness
+        elif l_std > 14 or cheek_data["lab_std"][1] > 10:
+            # High lightness or redness variance → reactive/sensitive
             skin_type = "sensitive"
         else:
             skin_type = "normal"
 
-        # Confidence based on lighting and data quality
-        base_confidence = 0.72
+        base_confidence = 0.74
         confidence = base_confidence * lighting_quality
 
         return skin_type, confidence
@@ -480,25 +537,30 @@ class EnhancedFacialSkinAnalyzer:
             concerns.append(redness_concern)
 
         # ============ DARK CIRCLES ============
+        # OpenCV LAB L is 0–255.  A difference of 6 L-units is a ~2 % change —
+        # far too small to be a visible dark circle.  Calibrated thresholds:
+        #   mild    : diff > 15  (~6 % darker)
+        #   moderate: diff > 25  (~10 % darker)
+        #   severe  : diff > 38  (~15 % darker)
         if regions["under_eye"] is not None and regions["cheek"] is not None:
-            under_eye_l = regions["under_eye"]["lab_mean"][0]
-            cheek_l = regions["cheek"]["lab_mean"][0]
+            under_eye_l = float(regions["under_eye"]["lab_mean"][0])
+            cheek_l = float(regions["cheek"]["lab_mean"][0])
 
             darkness_diff = cheek_l - under_eye_l
-            if darkness_diff > 6:
-                if darkness_diff > 15:
+            if darkness_diff > 15:
+                if darkness_diff > 38:
                     severity = "severe"
-                elif darkness_diff > 10:
+                elif darkness_diff > 25:
                     severity = "moderate"
                 else:
                     severity = "mild"
 
-                confidence = min(0.88, (darkness_diff / 20) * lighting_quality)
+                confidence = min(0.88, (darkness_diff / 50) * lighting_quality)
                 concerns.append(
                     {
                         "concern": "dark_circles",
                         "severity": severity,
-                        "confidence": confidence,
+                        "confidence": round(confidence, 3),
                     }
                 )
 
@@ -514,22 +576,28 @@ class EnhancedFacialSkinAnalyzer:
             concerns.append(scar_concern)
 
         # ============ UNEVEN TONE ============
+        # l_std is the within-region standard deviation of the L channel.
+        # Even perfectly smooth skin has natural variance ~5–12 units in 0–255 scale.
+        # Calibrated thresholds for genuinely uneven tone:
+        #   mild    : l_std > 18
+        #   moderate: l_std > 26
+        #   severe  : l_std > 35
         if regions["cheek"] is not None:
-            l_std = regions["cheek"]["lab_std"][0]
-            if l_std > 9:
-                if l_std > 16:
+            l_std = float(regions["cheek"]["lab_std"][0])
+            if l_std > 18:
+                if l_std > 35:
                     severity = "severe"
-                elif l_std > 12:
+                elif l_std > 26:
                     severity = "moderate"
                 else:
                     severity = "mild"
 
-                confidence = min(0.85, (l_std / 20) * lighting_quality)
+                confidence = min(0.85, (l_std / 45) * lighting_quality)
                 concerns.append(
                     {
                         "concern": "uneven_tone",
                         "severity": severity,
-                        "confidence": confidence,
+                        "confidence": round(confidence, 3),
                     }
                 )
 
@@ -543,24 +611,31 @@ class EnhancedFacialSkinAnalyzer:
         concerns.extend(line_concerns)
 
         # ============ DULLNESS ============
+        # OpenCV HSV saturation and value are both 0–255.
+        # Dull skin = low colour saturation + moderately low brightness.
+        # Typical healthy skin: saturation 70–150, value 120–200.
+        # Dull thresholds:
+        #   mild    : saturation < 65  and brightness < 160
+        #   moderate: saturation < 50  and brightness < 140
+        #   severe  : saturation < 35  and brightness < 120
         if regions["cheek"] is not None:
-            saturation = regions["cheek"]["hsv_mean"][1]
-            brightness = regions["cheek"]["hsv_mean"][2]
+            saturation = float(regions["cheek"]["hsv_mean"][1])
+            brightness = float(regions["cheek"]["hsv_mean"][2])
 
-            if saturation < 38 and brightness < 125:
-                if saturation < 28 and brightness < 110:
+            if saturation < 65 and brightness < 160:
+                if saturation < 35 and brightness < 120:
                     severity = "severe"
-                elif saturation < 33:
+                elif saturation < 50 and brightness < 140:
                     severity = "moderate"
                 else:
                     severity = "mild"
 
-                confidence = 0.75 * lighting_quality
+                confidence = 0.73 * lighting_quality
                 concerns.append(
                     {
                         "concern": "dullness",
                         "severity": severity,
-                        "confidence": confidence,
+                        "confidence": round(confidence, 3),
                     }
                 )
 
@@ -578,102 +653,135 @@ class EnhancedFacialSkinAnalyzer:
         lighting_quality: float,
     ) -> Optional[Dict]:
         """
-        Detect acne using redness + texture anomalies
-        Acne shows as localized red bumps with texture variation
+        Detect acne using redness + texture anomalies.
+        Acne shows as localised red bumps with texture variation.
+
+        Key calibration decisions:
+        - Threshold at a_mean + 2.0 * std (catches ~2.3% of pixels, not 16%).
+        - Absolute floor: spots must have a > 148 (genuinely red, not just warm skin).
+        - Spot pixel-area window widened to 5–120 px to handle image resolution variance.
+        - Spot counts raised significantly to avoid false mild classifications.
+        - Texture correlation required: gray_std must also be elevated.
+        - Spot ratio guard: spots must cover a meaningful fraction of the face area.
         """
         if regions["cheek"] is None or regions["forehead"] is None:
             return None
 
-        # Combine face regions
+        # Combine cheek + forehead as the primary acne-prone zone
         face_mask = cv2.bitwise_or(
             regions["cheek"]["mask"], regions["forehead"]["mask"]
         )
 
-        # Extract a channel (redness) in face region
-        a_channel = img_lab[:, :, 1].copy()
+        # Include chin if available (also acne-prone)
+        if regions.get("chin") is not None:
+            face_mask = cv2.bitwise_or(face_mask, regions["chin"]["mask"])
+
+        # Extract a-channel (red-green axis) for the face region
+        a_channel = img_lab[:, :, 1].copy().astype(np.float32)
         face_a = a_channel[face_mask > 0]
 
         if len(face_a) == 0:
             return None
 
-        # Detect red spots (acne is typically redder than surrounding skin)
-        a_mean = np.mean(face_a)
-        a_std = np.std(face_a)
-        red_threshold = a_mean + 1.2 * a_std  # Areas significantly redder
+        a_mean = float(np.mean(face_a))
+        a_std = float(np.std(face_a))
 
-        # Create red spot mask
-        red_spots_mask = ((a_channel > red_threshold) & (face_mask > 0)).astype(
-            np.uint8
-        )
+        # Threshold: 2 standard deviations above the local mean, AND
+        # must be above an absolute redness floor (a > 148 in OpenCV LAB 0–255).
+        # This prevents warm-toned skin (high average a) from being misclassified.
+        red_threshold = max(a_mean + 2.0 * a_std, 148.0)
 
-        # Use morphological operations to isolate spots
+        # Create binary mask of genuinely red spots
+        red_spots_mask = (
+            (a_channel > red_threshold) & (face_mask > 0)
+        ).astype(np.uint8)
+
+        # Morphological close to merge nearby pixels into coherent spots
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         red_spots_mask = cv2.morphologyEx(red_spots_mask, cv2.MORPH_CLOSE, kernel)
 
-        # Count connected components (potential acne spots)
-        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        # Count connected components
+        num_labels, _labels, stats, _ = cv2.connectedComponentsWithStats(
             red_spots_mask, connectivity=8
         )
 
-        # Filter by size (acne spots are typically 3-50 pixels in area)
+        # Only count components whose area falls in the acne-spot range
+        total_face_px = int(np.sum(face_mask > 0))
         valid_spots = 0
-        for i in range(1, num_labels):  # Skip background
-            area = stats[i, cv2.CC_STAT_AREA]
-            if 3 <= area <= 50:
+        spot_area_total = 0
+        for i in range(1, num_labels):
+            area = int(stats[i, cv2.CC_STAT_AREA])
+            # Acne spots: 5–120 pixels (avoids counting noise or large flush areas)
+            if 5 <= area <= 120:
                 valid_spots += 1
+                spot_area_total += area
 
-        # Also check texture variance in gray image
+        # Spot coverage ratio (guard against flagging a few tiny specks)
+        spot_ratio = spot_area_total / (total_face_px + 1e-6)
+
+        # Texture check: genuine acne raises the overall surface roughness
         gray_face = img_gray[face_mask > 0]
-        gray_std = np.std(gray_face)
+        gray_std = float(np.std(gray_face))
 
-        # Classification
-        if valid_spots > 15 or (valid_spots > 8 and gray_std > 25):
+        # ---- Classification (conservative thresholds) ----
+        # Mild:     ≥12 spots  AND  coverage ≥ 0.3%  AND  texture elevated
+        # Moderate: ≥20 spots  OR  (≥12 spots + high texture)
+        # Severe:   ≥35 spots  OR  (≥20 spots + very high texture)
+        if valid_spots >= 35 or (valid_spots >= 20 and gray_std > 28):
             severity = "severe"
             confidence = 0.78
-        elif valid_spots > 8 or (valid_spots > 4 and gray_std > 22):
+        elif valid_spots >= 20 or (valid_spots >= 12 and gray_std > 24):
             severity = "moderate"
-            confidence = 0.75
-        elif valid_spots > 3:
+            confidence = 0.74
+        elif valid_spots >= 12 and spot_ratio >= 0.003 and gray_std > 18:
             severity = "mild"
-            confidence = 0.70
+            confidence = 0.68
         else:
             return None
 
         return {
             "concern": "acne",
             "severity": severity,
-            "confidence": confidence * lighting_quality,
+            "confidence": round(confidence * lighting_quality, 3),
         }
 
     def _detect_redness(
         self, img_lab: np.ndarray, regions: Dict, lighting_quality: float
     ) -> Optional[Dict]:
         """
-        Detect generalized redness (different from acne - more diffuse)
+        Detect generalised facial redness (rosacea-like, not acne spots).
+        Different from acne: redness is diffuse (low a-channel std) rather than spotty.
+
+        OpenCV LAB neutral a = 128.  Typical warm skin a ≈ 132–140.
+        Clinical redness starts at a ≈ 143 when accompanied by low std
+        (low std = even flush, not acne spots).
+        Calibrated thresholds:
+            mild    : a > 143  and a_std < 12
+            moderate: a > 150
+            severe  : a > 158
         """
         if regions["cheek"] is None:
             return None
 
-        a_channel = regions["cheek"]["lab_mean"][1]  # Red-green axis
-        a_std = regions["cheek"]["lab_std"][1]
+        a_channel = float(regions["cheek"]["lab_mean"][1])
+        a_std = float(regions["cheek"]["lab_std"][1])
 
-        # Check if skin is generally red (not just spots)
-        # Neutral is ~128, red is >128
-        if a_channel > 136 and a_std < 10:  # Diffuse redness (low std = not spotty)
-            if a_channel > 145:
+        # Require diffuse (low std) redness — spotty high-a is handled by acne detector
+        if a_channel > 143 and a_std < 12:
+            if a_channel > 158:
                 severity = "severe"
                 confidence = 0.82
-            elif a_channel > 140:
+            elif a_channel > 150:
                 severity = "moderate"
-                confidence = 0.80
+                confidence = 0.79
             else:
                 severity = "mild"
-                confidence = 0.75
+                confidence = 0.74
 
             return {
                 "concern": "redness",
                 "severity": severity,
-                "confidence": confidence * lighting_quality,
+                "confidence": round(confidence * lighting_quality, 3),
             }
 
         return None
@@ -738,23 +846,29 @@ class EnhancedFacialSkinAnalyzer:
                 }
             )
 
-        # General hyperpigmentation (overall uneven lightness)
-        if l_std > 14:
-            if l_std > 20:
+        # General hyperpigmentation (overall uneven lightness across face regions).
+        # l_std here is pooled across cheek + forehead + chin pixels, so natural
+        # variation between regions is included.  Meaningful hyper-pigmentation
+        # shows as a much larger spread. Calibrated thresholds for 0–255 scale:
+        #   mild    : l_std > 22
+        #   moderate: l_std > 30
+        #   severe  : l_std > 40
+        if l_std > 22:
+            if l_std > 40:
                 severity = "severe"
                 confidence = 0.78
-            elif l_std > 17:
+            elif l_std > 30:
                 severity = "moderate"
-                confidence = 0.76
+                confidence = 0.75
             else:
                 severity = "mild"
-                confidence = 0.72
+                confidence = 0.71
 
             concerns.append(
                 {
                     "concern": "hyperpigmentation",
                     "severity": severity,
-                    "confidence": confidence * lighting_quality,
+                    "confidence": round(confidence * lighting_quality, 3),
                 }
             )
 
@@ -777,34 +891,35 @@ class EnhancedFacialSkinAnalyzer:
         # Get cheek region
         mask = regions["cheek"]["mask"]
 
-        # Apply Laplacian to detect texture edges
+        # Compute Laplacian only inside the cheek mask (avoids global inflation)
         laplacian = cv2.Laplacian(img_gray, cv2.CV_64F)
         laplacian_abs = np.abs(laplacian)
 
-        # Get texture in cheek region
+        # Get texture in cheek region only
         texture_region = laplacian_abs[mask > 0]
 
         if len(texture_region) == 0:
             return None
 
-        # High variance in texture suggests scars (discontinuous texture)
-        texture_var = np.var(texture_region)
-        texture_mean = np.mean(texture_region)
+        # Use std of local Laplacian (more stable than variance for varying image sizes)
+        texture_std = float(np.std(texture_region))
 
-        # Also check for lightness discontinuities
+        # Also check for lightness discontinuities inside cheek region
         l_channel = img_lab[:, :, 0]
         l_region = l_channel[mask > 0]
-        l_std = np.std(l_region)
+        l_std = float(np.std(l_region))
 
-        # Scars: high texture variance + lightness irregularity
-        scar_score = (texture_var / 100) + (l_std / 10)
+        # Scars: high within-region Laplacian std + lightness irregularity
+        # Smooth skin:   texture_std 5–15,  l_std  5–15  → scar_score 0.5–2.5
+        # Visible scars: texture_std 20–40, l_std 18–30  → scar_score 3.5–6+
+        scar_score = (texture_std / 10.0) + (l_std / 12.0)
 
-        if scar_score > 4.5:
+        if scar_score > 5.0:
             severity = "moderate"
-            confidence = 0.68  # Lower confidence - scars hard to detect
+            confidence = 0.66  # Lower confidence — scars are hard to detect reliably
         elif scar_score > 3.5:
             severity = "mild"
-            confidence = 0.65
+            confidence = 0.62
         else:
             return None
 
@@ -818,49 +933,57 @@ class EnhancedFacialSkinAnalyzer:
         self, img_gray: np.ndarray, regions: Dict, lighting_quality: float
     ) -> Optional[Dict]:
         """
-        Detect enlarged pores using local texture variance
-        Pores show as small dark spots with regular patterns
+        Detect enlarged pores using local texture variance.
+        Pores show as small dark spots with regular patterns.
+
+        IMPORTANT: Laplacian variance must be computed only inside the skin mask,
+        NOT over the whole image (which includes hair/background and inflates the score).
+        Typical Laplacian std values inside a smooth face region: 5–15.
+        Enlarged pores / rough skin: 20–40+.
         """
         if regions["nose"] is None and regions["cheek"] is None:
             return None
 
-        # Focus on nose and cheek (common pore areas)
+        # Build pore mask from nose + cheek
         pore_mask = np.zeros_like(img_gray)
         if regions["nose"] is not None:
             pore_mask = cv2.bitwise_or(pore_mask, regions["nose"]["mask"])
         if regions["cheek"] is not None:
             pore_mask = cv2.bitwise_or(pore_mask, regions["cheek"]["mask"])
 
-        # Use Laplacian variance as texture measure
+        # Compute Laplacian ONLY inside the masked region
         laplacian = cv2.Laplacian(img_gray, cv2.CV_64F)
-        lap_var = laplacian.var()
-
-        # Calculate local standard deviation (high = textured/porous)
+        lap_region = laplacian[pore_mask > 0]
         gray_region = img_gray[pore_mask > 0]
-        if len(gray_region) == 0:
+
+        if len(lap_region) == 0:
             return None
 
-        local_std = np.std(gray_region)
+        # Use std of Laplacian inside region (not global var which is unreliable)
+        lap_std = float(np.std(lap_region))
+        local_std = float(np.std(gray_region))
 
-        # Combined score
-        pore_score = (lap_var / 50) + (local_std / 10)
+        # Combined pore score: Laplacian std is the primary signal
+        # Smooth skin:       lap_std  5–15,  local_std  5–15  → score 1–3
+        # Textured/porous:   lap_std 20–40,  local_std 15–25  → score 4–8
+        pore_score = (lap_std / 8.0) + (local_std / 15.0)
 
-        if pore_score > 8:
+        if pore_score > 6.5:
             severity = "severe"
-            confidence = 0.70
-        elif pore_score > 5.5:
-            severity = "moderate"
             confidence = 0.68
-        elif pore_score > 4:
+        elif pore_score > 4.5:
+            severity = "moderate"
+            confidence = 0.66
+        elif pore_score > 3.0:
             severity = "mild"
-            confidence = 0.65
+            confidence = 0.62
         else:
             return None
 
         return {
             "concern": "enlarged_pores",
             "severity": severity,
-            "confidence": confidence * lighting_quality,
+            "confidence": round(confidence * lighting_quality, 3),
         }
 
     def _detect_lines_wrinkles(
@@ -874,29 +997,30 @@ class EnhancedFacialSkinAnalyzer:
         if regions["forehead"] is None and regions["under_eye"] is None:
             return concerns
 
-        # Apply Canny edge detection (deterministic with fixed thresholds)
-        edges = cv2.Canny(img_gray, threshold1=30, threshold2=90)
+        # Raise Canny thresholds to reduce noise/hair/pore edges being counted as lines
+        edges = cv2.Canny(img_gray, threshold1=50, threshold2=120)
 
-        # Analyze forehead (common wrinkle area)
+        # Analyze forehead (common wrinkle area).
+        # Edge density > 0.12 = genuinely wrinkled forehead (old threshold 0.08 was too low)
         if regions["forehead"] is not None:
             forehead_edges = edges[regions["forehead"]["mask"] > 0]
             if len(forehead_edges) > 0:
                 edge_density = np.sum(forehead_edges > 0) / len(forehead_edges)
 
-                if edge_density > 0.08:
+                if edge_density > 0.14:
                     concerns.append(
                         {
                             "concern": "wrinkles",
                             "severity": "moderate",
-                            "confidence": 0.72 * lighting_quality,
+                            "confidence": round(0.70 * lighting_quality, 3),
                         }
                     )
-                elif edge_density > 0.05:
+                elif edge_density > 0.09:
                     concerns.append(
                         {
                             "concern": "fine_lines",
                             "severity": "mild",
-                            "confidence": 0.68 * lighting_quality,
+                            "confidence": round(0.65 * lighting_quality, 3),
                         }
                     )
 
@@ -906,14 +1030,14 @@ class EnhancedFacialSkinAnalyzer:
             if len(under_eye_edges) > 0:
                 edge_density = np.sum(under_eye_edges > 0) / len(under_eye_edges)
 
-                if edge_density > 0.06 and not any(
+                if edge_density > 0.10 and not any(
                     c["concern"] == "fine_lines" for c in concerns
                 ):
                     concerns.append(
                         {
                             "concern": "fine_lines",
                             "severity": "mild",
-                            "confidence": 0.65 * lighting_quality,
+                            "confidence": round(0.62 * lighting_quality, 3),
                         }
                     )
 
@@ -923,32 +1047,42 @@ class EnhancedFacialSkinAnalyzer:
         self, cheek_data: Dict, lighting_quality: float
     ) -> Tuple[str, float]:
         """
-        Classify skin tone using L channel (lightness) from LAB
+        Classify skin tone using L channel (lightness) from LAB.
         Scale: very_light, light, medium_light, medium, medium_deep, deep, very_deep
+
+        NOTE: OpenCV converts 8-bit RGB → LAB with L scaled to [0, 255], not [0, 100].
+        Thresholds are calibrated for this range:
+            L > 195  → very_light  (Fitzpatrick I)
+            L > 168  → light       (Fitzpatrick II)
+            L > 142  → medium_light (Fitzpatrick III)
+            L > 115  → medium       (Fitzpatrick IV)
+            L > 88   → medium_deep  (Fitzpatrick IV–V)
+            L > 62   → deep         (Fitzpatrick V)
+            else     → very_deep    (Fitzpatrick VI)
         """
         if cheek_data is None:
             return "unknown", 0.0
 
         l_value = cheek_data["lab_mean"][0]
 
-        # Expanded Fitzpatrick-inspired thresholds
-        if l_value > 85:
+        # Calibrated for OpenCV LAB L channel (0–255 scale)
+        if l_value > 195:
             tone = "very_light"
-        elif l_value > 75:
+        elif l_value > 168:
             tone = "light"
-        elif l_value > 65:
+        elif l_value > 142:
             tone = "medium_light"
-        elif l_value > 55:
+        elif l_value > 115:
             tone = "medium"
-        elif l_value > 45:
+        elif l_value > 88:
             tone = "medium_deep"
-        elif l_value > 35:
+        elif l_value > 62:
             tone = "deep"
         else:
             tone = "very_deep"
 
         # High confidence for tone (relatively stable measurement)
-        confidence = 0.86 * lighting_quality
+        confidence = 0.88 * lighting_quality
 
         return tone, confidence
 
@@ -956,68 +1090,74 @@ class EnhancedFacialSkinAnalyzer:
         self, cheek_data: Dict, lighting_quality: float
     ) -> Tuple[str, float]:
         """
-        Classify undertone using 'a' and 'b' channels from LAB
+        Classify undertone using 'a' and 'b' channels from LAB.
         Types: warm, warm_golden, cool, cool_pink, neutral, neutral_warm, neutral_cool
+
+        OpenCV LAB (8-bit): neutral point is 128 for both a and b.
+          a > 128 → reddish/pink  |  b > 128 → yellowish/warm
+          a < 128 → greenish      |  b < 128 → bluish/cool
+
+        Typical skin a_diff range: +3 to +20 (almost always slightly red)
+        Typical skin b_diff range: +5 to +30 (warm) or −5 to +5 (cool)
+
+        Scoring approach:
+          - b_diff dominates undertone (yellow vs blue is the clearest signal)
+          - a_diff is secondary (distinguishes peachy-warm from pink-cool)
+          - Require a score gap of ≥2 to commit; otherwise neutral sub-type
         """
         if cheek_data is None:
             return "unknown", 0.0
 
-        a_channel = cheek_data["lab_mean"][1]  # Red-green axis
-        b_channel = cheek_data["lab_mean"][2]  # Yellow-blue axis
+        a_channel = float(cheek_data["lab_mean"][1])
+        b_channel = float(cheek_data["lab_mean"][2])
 
-        # Normalize around neutral (128)
-        a_diff = a_channel - 128
-        b_diff = b_channel - 128
+        # Offset from neutral midpoint
+        a_diff = a_channel - 128.0
+        b_diff = b_channel - 128.0
 
-        # Calculate undertone scores
         warm_score = 0
         cool_score = 0
 
-        # Yellow component (b channel)
-        if b_diff > 12:
-            warm_score += 3
-        elif b_diff > 6:
-            warm_score += 2
-        elif b_diff > 2:
-            warm_score += 1
-        elif b_diff < -4:
-            cool_score += 2
+        # ---- Yellow/blue axis (b) — primary signal ----
+        if b_diff > 18:
+            warm_score += 4       # Strongly golden/warm
+        elif b_diff > 10:
+            warm_score += 3       # Warm
+        elif b_diff > 4:
+            warm_score += 1       # Slightly warm
+        elif b_diff < -6:
+            cool_score += 4       # Blue-ish / cool
+        elif b_diff < -2:
+            cool_score += 2       # Slightly cool
 
-        # Red/pink component (a channel)
-        if a_diff > 8:
-            if b_diff > 0:
-                warm_score += 1  # Peachy
+        # ---- Red/pink axis (a) — secondary signal ----
+        if a_diff > 12:
+            if b_diff > 5:
+                warm_score += 2   # Peachy red → warm
             else:
-                cool_score += 2  # Pink
-        elif a_diff > 4:
-            if b_diff < 0:
-                cool_score += 1
+                cool_score += 2   # Pink red → cool
+        elif a_diff > 6:
+            if b_diff <= 2:
+                cool_score += 1   # Leaning pink
 
-        # Determine undertone
+        # ---- Determine undertone ----
         if warm_score >= cool_score + 2:
-            if b_diff > 15:
-                undertone = "warm_golden"
-            else:
-                undertone = "warm"
+            undertone = "warm_golden" if b_diff > 18 else "warm"
         elif cool_score >= warm_score + 2:
-            if a_diff > 6:
-                undertone = "cool_pink"
-            else:
-                undertone = "cool"
+            undertone = "cool_pink" if a_diff > 8 else "cool"
         else:
-            # Neutral territory
-            if abs(b_diff) < 4 and abs(a_diff) < 4:
+            # Neutral: use the residual lean
+            if abs(b_diff) < 5 and abs(a_diff) < 5:
                 undertone = "neutral"
-            elif b_diff > 0:
+            elif b_diff >= 0:
                 undertone = "neutral_warm"
             else:
                 undertone = "neutral_cool"
 
-        # Confidence (undertone is subtle)
-        base_confidence = 0.70
-        confidence = base_confidence * lighting_quality
+        # Undertone is a subtler measurement → slightly lower confidence
+        confidence = 0.72 * lighting_quality
 
-        return undertone, confidence
+        return undertone, round(confidence, 3)
 
     def _classify_texture(
         self, img_rgb: np.ndarray, cheek_data: Dict, lighting_quality: float
@@ -1067,25 +1207,29 @@ class EnhancedFacialSkinAnalyzer:
         if under_eye_data is None or cheek_data is None:
             return "unknown", 0.0
 
-        under_eye_l = under_eye_data["lab_mean"][0]
-        cheek_l = cheek_data["lab_mean"][0]
+        under_eye_l = float(under_eye_data["lab_mean"][0])
+        cheek_l = float(cheek_data["lab_mean"][0])
 
-        # Calculate relative darkness
+        # Relative darkness (OpenCV LAB L: 0–255 scale).
+        # Match thresholds to the dark_circles concern detector:
+        #   none    : diff < 12
+        #   mild    : diff 12–22
+        #   moderate: diff 22–35
+        #   severe  : diff > 35
         darkness_diff = cheek_l - under_eye_l
 
-        # Classification
-        if darkness_diff < 4:
+        if darkness_diff < 12:
             state = "none"
-        elif darkness_diff < 8:
+        elif darkness_diff < 22:
             state = "mild"
-        elif darkness_diff < 14:
+        elif darkness_diff < 35:
             state = "moderate"
         else:
             state = "severe"
 
         confidence = 0.78 * lighting_quality
 
-        return state, confidence
+        return state, round(confidence, 3)
 
     def _analyze_lip_color_expanded(
         self, lips_data: Dict, lighting_quality: float
@@ -1105,69 +1249,73 @@ class EnhancedFacialSkinAnalyzer:
         h, s, v = hsv_mean
         l, a_lab, b_lab = lab_mean
 
-        # Calculate color characteristics
-        lightness = l
-        saturation = s
-        hue = h
+        # OpenCV HSV ranges: H 0–179, S 0–255, V 0–255
+        # OpenCV LAB ranges: L 0–255, a 0–255 (neutral=128), b 0–255 (neutral=128)
+        lightness = float(l)    # 0–255
+        saturation = float(s)   # 0–255
+        hue = float(h)          # 0–179  ← NOT 0–360
 
-        # Red dominance
-        red_intensity = r / (g + b + 1)
+        # Convert OpenCV hue to 0–360 for easier reasoning
+        hue360 = hue * 2.0      # 0–360
 
-        # a* channel (red-green)
-        a_diff = a_lab - 128
+        a_diff = float(a_lab) - 128.0   # red-green offset
+        b_diff = float(b_lab) - 128.0   # yellow-blue offset
 
-        # Classification with expanded categories
+        # Lip-specific LAB thresholds (0–255 L-scale):
+        # very light lips: L > 170, medium: 120-170, dark: < 120
+        # Low-saturation check: sat < 80 (31%) = desaturated/muted
 
-        # PALE: Very light, low saturation
-        if lightness > 75 and saturation < 40:
+        # Classification with corrected OpenCV scale
+        # PALE: Very light, very low saturation
+        if lightness > 175 and saturation < 80:
             lip_color = "pale"
 
-        # NUDE: Light, peachy/beige
-        elif lightness > 65 and saturation < 60 and b_lab > 128:
+        # NUDE: Light, peachy/beige (warm b_diff, low saturation)
+        elif lightness > 145 and saturation < 110 and b_diff > 5:
             lip_color = "nude"
 
-        # BROWN: Lower lightness, low saturation, warm
-        elif lightness < 55 and saturation < 50 and b_lab > 128:
+        # BROWN: Darker, warm, lower saturation
+        elif lightness < 120 and saturation < 110 and b_diff > 0:
             lip_color = "brown"
 
-        # RED: High saturation, red hue
-        elif saturation > 80 and (hue < 15 or hue > 345):
+        # RED: Vivid red hue — hue360 near 0° or 360°
+        elif saturation > 150 and (hue360 < 30 or hue360 > 330):
             lip_color = "red"
 
-        # CORAL: Orange-red, warm
-        elif saturation > 50 and 5 < hue < 25:
+        # CORAL: Orange-red — hue360 20–55°
+        elif saturation > 100 and 20 < hue360 < 55:
             lip_color = "coral"
 
-        # BERRY: Deep, saturated, purple-red
-        elif saturation > 60 and lightness < 60 and (hue > 320 or hue < 10):
+        # BERRY: Deep purple-red — hue360 300–345°, darker
+        elif saturation > 120 and lightness < 140 and 300 < hue360 <= 360:
             lip_color = "berry"
 
-        # MAUVE: Purple-pink, medium saturation
-        elif saturation > 35 and 300 < hue < 340:
+        # MAUVE: Purple-pink, medium saturation — hue360 280–310°
+        elif saturation > 70 and 280 < hue360 < 315:
             lip_color = "mauve"
 
-        # ROSE/PINK: Distinguish by intensity
-        elif saturation > 45 and 330 < hue < 360:
-            if a_diff > 15 or saturation > 65:
+        # ROSE: Bright pink-red — hue360 330–360° or high a_diff
+        elif saturation > 90 and (hue360 > 330 or hue360 < 10):
+            if a_diff > 15 or saturation > 140:
                 lip_color = "rose"
             else:
                 lip_color = "pink"
 
-        # LIGHT_PINK: Lower saturation pink
-        elif saturation > 30 and 320 < hue < 360 and lightness > 60:
+        # LIGHT_PINK: Soft pink, lighter
+        elif saturation > 60 and 300 < hue360 <= 360 and lightness > 150:
             lip_color = "light_pink"
 
-        # PINK: Default pink range
-        elif saturation > 35 and (hue > 320 or hue < 20):
+        # PINK: General pink range — hue360 300–360°
+        elif saturation > 70 and hue360 > 300:
             lip_color = "pink"
 
-        # NATURAL: Everything else
+        # NATURAL: Neutral / muted / everything else
         else:
             lip_color = "natural"
 
-        confidence = 0.72 * lighting_quality
+        confidence = 0.70 * lighting_quality
 
-        return lip_color, confidence
+        return lip_color, round(confidence, 3)
 
     def save_result_json(self, result: SkinAnalysisResult, output_path: str):
         """Save analysis result as JSON"""

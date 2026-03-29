@@ -24,6 +24,8 @@ import { useRouter } from "next/navigation";
 import { useShadeMatchStore } from "@/store/skinResult";
 import useAuthStore from "@/store/authStore";
 import { Api } from "@/shared/api/api";
+import ReviewModal from "@/CustomComponents/Popups/ReviewModal";
+import { useReviewPrompt } from "@/hooks/useReviewPrompt";
 
 export default function MakeupResultsPage() {
   const router = useRouter();
@@ -31,6 +33,8 @@ export default function MakeupResultsPage() {
   const [favorites, setFavorites] = useState([]);
 
   const { token, userId } = useAuthStore();
+  const { shouldShow: showReview, dismiss: dismissReview, markSubmitted: reviewSubmitted } =
+    useReviewPrompt("shade_matching");
 
   const handleDownloadReport = () => {
     if (resultsData) {
@@ -370,6 +374,14 @@ export default function MakeupResultsPage() {
           </div>
         </div>
       </div>
+
+      {showReview && (
+        <ReviewModal
+          featureTag="shade_matching"
+          onClose={dismissReview}
+          onSubmitted={reviewSubmitted}
+        />
+      )}
     </div>
   );
 }
