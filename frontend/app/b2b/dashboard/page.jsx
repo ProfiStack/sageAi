@@ -19,7 +19,7 @@ export default function B2BDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/b2b-portal");
+    if (!isAuthenticated) router.replace("/b2b");
   }, [isAuthenticated, router]);
 
   const fetchUsers = useCallback(async () => {
@@ -42,7 +42,7 @@ export default function B2BDashboard() {
 
   const handleLogout = () => {
     logout();
-    router.push("/b2b-portal");
+    router.push("/b2b");
   };
 
   const stats = [
@@ -118,7 +118,7 @@ export default function B2BDashboard() {
         {/* Quick actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <button
-            onClick={() => router.push("/b2b-portal/scan")}
+            onClick={() => router.push("/b2b/scan")}
             className="bg-gradient-to-br from-[#02331E] to-[#024029] text-white rounded-2xl p-5 text-left hover:opacity-95 transition group shadow-sm"
           >
             <ScanFace size={24} className="mb-3 text-[#D4B038]" />
@@ -129,7 +129,7 @@ export default function B2BDashboard() {
             </div>
           </button>
           <button
-            onClick={() => users.length > 0 && router.push(`/b2b-portal/recommendations`)}
+            onClick={() => users.length > 0 && router.push(`/b2b/recommendations`)}
             className="bg-white border border-gray-100 rounded-2xl p-5 text-left hover:shadow-md transition group shadow-sm"
           >
             <Package size={24} className="mb-3 text-[#02331E]" />
@@ -218,13 +218,13 @@ export default function B2BDashboard() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center gap-2 justify-end">
                         <button
-                          onClick={() => router.push(`/b2b-portal/scan?userId=${u.id}`)}
+                          onClick={() => router.push(`/b2b/scan?userId=${u.id}`)}
                           className="text-xs bg-[#02331E] text-white px-3 py-1.5 rounded-lg hover:bg-[#024029] transition"
                         >
                           Scan
                         </button>
                         <button
-                          onClick={() => router.push(`/b2b-portal/recommendations?userId=${u.id}`)}
+                          onClick={() => router.push(`/b2b/recommendations?userId=${u.id}`)}
                           className="text-xs border border-[#02331E] text-[#02331E] px-3 py-1.5 rounded-lg hover:bg-[#02331E]/5 transition"
                         >
                           Recs

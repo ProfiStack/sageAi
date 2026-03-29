@@ -74,7 +74,7 @@ function B2BScanPageContent() {
   const resultsRef = useRef(null);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/b2b-portal");
+    if (!isAuthenticated) router.replace("/b2b");
   }, [isAuthenticated, router]);
 
   useEffect(() => {
@@ -138,7 +138,7 @@ function B2BScanPageContent() {
       {/* Header */}
       <header className="bg-[#02331E] text-white px-6 py-4 shadow-lg sticky top-0 z-30">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <button onClick={() => router.push("/b2b-portal/dashboard")} className="flex items-center gap-2 text-white/70 hover:text-white transition text-sm">
+          <button onClick={() => router.push("/b2b/dashboard")} className="flex items-center gap-2 text-white/70 hover:text-white transition text-sm">
             <ArrowLeft size={16} /> Dashboard
           </button>
           <span className="text-white/30">|</span>
@@ -178,7 +178,7 @@ function B2BScanPageContent() {
               {users.length === 0 && (
                 <p className="text-xs text-gray-400 mt-2">
                   No users yet.{" "}
-                  <button onClick={() => router.push("/b2b-portal/dashboard")} className="text-[#02331E] underline">Create one first</button>
+                  <button onClick={() => router.push("/b2b/dashboard")} className="text-[#02331E] underline">Create one first</button>
                 </p>
               )}
             </div>
