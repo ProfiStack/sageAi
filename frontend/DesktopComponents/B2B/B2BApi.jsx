@@ -125,7 +125,7 @@ export default function B2BApi() {
               <div className="mt-6 pt-5 border-t border-gray-100">
                 <p className="lg:text-lg text-base font-medium text-gray-400 text-center">
                   Need an API key? Contact{" "}
-                  <a href="mailto:sageeai@sageeai.com" className="text-[#02331E] underline">
+                  <a href="https://mail.google.com/mail/?view=cm&fs=1&to=sageeai@sageeai.com" className="text-[#02331E] underline">
                     sageeai@sageeai.com
                   </a>
                 </p>
