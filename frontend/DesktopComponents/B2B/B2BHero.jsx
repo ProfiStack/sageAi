@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import ComingSoonPopup from "../ComingSoon";
 import { useState } from "react";
 
-export function B2BHero() {
+export function B2BHero({ scrollToPricing }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#02331E] via-[#02331E]/95 to-[#02331E]/90">
@@ -121,9 +121,7 @@ export function B2BHero() {
               </Button>
               <Button
                 size="lg"
-                onClick={() => {
-                  setIsPopupOpen(true);
-                }}
+                onClick={scrollToPricing}
                 variant="outline"
                 className="border-2 border-white/30 text-white bg-white/10 hover:bg-white/10 px-8 py-6 rounded-full backdrop-blur-sm"
               >

@@ -9,12 +9,14 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import QRCodeModal from "@/CustomComponents/Popups/QrCode";
 
-export function Navbar() {
+export function Navbar({ onGetStarted }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isHomePage, setIsHomePage] = useState(true);
   const [isQrOpen, setQrOpen] = useState(false);
   const router = useRouter();
+
+  const handleGetStarted = onGetStarted ?? (() => setQrOpen(true));
 
   const handleB2BRoute = (link) => {
     if (link === "#/b2b") {
@@ -94,9 +96,7 @@ export function Navbar() {
             ))}
 
             <button
-              onClick={() => {
-                setQrOpen(true);
-              }}
+                onClick={handleGetStarted}
               className="px-6 py-2 bg-[#02331E] text-white rounded-full hover:bg-[#02331E]/90 transition-all duration-300"
             >
               Get Started
@@ -105,7 +105,7 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <Button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => { handleGetStarted(); setMobileMenuOpen(false); }}
             className={`md:hidden transition-colors duration-300 ${
               scrolled ? "text-[#02331E]" : "text-white"
             }`}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/DesktopComponents/homePage/Navbar";
@@ -10,9 +10,23 @@ import { B2BStats } from "@/DesktopComponents/B2B/B2BStats";
 import { B2BIntegration } from "@/DesktopComponents/B2B/B2BIntegrations";
 import { B2BCTA } from "@/DesktopComponents/B2B/B2BCta";
 import { Footer } from "@/DesktopComponents/homePage/Footer";
+import B2BApi from "@/DesktopComponents/B2B/B2BApi";
+import PricingPackages from "@/DesktopComponents/B2B/B2BPricing";
 
 export default function B2BPage() {
   const [showBackButton, setShowBackButton] = useState(false);
+  const b2bApiRef = useRef(null);
+  const b2bPricingRef = useRef(null);
+
+  const scrollToB2BApi = () => {
+    b2bApiRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToB2BPricing = () => {
+    b2bPricingRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,7 +40,7 @@ export default function B2BPage() {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
-      <Navbar />
+      <Navbar onGetStarted={scrollToB2BApi} />
 
       {/* Back Button - Floating (appears after scrolling) */}
       <div
@@ -46,10 +60,16 @@ export default function B2BPage() {
       </div>
 
       <main>
-        <B2BHero />
+        <B2BHero scrollToPricing={scrollToB2BPricing}/>
+        <div ref={b2bApiRef}>
+          <B2BApi />
+        </div>
         <B2BFeatures />
         <B2BStats />
         <B2BIntegration />
+        <div ref={b2bPricingRef}>
+          <PricingPackages/>
+        </div>
         <B2BCTA />
       </main>
 
