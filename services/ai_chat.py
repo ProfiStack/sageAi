@@ -2,7 +2,7 @@ import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
-from openai import OpenAI
+import anthropic
 
 from core.database import SessionLocal
 from repositories.chat_repository import get_user_session_data, save_chat_message
@@ -19,7 +19,7 @@ from prompts.trend_analysis import get_trend_analysis_prompt
 from prompts.treatment import get_treatment_plan_prompt
 
 load_dotenv()
-chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+claude = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 executor = ThreadPoolExecutor()
 
 
@@ -109,10 +109,18 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
             db.close()
 
         system_prompt = get_feature_prompt(feature_type, user_data)
-        messages = [{"role": "system", "content": system_prompt}]
         chat_history = user_data.get("chat_history", [])[-10:]
-        messages.extend(chat_history)
-        messages.append({"role": "user", "content": message})
+
+        # Build messages — Claude only accepts user/assistant roles
+        history_messages = [
+            {
+                "role": "assistant" if m["role"] == "system" else m["role"],
+                "content": m["content"],
+            }
+            for m in chat_history
+            if m["role"] in ("user", "assistant", "system")
+        ]
+        history_messages.append({"role": "user", "content": message})
 
         if "end chat" in message.lower():
             return "Thank you for chatting with us :)"
@@ -120,22 +128,24 @@ async def get_ai_response(feature_type: str, message: str, user_id: str):
         try:
             response = await asyncio.get_event_loop().run_in_executor(
                 executor,
-                lambda: chat_gpt.chat.completions.create(
-                    model="gpt-4o",
-                    messages=messages,
+                lambda: claude.messages.create(
+                    model="claude-opus-4-6",
+                    system=system_prompt,
+                    messages=history_messages,
+                    max_tokens=2048,
                     temperature=0.7,
                 ),
             )
-            ai_response = response.choices[0].message.content
+            ai_response = response.content[0].text
         except Exception as e:
-            print(f"[OpenAI] API call failed: {e}")
+            print(f"[Claude] API call failed: {e}")
             return "Sorry! I had trouble generating a response. Please try again in a moment."
 
         # Save conversation to DB using a fresh session
         db2 = SessionLocal()
         try:
-            db_message = messages.copy()
-            db_message.append({"role": "system", "content": ai_response})
+            db_message = history_messages.copy()
+            db_message.append({"role": "assistant", "content": ai_response})
             save_chat_message(db2, user_id, feature_type, message, db_message)
         finally:
             db2.close()

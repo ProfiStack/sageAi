@@ -6,10 +6,11 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   ScanFace, ArrowLeft, CheckCircle2, AlertCircle,
   Camera, X, Sparkles, Sun, Moon, ThumbsUp, ThumbsDown,
-  Leaf, Activity, Package, ExternalLink, RefreshCw,
+  Leaf, Activity, Package, ExternalLink, RefreshCw, Upload,
 } from "lucide-react";
 import { Api } from "@/shared/api/api";
 import useB2BStore from "@/store/b2bStore";
+import PictureAnalysisPopup from "@/CustomComponents/cameraPopups/PictureAnalysis";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const Spinner = () => (
@@ -70,6 +71,7 @@ function B2BScanPageContent() {
   const [recs, setRecs] = useState(null);
   const [recsLoading, setRecsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const fileRef = useRef(null);
   const resultsRef = useRef(null);
 
@@ -97,6 +99,18 @@ function B2BScanPageContent() {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith("image/")) handleImage(file);
+  };
+
+  const handleCapture = (base64) => {
+    setCameraOpen(false);
+    const byteString = atob(base64.split(",")[1]);
+    const mime = base64.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+    const blob = new Blob([ab], { type: mime });
+    const file = new File([blob], "camera-capture.png", { type: mime });
+    handleImage(file);
   };
 
   const fetchRecs = async (userId) => {
@@ -187,33 +201,56 @@ function B2BScanPageContent() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-6 h-6 rounded-full bg-[#02331E] text-white text-xs font-bold flex items-center justify-center">2</span>
-                <span className="font-semibold text-[#02331E] text-sm">Upload Skin Image</span>
+                <span className="font-semibold text-[#02331E] text-sm">Capture or Upload Skin Image</span>
               </div>
-              <div
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onClick={() => !imagePreview && fileRef.current?.click()}
-                className={`relative border-2 border-dashed rounded-xl transition cursor-pointer ${imagePreview ? "border-[#02331E]/30" : "border-gray-200 hover:border-[#02331E]/40 hover:bg-[#02331E]/3"}`}
-              >
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImage(e.target.files[0])} />
-                {imagePreview ? (
-                  <div className="relative">
-                    <img src={imagePreview} alt="Preview" className="w-full h-36 object-cover rounded-xl" />
-                    <button onClick={(e) => { e.stopPropagation(); setImageFile(null); setImagePreview(null); setResult(null); setRecs(null); }} className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition">
-                      <X size={14} />
-                    </button>
-                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-lg flex items-center gap-1">
-                      <CheckCircle2 size={11} /> Ready
+
+              {imagePreview ? (
+                <div className="relative border-2 border-[#02331E]/30 rounded-xl overflow-hidden">
+                  <img src={imagePreview} alt="Preview" className="w-full h-44 object-cover" />
+                  <button
+                    onClick={() => { setImageFile(null); setImagePreview(null); setResult(null); setRecs(null); }}
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition"
+                  >
+                    <X size={14} />
+                  </button>
+                  <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-lg flex items-center gap-1">
+                    <CheckCircle2 size={11} /> Ready
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Camera snap */}
+                  <button
+                    onClick={() => setCameraOpen(true)}
+                    className="w-full flex items-center gap-3 px-4 py-4 rounded-xl border-2 border-[#02331E]/20 hover:border-[#02331E]/50 hover:bg-[#02331E]/3 transition group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#02331E]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#02331E]/20 transition">
+                      <Camera size={20} className="text-[#02331E]" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-[#02331E]">Snap with Camera</p>
+                      <p className="text-xs text-gray-400">Use webcam to capture live photo</p>
+                    </div>
+                  </button>
+
+                  {/* File upload */}
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => fileRef.current?.click()}
+                    className="w-full flex items-center gap-3 px-4 py-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#02331E]/40 hover:bg-[#02331E]/3 transition cursor-pointer group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-[#02331E]/10 transition">
+                      <Upload size={18} className="text-gray-400 group-hover:text-[#02331E] transition" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-gray-600 group-hover:text-[#02331E] transition">Upload Image</p>
+                      <p className="text-xs text-gray-400">Drop file or click to browse · JPG, PNG, WebP</p>
                     </div>
                   </div>
-                ) : (
-                  <div className="py-8 flex flex-col items-center gap-2 text-gray-400">
-                    <Camera size={24} className="text-gray-300" />
-                    <p className="text-sm font-medium text-gray-500">Drop image or click to browse</p>
-                    <p className="text-xs">JPG, PNG, WebP</p>
-                  </div>
-                )}
-              </div>
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImage(e.target.files[0])} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -500,11 +537,18 @@ function B2BScanPageContent() {
         {!result && !scanning && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Sparkles size={40} className="text-gray-200 mb-3" />
-            <p className="text-gray-400 text-sm">Select a user, upload a photo and run a scan to see full results here</p>
+            <p className="text-gray-400 text-sm">Select a user, snap or upload a photo and run a scan to see full results here</p>
           </div>
         )}
 
       </main>
+
+      <PictureAnalysisPopup
+        open={cameraOpen}
+        setOpen={setCameraOpen}
+        onCapture={handleCapture}
+        loading={false}
+      />
     </div>
   );
 }

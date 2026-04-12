@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
-from openai import OpenAI
+import anthropic
 from sqlalchemy.orm import Session
 
 from core.database import SessionLocal
@@ -19,7 +19,7 @@ router = APIRouter(tags=["B2B"])
 
 executor = ThreadPoolExecutor()
 load_dotenv()
-chat_gpt = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+claude = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 _analyzer = None
 
@@ -167,18 +167,19 @@ async def create_face_scan(
         db.commit()
         db.refresh(scan)
 
-        message = get_image_analysis_prompt(result)
-        messages = [{"role": "system", "content": message}]
+        system_prompt = get_image_analysis_prompt(result)
         response = await asyncio.get_event_loop().run_in_executor(
             executor,
-            lambda: chat_gpt.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
+            lambda: claude.messages.create(
+                model="claude-haiku-4-5-20251001",
+                system=system_prompt,
+                messages=[{"role": "user", "content": "Analyze the skin data and return the JSON response."}],
+                max_tokens=4096,
                 temperature=0.7,
             ),
         )
 
-        json_result = clean_and_parse_json(response.choices[0].message.content)
+        json_result = clean_and_parse_json(response.content[0].text)
         return {"scan_id": scan.id, "results": json_result}
 
     except HTTPException:

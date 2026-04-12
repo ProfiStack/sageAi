@@ -64,7 +64,7 @@ Return ONLY this JSON structure and nothing else:
     "reef_safe": false,
     "notes": "Any additional clean beauty context worth mentioning. Leave empty string if none."
   }},
-  "confidence_note": "Brief note on how much OpenAI inferred vs. read directly from the label. E.g. 'Ingredient highlights are based on general product knowledge as the full INCI list was partially obscured.'"
+  "confidence_note": "Brief note on how much was inferred vs. read directly from the label. E.g. 'Ingredient highlights are based on general product knowledge as the full INCI list was partially obscured.'"
 }}
 
 ---
