@@ -4,7 +4,7 @@ from fastapi import HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from services.skin_analyzer import EnhancedFacialSkinAnalyzer
-from services.ai_chat import chat_gpt
+from services.ai_chat import claude
 from prompts.image_analysis import clean_and_parse_json, get_image_analysis_prompt
 from prompts.shade_matching import get_shade_matching_prompt
 
@@ -28,18 +28,18 @@ async def analyze_skin(user_db: dict, image: UploadFile) -> dict:
         result = await asyncio.get_event_loop().run_in_executor(
             executor, skin_analyzer.analyze, image_bytes
         )
-        message = get_image_analysis_prompt(result)
-        messages = [{"role": "system", "content": message}]
+        system_prompt = get_image_analysis_prompt(result)
         response = await asyncio.get_event_loop().run_in_executor(
             executor,
-            lambda: chat_gpt.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
+            lambda: claude.messages.create(
+                model="claude-haiku-4-5-20251001",
+                system=system_prompt,
+                messages=[{"role": "user", "content": "Analyze the skin data and return the JSON response."}],
+                max_tokens=4096,
                 temperature=0.7,
             ),
         )
-        json_result = response.choices[0].message.content
-        json_result = clean_and_parse_json(json_result)
+        json_result = clean_and_parse_json(response.content[0].text)
         return {"results": json_result}
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
@@ -54,18 +54,18 @@ async def analyze_shade_matching(user_db: dict, image: UploadFile) -> dict:
         result = await asyncio.get_event_loop().run_in_executor(
             executor, skin_analyzer.analyze, image_bytes
         )
-        message = get_shade_matching_prompt(result)
-        messages = [{"role": "system", "content": message}]
+        system_prompt = get_shade_matching_prompt(result)
         response = await asyncio.get_event_loop().run_in_executor(
             executor,
-            lambda: chat_gpt.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
+            lambda: claude.messages.create(
+                model="claude-haiku-4-5-20251001",
+                system=system_prompt,
+                messages=[{"role": "user", "content": "Analyze the skin data and return the JSON response."}],
+                max_tokens=4096,
                 temperature=0.7,
             ),
         )
-        json_result = response.choices[0].message.content
-        json_result = clean_and_parse_json(json_result)
+        json_result = clean_and_parse_json(response.content[0].text)
         return {"results": json_result}
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})

@@ -9,7 +9,7 @@ from core.database import SessionLocal
 from models.db_models import ChatResults
 from repositories.user_repository import get_or_create_user_profile
 from repositories.chat_repository import get_user_chat_data
-from services.ai_chat import get_ai_response, chat_gpt
+from services.ai_chat import get_ai_response, claude
 from schemas.chat import ChatRequest, ChatResponse
 from prompts.result import result_prompt
 
@@ -43,19 +43,28 @@ async def get_or_create_chat_results(user_db: dict, chat_id: str) -> dict:
         if not chat_history:
             raise HTTPException(status_code=404, detail="No chat messages found.")
 
-        messages = [{"role": "system", "content": system_prompt}]
-        messages.extend(chat_history)
+        # Build messages — Claude only accepts user/assistant roles
+        history_messages = [
+            {
+                "role": "assistant" if m["role"] == "system" else m["role"],
+                "content": m["content"],
+            }
+            for m in chat_history
+            if m["role"] in ("user", "assistant", "system")
+        ]
 
         try:
             response = await asyncio.get_event_loop().run_in_executor(
                 executor,
-                lambda: chat_gpt.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=messages,
+                lambda: claude.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    system=system_prompt,
+                    messages=history_messages,
+                    max_tokens=2048,
                     temperature=0.7,
                 ),
             )
-            ai_response = response.choices[0].message.content
+            ai_response = response.content[0].text
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
 
