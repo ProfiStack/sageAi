@@ -8,6 +8,7 @@ from sqlalchemy import (
     String,
     JSON,
     DateTime,
+    UniqueConstraint,
 )
 from core.database import Base
 
@@ -35,12 +36,17 @@ class B2BApiKey(Base):
 class B2BUser(Base):
     __tablename__ = "b2b_users"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String, unique=True, nullable=True)
+    email = Column(String, nullable=True)
     client_id = Column(String, ForeignKey("b2b_clients.id"), index=True, nullable=False)
     external_user_id = Column(String)
     consent = Column(Boolean, default=True)
     source = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        # email must be unique per client, not globally
+        UniqueConstraint("email", "client_id", name="uq_b2b_users_email_client"),
+    )
 
 
 class B2BFaceScan(Base):
