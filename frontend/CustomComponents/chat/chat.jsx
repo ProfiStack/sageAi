@@ -499,8 +499,8 @@ function ConsultationChatComponent({ route, title, initialMessage }) {
 
         {isTyping && (
           <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
-              <div className="w-6 h-6 bg-orange-400 rounded-full"></div>
+            <div className="w-10 h-10 bg-[#02331E] rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 bg-[#D4B038] animate-pulse rounded-full"></div>
             </div>
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900 mb-1">
