@@ -22,7 +22,8 @@ export function PostHogProvider({ children }) {
 
     posthog.init(apiKey, {
       api_host: apiHost,
-      capture_pageview: false, // manual page tracking
+      capture_pageview: true, // manual page tracking
+      defaults: '2026-01-30',
     });
 
     setInitialized(true);
