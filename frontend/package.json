@@ -39,7 +39,7 @@
     "lucide-react": "^0.441.0",
     "motion": "^12.23.24",
     "next": "14.2.11",
-    "posthog-js": "^1.310.1",
+    "posthog-js": "^1.372.10",
     "qrcode": "^1.5.4",
     "react": "^18",
     "react-calendar": "^5.1.0",
