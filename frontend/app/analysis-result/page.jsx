@@ -18,6 +18,7 @@ import {
   Download,
   Share2,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSkinResultStore } from "@/store/skinResult";
@@ -152,39 +153,46 @@ export default function ResultsPage() {
         </div>
 
         {/* Navigation Tabs & Content - Shadcn UI */}
-        <Tabs defaultValue="routine" className="mx-2 no-scrollbar">
-          <TabsList className="flex flex-wrap p-2 h-auto gap-2 bg-transparent justify-start mb-6">
+        <Tabs defaultValue="treatments" className="mx-2 no-scrollbar">
+          <TabsList className="flex overflow-x-auto p-2 pb-4 h-auto gap-2  bg-transparent justify-start mb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 rounded-xl ">
+            <TabsTrigger
+              value="treatments"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E]  data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Treatments</span>
+            </TabsTrigger>
             <TabsTrigger
               value="routine"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E]  data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Clock className="w-4 h-4" />
               <span>Routine</span>
             </TabsTrigger>
             <TabsTrigger
               value="products"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E]  data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>Products</span>
             </TabsTrigger>
             <TabsTrigger
               value="seasonal"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E]  data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Calendar className="w-4 h-4" />
               <span>Seasonal</span>
             </TabsTrigger>
             <TabsTrigger
               value="lifestyle"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E]  data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Heart className="w-4 h-4" />
               <span>Lifestyle</span>
             </TabsTrigger>
             <TabsTrigger
               value="tips"
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E] hover:bg-[#D4B038]/20 data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-300 text-sm sm:text-base font-medium bg-white/50 text-[#02331E]  data-[state=active]:bg-[#D4B038] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <Shield className="w-4 h-4" />
               <span>Do's & Don'ts</span>
@@ -193,6 +201,89 @@ export default function ResultsPage() {
 
           {/* Tab Content */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-[#D4B038]/20">
+            {/* Treatments Tab */}
+            <TabsContent value="treatments" className="mt-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#02331E] text-center mb-6 sm:mb-8">
+                Recommended Treatments
+              </h2>
+              <div className="space-y-6">
+                {resultsData?.treatments_section?.map((treatment, index) => (
+                  <div
+                    key={index}
+                    className="bg-gradient-to-br from-[#D4B038]/10 to-transparent rounded-xl p-4 sm:p-6"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#D4B038] rounded-full flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-[#02331E] text-base sm:text-lg leading-snug">
+                          {treatment.name}
+                        </h3>
+                        <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-[#02331E] text-white text-xs font-semibold">
+                          {treatment.type}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[#02331E]/80 text-sm mb-5 leading-relaxed">
+                      {treatment.description}
+                    </p>
+
+                    <div className="space-y-4 mb-5 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0">
+                      {/* Benefits */}
+                      <div>
+                        <p className="text-xs font-semibold text-[#D4B038] mb-3 uppercase tracking-wide">
+                          Benefits:
+                        </p>
+                        <div className="space-y-3">
+                          {treatment.benefits?.map((benefit, i) => (
+                            <div key={i} className="flex gap-3">
+                              <div className="w-6 h-6 bg-[#D4B038] rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
+                                {i + 1}
+                              </div>
+                              <p className="text-[#02331E] text-sm leading-relaxed">{benefit}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Avoid If */}
+                      <div className="mt-8">
+                        <p className="text-xs font-semibold text-[#02331E] mb-3 uppercase tracking-wide">
+                          Avoid If:
+                        </p>
+                        <div className="space-y-3">
+                          {treatment.avoid_if?.map((condition, i) => (
+                            <div key={i} className="flex gap-3">
+                              <div className="w-6 h-6 bg-[#02331E] rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
+                                {i + 1}
+                              </div>
+                              <p className="text-[#02331E] text-sm leading-relaxed">{condition}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="bg-[#D4B038]/10 rounded-xl p-3">
+                        <p className="text-xs text-[#02331E] font-medium">
+                          Perfect for: {treatment.perfect_for}
+                        </p>
+                      </div>
+                      <div className="bg-[#02331E]/10 rounded-xl p-3">
+                        <p className="text-xs text-[#02331E]">
+                          Why recommended: {treatment.why_recommended}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
             {/* Daily Routine Tab */}
             <TabsContent
               value="routine"

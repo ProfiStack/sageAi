@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, X } from "lucide-react";
 import CameraPermissionModal from "../Popups/CameraPermission";
 import { AnimatePresence, motion } from "framer-motion";
+import useFormToast from "../FormToast/FormToast";
 
 export default function PictureAnalysisPopup({
   open,
@@ -17,6 +18,7 @@ export default function PictureAnalysisPopup({
 
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraPermission, setCameraPermission] = useState(false);
+  const { destructiveToast } = useFormToast();
 
   // ✅ Start camera
   useEffect(() => {
@@ -44,6 +46,9 @@ export default function PictureAnalysisPopup({
         console.error(err);
         if (err.name === "NotAllowedError") {
           setCameraPermission(true);
+        } else if (err.name === "NotFoundError") {
+          destructiveToast("No camera found on this device.");
+          setOpen(false);
         } else {
           setOpen(false);
         }

@@ -96,7 +96,7 @@ const ScanPopup = ({ isOpen, setIsOpen }) => {
             {/* Grid of options */}
             <div className="grid grid-cols-2 gap-3">
               {ImageAnalysisData.map((item, index) =>
-                item.title !== "Mole Analysis" ? (
+                item.title !== "Mole Analysis" && item.title !==  "Product Analysis" ? (
                   <SubscribeButton route={item.route}>
                     <div
                       key={index}
