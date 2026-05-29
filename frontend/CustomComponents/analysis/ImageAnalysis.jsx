@@ -3,6 +3,7 @@
 import PictureAnalysisPopup from "@/CustomComponents/cameraPopups/PictureAnalysis";
 import Footer from "@/CustomComponents/Footer/Footer";
 import ImagePreviewPopup from "@/CustomComponents/Popups/ImagePreviewPopup";
+import ScanConsentModal from "@/CustomComponents/Popups/ScanConsentModal";
 import SettingsHeader from "@/CustomComponents/settingsHeader/settingsHeader";
 import { Api } from "@/shared/api/api";
 import { useSkinResultStore } from "@/store/skinResult";
@@ -24,15 +25,17 @@ export default function SkinAnalysis() {
   const [showPreview, setShowPreview] = useState(false);
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState(null);
   const router = useRouter();
 
-  // Handle upload image to backend
-  const handleUploadImage = async (fileOrBlob) => {
+  const handleUploadImage = async (fileOrBlob, consent = false) => {
     try {
       setIsLoading(true);
 
       const formData = new FormData();
       formData.append("image", fileOrBlob, "skin.jpg");
+      formData.append("consent", consent ? "true" : "false");
 
       const response = await Api.client.analyzeSkinPhoto(formData, authToken);
 
@@ -55,7 +58,6 @@ export default function SkinAnalysis() {
     }
   };
 
-  // Handle image capture from popup
   const handleImageCapture = async (imageData) => {
     SetIsOpen(false);
 
@@ -69,16 +71,23 @@ export default function SkinAnalysis() {
     }
 
     const blob = new Blob([ab], { type: mimeString });
-
-    await handleUploadImage(blob);
+    setPendingUpload(blob);
+    setShowConsent(true);
   };
 
-  // Handle confirm image upload
   const handleConfirm = async (file) => {
     setShowPreview(false);
     setPreviewImage(null);
+    setPendingUpload(file);
+    setShowConsent(true);
+  };
 
-    await handleUploadImage(file);
+  const handleConsentResponse = async (consent) => {
+    setShowConsent(false);
+    if (pendingUpload) {
+      await handleUploadImage(pendingUpload, consent);
+      setPendingUpload(null);
+    }
   };
 
   const handleUploadClick = () => {
@@ -252,6 +261,12 @@ export default function SkinAnalysis() {
         setPreviewImage={setPreviewImage}
         onClose={closePreview}
         onConfirm={handleConfirm}
+      />
+      <ScanConsentModal
+        open={showConsent}
+        type="skin"
+        onAccept={() => handleConsentResponse(true)}
+        onDecline={() => handleConsentResponse(false)}
       />
     </div>
   );
